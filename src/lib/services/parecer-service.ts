@@ -1,4 +1,5 @@
 import { getAiConfigForServer } from "@/lib/ai/config-service";
+import { DEFAULT_PARECER_SYSTEM_PROMPT } from "@/lib/ai/default-prompt";
 import { getProvider } from "@/lib/ai/registry";
 import { cache } from "@/lib/cache";
 import { prisma } from "@/lib/db";
@@ -24,11 +25,6 @@ export interface Parecer {
 	geradoPorIA: boolean;
 	geradoEm: string;
 }
-
-const SYSTEM_PROMPT =
-	"Você é um perito em compras (procurement) B2B. Responda em português do Brasil, " +
-	"de forma objetiva e profissional. NÃO invente números — os valores já foram calculados " +
-	"e estão no contexto. Produza apenas um parecer textual e vantagens.";
 
 // biome-ignore lint/complexity/noStaticOnlyClass: intentional static service namespace
 export class ParecerService {
@@ -92,7 +88,7 @@ export class ParecerService {
 				const text = await getProvider(config.provider).generate({
 					model: config.model,
 					key: config.key,
-					system: SYSTEM_PROMPT,
+					system: config.systemPrompt?.trim() || DEFAULT_PARECER_SYSTEM_PROMPT,
 					prompt: ParecerService.buildPrompt(facts),
 					maxTokens: 700,
 				});

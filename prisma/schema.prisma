@@ -312,6 +312,7 @@ model AiConfig {
   encryptedKey String
   keyHint      String
   model        String
+  systemPrompt String?
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 

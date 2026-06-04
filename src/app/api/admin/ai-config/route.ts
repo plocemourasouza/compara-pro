@@ -1,5 +1,9 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { getAiConfigPublic, saveAiConfig } from "@/lib/ai/config-service";
+import {
+	getAiConfigForServer,
+	getAiConfigPublic,
+	saveAiConfig,
+} from "@/lib/ai/config-service";
 import { getProvider } from "@/lib/ai/registry";
 import { AuthError, requireAuth } from "@/lib/auth-server";
 import { isEncryptionConfigured } from "@/lib/crypto/secret-box";
@@ -45,10 +49,24 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
-		const { provider, key, model } = parsed.data;
+		const { provider, key, model, systemPrompt } = parsed.data;
+
+		// Reuse the stored key when the admin edits the model/prompt without
+		// re-pasting it. A new provider always requires a fresh key.
+		let keyToUse = key;
+		if (!keyToUse) {
+			const existing = await getAiConfigForServer();
+			if (!existing || existing.provider !== provider) {
+				return NextResponse.json(
+					{ error: "Informe a chave de API para este provedor" },
+					{ status: 400 },
+				);
+			}
+			keyToUse = existing.key;
+		}
 
 		// Re-validate the key + model server-side before persisting.
-		const result = await getProvider(provider).validateKey(key);
+		const result = await getProvider(provider).validateKey(keyToUse);
 		if (!result.valid) {
 			return NextResponse.json(
 				{ error: result.error ?? "Chave inválida" },
@@ -62,7 +80,12 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
-		await saveAiConfig({ provider, key, model });
+		await saveAiConfig({
+			provider,
+			key: keyToUse,
+			model,
+			systemPrompt: systemPrompt?.trim() ? systemPrompt.trim() : null,
+		});
 		const config = await getAiConfigPublic();
 		return NextResponse.json({ success: true, config });
 	} catch (error) {

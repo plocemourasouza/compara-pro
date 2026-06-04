@@ -8,6 +8,7 @@ export interface AiConfigServer {
 	provider: AiProviderId;
 	model: string;
 	key: string;
+	systemPrompt: string | null;
 }
 
 export interface AiConfigPublic {
@@ -15,6 +16,7 @@ export interface AiConfigPublic {
 	provider: AiProviderId | null;
 	model: string | null;
 	keyHint: string | null;
+	systemPrompt: string | null;
 }
 
 /** Server-only: returns the decrypted key. NEVER expose this to the client. */
@@ -25,7 +27,12 @@ export async function getAiConfigForServer(): Promise<AiConfigServer | null> {
 	}
 	try {
 		const key = decryptSecret(row.encryptedKey);
-		return { provider: row.provider, model: row.model, key };
+		return {
+			provider: row.provider,
+			model: row.model,
+			key,
+			systemPrompt: row.systemPrompt,
+		};
 	} catch {
 		// Missing/rotated encryption key → treat as not configured (graceful).
 		return null;
@@ -36,13 +43,20 @@ export async function getAiConfigForServer(): Promise<AiConfigServer | null> {
 export async function getAiConfigPublic(): Promise<AiConfigPublic> {
 	const row = await prisma.aiConfig.findUnique({ where: { id: SINGLETON_ID } });
 	if (!row) {
-		return { configured: false, provider: null, model: null, keyHint: null };
+		return {
+			configured: false,
+			provider: null,
+			model: null,
+			keyHint: null,
+			systemPrompt: null,
+		};
 	}
 	return {
 		configured: true,
 		provider: row.provider,
 		model: row.model,
 		keyHint: row.keyHint,
+		systemPrompt: row.systemPrompt,
 	};
 }
 
@@ -50,6 +64,7 @@ export async function saveAiConfig(input: {
 	provider: AiProviderId;
 	key: string;
 	model: string;
+	systemPrompt: string | null;
 }): Promise<void> {
 	const encryptedKey = encryptSecret(input.key);
 	const hint = keyHint(input.key);
@@ -61,12 +76,14 @@ export async function saveAiConfig(input: {
 			encryptedKey,
 			keyHint: hint,
 			model: input.model,
+			systemPrompt: input.systemPrompt,
 		},
 		update: {
 			provider: input.provider,
 			encryptedKey,
 			keyHint: hint,
 			model: input.model,
+			systemPrompt: input.systemPrompt,
 		},
 	});
 }
