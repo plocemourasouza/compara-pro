@@ -24,6 +24,10 @@
 .DS_Store
 *.pem
 
+# curl/test cookie jars (may hold real session JWTs)
+cookies.txt
+cookies*.txt
+
 # debug
 npm-debug.log*
 yarn-debug.log*
@@ -39,3 +43,13 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+/src/generated/prisma
+
+# local editor / agent state
+.cursor/
+.claude/settings.local.json
+
+# local sqlite dev artifacts (project uses PostgreSQL)
+*.db
+*.db-journal
