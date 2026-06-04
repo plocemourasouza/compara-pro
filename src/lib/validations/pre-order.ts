@@ -27,6 +27,26 @@ export const preOrderItemSchema = z.object({
 	notes: z.string().optional(),
 });
 
+// Batch creation — one or more pre-orders (grouped by supplier) in a single action
+export const createPreOrderBatchSchema = z.object({
+	comparisonId: z.string().min(1, "Comparison ID é obrigatório"),
+	groups: z
+		.array(
+			z.object({
+				supplierId: z.string().min(1, "Supplier ID é obrigatório"),
+				selectedMatches: z
+					.array(z.string())
+					.min(1, "Pelo menos um produto deve ser selecionado"),
+				quantities: z
+					.record(z.string(), z.number().int().positive())
+					.optional(),
+			}),
+		)
+		.min(1, "Pelo menos um fornecedor deve ser selecionado"),
+	notes: z.string().optional(),
+});
+
+export type CreatePreOrderBatchData = z.infer<typeof createPreOrderBatchSchema>;
 export type CreatePreOrderData = z.infer<typeof createPreOrderSchema>;
 export type PreOrderResponseData = z.infer<typeof preOrderResponseSchema>;
 export type PreOrderItemData = z.infer<typeof preOrderItemSchema>;

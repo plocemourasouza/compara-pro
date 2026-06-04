@@ -303,3 +303,22 @@ enum NotificationType {
   COMPARISON_COMPLETED
   SYSTEM_UPDATE
 }
+
+// Platform-level AI provider configuration (single row). The API key is stored
+// encrypted (AES-256-GCM) and never returned to the client.
+model AiConfig {
+  id           String     @id @default("singleton")
+  provider     AiProvider
+  encryptedKey String
+  keyHint      String
+  model        String
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@map("ai_config")
+}
+
+enum AiProvider {
+  ANTHROPIC
+  OPENAI
+}

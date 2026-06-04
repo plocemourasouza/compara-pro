@@ -1,6 +1,9 @@
 import type { NotificationType } from "@/generated/prisma";
 import { prisma } from "@/lib/db";
-import type { CreatePreOrderData } from "@/lib/validations/pre-order";
+import type {
+	CreatePreOrderBatchData,
+	CreatePreOrderData,
+} from "@/lib/validations/pre-order";
 
 // biome-ignore lint/complexity/noStaticOnlyClass: intentional static utility namespace
 export class PreOrderService {
@@ -128,6 +131,111 @@ export class PreOrderService {
 				? error
 				: new Error("Erro ao criar pré-pedido");
 		}
+	}
+
+	/**
+	 * Create one pre-order per supplier group, atomically (single transaction).
+	 * Returns the created pre-order ids. Supplier notifications are best-effort
+	 * (fired after commit, never block the order).
+	 */
+	static async createPreOrdersBatch(
+		data: CreatePreOrderBatchData,
+		clientId: string,
+	): Promise<string[]> {
+		const comparison = await prisma.comparison.findUnique({
+			where: { id: data.comparisonId },
+			select: { clientId: true },
+		});
+		if (!comparison || comparison.clientId !== clientId) {
+			throw new Error("Comparação não encontrada ou não autorizada");
+		}
+
+		const created = await prisma.$transaction(async (tx) => {
+			const results: Array<{
+				id: string;
+				supplierId: string;
+				clientName: string;
+			}> = [];
+
+			for (const group of data.groups) {
+				const matches = await tx.comparisonMatch.findMany({
+					where: {
+						id: { in: group.selectedMatches },
+						comparisonId: data.comparisonId,
+					},
+					include: {
+						supplierMatches: {
+							where: { supplierCompanyId: group.supplierId },
+						},
+					},
+				});
+
+				let totalAmount = 0;
+				const items: Array<{
+					matchId: string;
+					productId: string;
+					quantity: number;
+					price: number;
+					totalPrice: number;
+				}> = [];
+
+				for (const match of matches) {
+					const supplierMatch = match.supplierMatches.find(
+						(sm) => sm.supplierCompanyId === group.supplierId,
+					);
+					if (!supplierMatch) continue;
+
+					const quantity = group.quantities?.[match.id] ?? 1;
+					const price = supplierMatch.price;
+					items.push({
+						matchId: match.id,
+						productId: supplierMatch.supplierProductId,
+						quantity,
+						price,
+						totalPrice: price * quantity,
+					});
+					totalAmount += price * quantity;
+				}
+
+				if (items.length === 0) continue;
+
+				const preOrder = await tx.preOrder.create({
+					data: {
+						comparisonId: data.comparisonId,
+						clientId,
+						supplierId: group.supplierId,
+						status: "ACTIVE",
+						totalAmount,
+						notes: data.notes,
+						items: { create: items },
+					},
+					include: { client: { select: { name: true } } },
+				});
+
+				results.push({
+					id: preOrder.id,
+					supplierId: group.supplierId,
+					clientName: preOrder.client.name,
+				});
+			}
+
+			if (results.length === 0) {
+				throw new Error("Nenhum produto válido para criar pré-pedido");
+			}
+			return results;
+		});
+
+		for (const r of created) {
+			await PreOrderService.createNotification(
+				r.supplierId,
+				"PRE_ORDER_CREATED",
+				"Novo pré-pedido recebido",
+				`Você recebeu um novo pré-pedido de ${r.clientName}`,
+				{ preOrderId: r.id },
+			);
+		}
+
+		return created.map((r) => r.id);
 	}
 
 	static async respondToPreOrder(
@@ -314,7 +422,7 @@ export class PreOrderService {
 					type,
 					title,
 					message,
-					data: data ? JSON.stringify(data) : null,
+					metadata: data ? JSON.stringify(data) : undefined,
 				})),
 			});
 		} catch (error) {

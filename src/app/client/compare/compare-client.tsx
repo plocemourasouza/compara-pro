@@ -12,12 +12,14 @@ import {
 	XCircle,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import CreatePreOrderDialog from "@/components/shared/create-pre-order-dialog";
+import { toast } from "sonner";
+import ParecerPanel from "@/components/compare/parecer-panel";
 import ManualMatchDialog from "@/components/shared/manual-match-dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import {
 	Select,
@@ -26,17 +28,14 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 
 type User = {
 	id: string;
 	name: string;
 	email: string;
 	role: string;
-	company: {
-		id: string;
-		name: string;
-		type: string;
-	} | null;
+	company: { id: string; name: string; type: string } | null;
 };
 
 interface Upload {
@@ -92,8 +91,28 @@ interface SupplierMatch {
 	supplier: SupplierInfo;
 }
 
+interface Selection {
+	included: boolean;
+	supplierId: string;
+	quantity: number;
+}
+
+interface GroupSummary {
+	supplierId: string;
+	name: string;
+	itens: number;
+	total: number;
+}
+
 interface CompareClientProps {
 	user: User;
+}
+
+function formatCurrency(value: number): string {
+	return new Intl.NumberFormat("pt-BR", {
+		style: "currency",
+		currency: "BRL",
+	}).format(value);
 }
 
 export default function CompareClient({ user: _user }: CompareClientProps) {
@@ -106,13 +125,12 @@ export default function CompareClient({ user: _user }: CompareClientProps) {
 	const [filterType, setFilterType] = useState<"ALL" | "MATCHED" | "UNMATCHED">(
 		"ALL",
 	);
+	const [selections, setSelections] = useState<Record<string, Selection>>({});
+	const [notes, setNotes] = useState("");
+	const [confirming, setConfirming] = useState(false);
 	const [manualMatchDialog, setManualMatchDialog] = useState<{
 		open: boolean;
 		clientProduct?: ClientProduct;
-	}>({ open: false });
-	const [preOrderDialog, setPreOrderDialog] = useState<{
-		open: boolean;
-		supplier?: { id: string; name: string };
 	}>({ open: false });
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: mount-only fetch
@@ -120,61 +138,78 @@ export default function CompareClient({ user: _user }: CompareClientProps) {
 		fetchUploads();
 	}, []);
 
-	const fetchUploads = async () => {
+	async function fetchUploads() {
 		try {
 			const response = await fetch(
 				"/api/upload/history?type=CLIENT_REQUIREMENTS",
 			);
-
-			if (!response.ok) {
-				throw new Error("Erro ao carregar uploads");
-			}
-
+			if (!response.ok) throw new Error("Erro ao carregar uploads");
 			const data = await response.json();
 			setUploads(data.uploads.filter((u: Upload) => u.status === "COMPLETED"));
 		} catch (err) {
 			setError(err instanceof Error ? err.message : "Erro desconhecido");
 		}
-	};
+	}
+
+	function initSelections(matches: Match[]) {
+		const next: Record<string, Selection> = {};
+		for (const m of matches) {
+			if (m.supplierMatches.length === 0) continue;
+			let best: SupplierMatch | undefined;
+			for (const sm of m.supplierMatches) {
+				if (!best || sm.price < best.price) best = sm;
+			}
+			if (best) {
+				next[m.id] = {
+					included: true,
+					supplierId: best.supplier.id,
+					quantity: 1,
+				};
+			}
+		}
+		setSelections(next);
+	}
 
 	const createComparison = async () => {
 		if (!selectedUpload) return;
-
 		setLoading(true);
 		setError(null);
 		setComparison(null);
-
+		setNotes("");
 		try {
-			// Create comparison
 			const createResponse = await fetch("/api/comparison/create", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ uploadId: selectedUpload }),
 			});
-
 			if (!createResponse.ok) {
 				const errorData = await createResponse.json();
 				throw new Error(errorData.error);
 			}
-
 			const createResult = await createResponse.json();
 
-			// Fetch comparison details
 			const comparisonResponse = await fetch(
 				`/api/comparison/${createResult.comparisonId}`,
 			);
-
 			if (!comparisonResponse.ok) {
 				throw new Error("Erro ao carregar comparação");
 			}
-
-			const comparisonData = await comparisonResponse.json();
+			const comparisonData: Comparison = await comparisonResponse.json();
 			setComparison(comparisonData);
+			initSelections(comparisonData.matches);
 		} catch (err) {
 			setError(err instanceof Error ? err.message : "Erro desconhecido");
 		} finally {
 			setLoading(false);
 		}
+	};
+
+	const updateSel = (matchId: string, patch: Partial<Selection>) => {
+		setSelections((prev) => {
+			const cur = prev[matchId];
+			if (!cur) return prev;
+			return { ...prev, [matchId]: { ...cur, ...patch } };
+		});
 	};
 
 	const getMatchTypeLabel = (type: string) => {
@@ -205,7 +240,6 @@ export default function CompareClient({ user: _user }: CompareClientProps) {
 
 	const filteredMatches =
 		comparison?.matches.filter((match) => {
-			// Filter by search term
 			if (searchTerm) {
 				const searchLower = searchTerm.toLowerCase();
 				const matchesSearch =
@@ -214,33 +248,19 @@ export default function CompareClient({ user: _user }: CompareClientProps) {
 					match.clientProduct.code?.toLowerCase().includes(searchLower);
 				if (!matchesSearch) return false;
 			}
-
-			// Filter by match type
 			if (filterType === "MATCHED" && match.supplierMatches.length === 0)
 				return false;
 			if (filterType === "UNMATCHED" && match.supplierMatches.length > 0)
 				return false;
-
 			return true;
 		}) || [];
 
-	const formatCurrency = (value: number) => {
-		return new Intl.NumberFormat("pt-BR", {
-			style: "currency",
-			currency: "BRL",
-		}).format(value);
-	};
-
 	const handleManualMatch = (clientProduct: ClientProduct) => {
-		setManualMatchDialog({
-			open: true,
-			clientProduct,
-		});
+		setManualMatchDialog({ open: true, clientProduct });
 	};
 
 	const handleMatchProduct = async (supplierProductId: string) => {
 		if (!comparison) return;
-
 		setLoading(true);
 		try {
 			const { createManualMatchAction } = await import(
@@ -249,58 +269,111 @@ export default function CompareClient({ user: _user }: CompareClientProps) {
 			const result = await createManualMatchAction(
 				comparison.id,
 				supplierProductId,
-				comparison.id, // This would need the actual client product ID
+				comparison.id,
 			);
-
 			if (result.success) {
-				// Refresh the comparison data
 				setComparison(null);
-				// Show success message
 			} else {
 				console.error("Manual match error:", result.error);
 			}
-		} catch (error) {
-			console.error("Manual match error:", error);
+		} catch (err) {
+			console.error("Manual match error:", err);
 		} finally {
 			setLoading(false);
 		}
 	};
 
-	const handleCreatePreOrder = (supplier: { id: string; name: string }) => {
-		setPreOrderDialog({
-			open: true,
-			supplier,
-		});
+	const chosenSupplierMatch = (m: Match): SupplierMatch | undefined => {
+		const sel = selections[m.id];
+		if (!sel) return undefined;
+		return m.supplierMatches.find((sm) => sm.supplier.id === sel.supplierId);
 	};
 
-	const handlePreOrderSuccess = () => {
-		alert("Pré-pedido criado com sucesso!");
-		// Could refresh comparison or navigate to orders page
-	};
-
-	// Get unique suppliers from comparison matches
-	const getAvailableSuppliers = () => {
+	const groupSummary = (): GroupSummary[] => {
 		if (!comparison) return [];
-
-		const suppliersMap = new Map();
-
-		comparison.matches.forEach((match) => {
-			match.supplierMatches.forEach((sm) => {
-				if (!suppliersMap.has(sm.supplier.id)) {
-					suppliersMap.set(sm.supplier.id, {
-						id: sm.supplier.id,
-						name: sm.supplier.name,
-						matchCount: 0,
-					});
-				}
-				suppliersMap.get(sm.supplier.id).matchCount++;
-			});
-		});
-
-		return Array.from(suppliersMap.values()).sort(
-			(a, b) => b.matchCount - a.matchCount,
-		);
+		const map = new Map<string, GroupSummary>();
+		for (const m of comparison.matches) {
+			const sel = selections[m.id];
+			if (!sel?.included) continue;
+			const sm = m.supplierMatches.find(
+				(s) => s.supplier.id === sel.supplierId,
+			);
+			if (!sm) continue;
+			const cur = map.get(sel.supplierId) ?? {
+				supplierId: sel.supplierId,
+				name: sm.supplier.name,
+				itens: 0,
+				total: 0,
+			};
+			cur.itens += 1;
+			cur.total += sm.price * sel.quantity;
+			map.set(sel.supplierId, cur);
+		}
+		return Array.from(map.values());
 	};
+
+	const confirmPreOrders = async () => {
+		if (!comparison) return;
+		const groupsMap = new Map<
+			string,
+			{
+				supplierId: string;
+				selectedMatches: string[];
+				quantities: Record<string, number>;
+			}
+		>();
+		for (const m of comparison.matches) {
+			const sel = selections[m.id];
+			if (!sel?.included) continue;
+			const sm = m.supplierMatches.find(
+				(s) => s.supplier.id === sel.supplierId,
+			);
+			if (!sm) continue;
+			const g = groupsMap.get(sel.supplierId) ?? {
+				supplierId: sel.supplierId,
+				selectedMatches: [],
+				quantities: {},
+			};
+			g.selectedMatches.push(m.id);
+			g.quantities[m.id] = sel.quantity;
+			groupsMap.set(sel.supplierId, g);
+		}
+		const groups = Array.from(groupsMap.values());
+		if (groups.length === 0) {
+			toast.error("Selecione ao menos um produto");
+			return;
+		}
+		setConfirming(true);
+		try {
+			const res = await fetch("/api/pre-order/create-batch", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					comparisonId: comparison.id,
+					groups,
+					notes: notes || undefined,
+				}),
+			});
+			const data = (await res.json()) as {
+				preOrderIds?: string[];
+				error?: string;
+			};
+			if (!res.ok) throw new Error(data.error ?? "Erro ao criar pré-pedido");
+			toast.success(
+				`${data.preOrderIds?.length ?? 0} pré-pedido(s) criado(s) com sucesso`,
+			);
+		} catch (err) {
+			toast.error(
+				err instanceof Error ? err.message : "Erro ao criar pré-pedido",
+			);
+		} finally {
+			setConfirming(false);
+		}
+	};
+
+	const groups = groupSummary();
+	const grandTotal = groups.reduce((sum, g) => sum + g.total, 0);
+	const totalItens = groups.reduce((sum, g) => sum + g.itens, 0);
 
 	return (
 		<div className="space-y-6">
@@ -347,7 +420,6 @@ export default function CompareClient({ user: _user }: CompareClientProps) {
 				</CardContent>
 			</Card>
 
-			{/* Error Display */}
 			{error && (
 				<Alert variant="destructive">
 					<AlertCircle className="h-4 w-4" />
@@ -355,7 +427,6 @@ export default function CompareClient({ user: _user }: CompareClientProps) {
 				</Alert>
 			)}
 
-			{/* Comparison Results */}
 			{comparison && (
 				<>
 					{/* Stats Summary */}
@@ -377,7 +448,6 @@ export default function CompareClient({ user: _user }: CompareClientProps) {
 								</div>
 							</CardContent>
 						</Card>
-
 						<Card>
 							<CardContent className="p-6">
 								<div className="flex items-center">
@@ -395,7 +465,6 @@ export default function CompareClient({ user: _user }: CompareClientProps) {
 								</div>
 							</CardContent>
 						</Card>
-
 						<Card>
 							<CardContent className="p-6">
 								<div className="flex items-center">
@@ -413,7 +482,6 @@ export default function CompareClient({ user: _user }: CompareClientProps) {
 								</div>
 							</CardContent>
 						</Card>
-
 						<Card>
 							<CardContent className="p-6">
 								<div className="flex items-center">
@@ -434,6 +502,9 @@ export default function CompareClient({ user: _user }: CompareClientProps) {
 							</CardContent>
 						</Card>
 					</div>
+
+					{/* AI parecer */}
+					<ParecerPanel comparisonId={comparison.id} />
 
 					{/* Filters */}
 					<Card>
@@ -470,119 +541,143 @@ export default function CompareClient({ user: _user }: CompareClientProps) {
 						</CardContent>
 					</Card>
 
-					{/* Pre-order Actions */}
-					{comparison && comparison.matchedProducts > 0 && (
-						<Card>
-							<CardHeader>
-								<CardTitle className="flex items-center gap-2">
-									<ShoppingCart className="h-5 w-5" />
-									Criar Pré-pedidos
-								</CardTitle>
-							</CardHeader>
-							<CardContent>
-								<p className="text-muted-foreground mb-4">
-									Selecione um fornecedor para criar um pré-pedido com os
-									produtos encontrados:
-								</p>
-								<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-									{getAvailableSuppliers().map((supplier) => (
-										<Button
-											key={supplier.id}
-											variant="outline"
-											onClick={() => handleCreatePreOrder(supplier)}
-											className="flex items-center justify-between p-4 h-auto"
-										>
-											<div className="text-left">
-												<div className="font-medium">{supplier.name}</div>
-												<div className="text-sm text-muted-foreground">
-													{supplier.matchCount} produtos disponíveis
-												</div>
-											</div>
-											<ShoppingCart className="h-4 w-4" />
-										</Button>
-									))}
-								</div>
-							</CardContent>
-						</Card>
-					)}
-
-					{/* Results Table */}
+					{/* Results — inline override per product */}
 					<Card>
 						<CardHeader>
 							<CardTitle>Resultados da Comparação</CardTitle>
+							<p className="text-sm text-muted-foreground">
+								Ajuste o fornecedor, a quantidade ou desmarque itens antes de
+								confirmar o pré-pedido.
+							</p>
 						</CardHeader>
 						<CardContent>
 							<div className="space-y-4">
-								{filteredMatches.map((match) => (
-									<div key={match.id} className="border rounded-lg p-4">
-										<div className="flex justify-between items-start mb-3">
-											<div className="flex-1">
-												<h4 className="font-semibold">
-													{match.clientProduct.name}
-												</h4>
-												<div className="flex gap-2 text-sm text-muted-foreground mt-1">
-													{match.clientProduct.sku && (
-														<span>SKU: {match.clientProduct.sku}</span>
-													)}
-													{match.clientProduct.code && (
-														<span>Código: {match.clientProduct.code}</span>
+								{filteredMatches.map((match) => {
+									const sel = selections[match.id];
+									const chosen = chosenSupplierMatch(match);
+									const above =
+										chosen && match.bestPrice
+											? chosen.price - match.bestPrice
+											: 0;
+									return (
+										<div key={match.id} className="border rounded-lg p-4">
+											<div className="flex justify-between items-start mb-3">
+												<div className="flex-1">
+													<h4 className="font-semibold">
+														{match.clientProduct.name}
+													</h4>
+													<div className="flex gap-2 text-sm text-muted-foreground mt-1">
+														{match.clientProduct.sku && (
+															<span>SKU: {match.clientProduct.sku}</span>
+														)}
+														{match.clientProduct.code && (
+															<span>Código: {match.clientProduct.code}</span>
+														)}
+													</div>
+												</div>
+												<div className="flex items-center gap-2">
+													<Badge className={getMatchTypeColor(match.matchType)}>
+														{getMatchTypeLabel(match.matchType)}
+													</Badge>
+													{match.bestPrice && (
+														<Badge variant="outline" className="font-semibold">
+															Melhor: {formatCurrency(match.bestPrice)}
+														</Badge>
 													)}
 												</div>
 											</div>
-											<div className="flex items-center gap-2">
-												<Badge className={getMatchTypeColor(match.matchType)}>
-													{getMatchTypeLabel(match.matchType)}
-												</Badge>
-												{match.bestPrice && (
-													<Badge variant="outline" className="font-semibold">
-														Melhor: {formatCurrency(match.bestPrice)}
-													</Badge>
-												)}
-											</div>
-										</div>
 
-										{match.supplierMatches.length > 0 ? (
-											<div className="grid gap-2">
-												{match.supplierMatches.map((supplierMatch) => (
-													<div
-														key={supplierMatch.id}
-														className="flex justify-between items-center p-3 bg-muted rounded"
-													>
-														<div>
-															<p className="font-medium">
-																{supplierMatch.supplier.name}
+											{match.supplierMatches.length > 0 && sel ? (
+												<div className="flex flex-col gap-3 rounded bg-muted/40 p-3 sm:flex-row sm:items-end">
+													<span className="flex items-center gap-2 text-sm">
+														<Checkbox
+															checked={sel.included}
+															onCheckedChange={(c) =>
+																updateSel(match.id, { included: c === true })
+															}
+														/>
+														Incluir
+													</span>
+													<div className="flex-1">
+														<span className="text-xs text-muted-foreground">
+															Fornecedor
+														</span>
+														<Select
+															value={sel.supplierId}
+															onValueChange={(v) =>
+																updateSel(match.id, { supplierId: v })
+															}
+														>
+															<SelectTrigger>
+																<SelectValue />
+															</SelectTrigger>
+															<SelectContent>
+																{match.supplierMatches.map((sm) => (
+																	<SelectItem
+																		key={sm.id}
+																		value={sm.supplier.id}
+																	>
+																		{sm.supplier.name} —{" "}
+																		{formatCurrency(sm.price)}
+																	</SelectItem>
+																))}
+															</SelectContent>
+														</Select>
+														{above > 0 && (
+															<p className="mt-1 text-xs text-destructive">
+																+{formatCurrency(above)} acima do melhor preço
 															</p>
-															<p className="text-sm text-muted-foreground">
-																{supplierMatch.product.name}
-															</p>
-														</div>
-														<div className="text-right">
-															<p
-																className={`font-bold ${supplierMatch.price === match.bestPrice ? "text-success" : "text-foreground"}`}
-															>
-																{formatCurrency(supplierMatch.price)}
-															</p>
-														</div>
+														)}
 													</div>
-												))}
-											</div>
-										) : (
-											<div className="text-center p-4 text-muted-foreground">
-												<XCircle className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-												<p>Produto não encontrado nos fornecedores</p>
-												<Button
-													variant="outline"
-													size="sm"
-													className="mt-2"
-													onClick={() => handleManualMatch(match.clientProduct)}
-												>
-													<Plus className="h-4 w-4 mr-2" />
-													Buscar Manualmente
-												</Button>
-											</div>
-										)}
-									</div>
-								))}
+													<div className="w-24">
+														<span className="text-xs text-muted-foreground">
+															Quantidade
+														</span>
+														<Input
+															type="number"
+															min={1}
+															value={sel.quantity}
+															onChange={(e) =>
+																updateSel(match.id, {
+																	quantity: Math.max(
+																		1,
+																		Number(e.target.value) || 1,
+																	),
+																})
+															}
+														/>
+													</div>
+													<div className="text-right">
+														<span className="text-xs text-muted-foreground">
+															Subtotal
+														</span>
+														<p className="font-bold">
+															{formatCurrency(
+																(chosen?.price ?? 0) * sel.quantity,
+															)}
+														</p>
+													</div>
+												</div>
+											) : (
+												<div className="text-center p-4 text-muted-foreground">
+													<XCircle className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+													<p>Produto não encontrado nos fornecedores</p>
+													<Button
+														variant="outline"
+														size="sm"
+														className="mt-2"
+														onClick={() =>
+															handleManualMatch(match.clientProduct)
+														}
+													>
+														<Plus className="h-4 w-4 mr-2" />
+														Buscar Manualmente
+													</Button>
+												</div>
+											)}
+										</div>
+									);
+								})}
 							</div>
 
 							{filteredMatches.length === 0 && (
@@ -596,6 +691,59 @@ export default function CompareClient({ user: _user }: CompareClientProps) {
 							)}
 						</CardContent>
 					</Card>
+
+					{/* Confirm pre-order */}
+					{groups.length > 0 && (
+						<Card className="border-primary">
+							<CardHeader>
+								<CardTitle className="flex items-center gap-2">
+									<ShoppingCart className="h-5 w-5 text-primary" />
+									Confirmar pré-pedido
+								</CardTitle>
+								<p className="text-sm text-muted-foreground">
+									Suas escolhas geram {groups.length} pré-pedido(s), agrupados
+									por fornecedor.
+								</p>
+							</CardHeader>
+							<CardContent className="space-y-4">
+								<div className="space-y-2">
+									{groups.map((g) => (
+										<div
+											key={g.supplierId}
+											className="flex items-center justify-between rounded border border-border px-3 py-2 text-sm"
+										>
+											<span className="font-medium">{g.name}</span>
+											<span className="text-muted-foreground">
+												{g.itens} item(ns) · {formatCurrency(g.total)}
+											</span>
+										</div>
+									))}
+								</div>
+								<Textarea
+									placeholder="Observações (opcional)"
+									value={notes}
+									onChange={(e) => setNotes(e.target.value)}
+								/>
+								<div className="flex items-center justify-between">
+									<div>
+										<p className="text-sm text-muted-foreground">
+											Total ({totalItens} item(ns))
+										</p>
+										<p className="text-2xl font-bold">
+											{formatCurrency(grandTotal)}
+										</p>
+									</div>
+									<Button
+										size="lg"
+										onClick={confirmPreOrders}
+										disabled={confirming}
+									>
+										{confirming ? "Enviando..." : "Confirmar pré-pedido"}
+									</Button>
+								</div>
+							</CardContent>
+						</Card>
+					)}
 				</>
 			)}
 
@@ -606,18 +754,6 @@ export default function CompareClient({ user: _user }: CompareClientProps) {
 					onOpenChange={(open) => setManualMatchDialog({ open })}
 					clientProduct={manualMatchDialog.clientProduct}
 					onMatch={handleMatchProduct}
-				/>
-			)}
-
-			{/* Create Pre-order Dialog */}
-			{preOrderDialog.supplier && comparison && (
-				<CreatePreOrderDialog
-					open={preOrderDialog.open}
-					onOpenChange={(open) => setPreOrderDialog({ open })}
-					comparisonId={comparison.id}
-					supplier={preOrderDialog.supplier}
-					matches={comparison.matches}
-					onSuccess={handlePreOrderSuccess}
 				/>
 			)}
 		</div>

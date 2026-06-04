@@ -13,6 +13,7 @@ import {
 	User as UserIcon,
 } from "lucide-react";
 import { useState } from "react";
+import AiConfigCard from "@/components/admin/ai-config-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -428,36 +429,39 @@ export function SettingsClient({ user }: SettingsClientProps) {
 
 				{/* Informações Adicionais para Admin */}
 				{user.role === "ADMIN" && (
-					<Card>
-						<CardHeader>
-							<div className="flex items-center gap-2">
-								<Shield className="h-5 w-5" />
-								<CardTitle>Configurações de Administrador</CardTitle>
-							</div>
-							<CardDescription>
-								Configurações específicas para administradores do sistema
-							</CardDescription>
-						</CardHeader>
-						<CardContent>
-							<div className="space-y-4">
-								<div className="p-4 border border-primary bg-primary/10 rounded-lg">
-									<h4 className="font-medium text-primary mb-2">
-										Permissões Administrativas
-									</h4>
-									<ul className="text-sm text-primary space-y-1">
-										<li>• Gerenciar usuários e empresas</li>
-										<li>• Acessar relatórios do sistema</li>
-										<li>• Configurar parâmetros globais</li>
-										<li>• Monitorar atividades do sistema</li>
-									</ul>
+					<>
+						<Card>
+							<CardHeader>
+								<div className="flex items-center gap-2">
+									<Shield className="h-5 w-5" />
+									<CardTitle>Configurações de Administrador</CardTitle>
 								</div>
+								<CardDescription>
+									Configurações específicas para administradores do sistema
+								</CardDescription>
+							</CardHeader>
+							<CardContent>
+								<div className="space-y-4">
+									<div className="p-4 border border-primary bg-primary/10 rounded-lg">
+										<h4 className="font-medium text-primary mb-2">
+											Permissões Administrativas
+										</h4>
+										<ul className="text-sm text-primary space-y-1">
+											<li>• Gerenciar usuários e empresas</li>
+											<li>• Acessar relatórios do sistema</li>
+											<li>• Configurar parâmetros globais</li>
+											<li>• Monitorar atividades do sistema</li>
+										</ul>
+									</div>
 
-								<div className="text-xs text-muted-foreground">
-									ID do usuário: {user.id}
+									<div className="text-xs text-muted-foreground">
+										ID do usuário: {user.id}
+									</div>
 								</div>
-							</div>
-						</CardContent>
-					</Card>
+							</CardContent>
+						</Card>
+						<AiConfigCard />
+					</>
 				)}
 			</div>
 		</div>
