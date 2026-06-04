@@ -83,8 +83,8 @@ export default function SettingsClient({ user }: SettingsClientProps) {
 	return (
 		<div className="space-y-6">
 			<div>
-				<h1 className="text-2xl font-bold text-gray-900">Configurações</h1>
-				<p className="text-gray-600">
+				<h1 className="text-2xl font-bold text-foreground">Configurações</h1>
+				<p className="text-muted-foreground">
 					Gerencie suas configurações pessoais e preferências
 				</p>
 			</div>
@@ -186,7 +186,7 @@ export default function SettingsClient({ user }: SettingsClientProps) {
 										<Label htmlFor="email-notifications">
 											Notificações por Email
 										</Label>
-										<p className="text-sm text-gray-500">
+										<p className="text-sm text-muted-foreground">
 											Receba notificações importantes por email
 										</p>
 									</div>
@@ -207,7 +207,7 @@ export default function SettingsClient({ user }: SettingsClientProps) {
 										<Label htmlFor="push-notifications">
 											Notificações Push
 										</Label>
-										<p className="text-sm text-gray-500">
+										<p className="text-sm text-muted-foreground">
 											Receba notificações em tempo real no navegador
 										</p>
 									</div>
@@ -226,7 +226,7 @@ export default function SettingsClient({ user }: SettingsClientProps) {
 								<div className="flex items-center justify-between">
 									<div>
 										<Label htmlFor="price-alerts">Alertas de Preço</Label>
-										<p className="text-sm text-gray-500">
+										<p className="text-sm text-muted-foreground">
 											Notificações sobre mudanças significativas de preço
 										</p>
 									</div>
@@ -247,7 +247,7 @@ export default function SettingsClient({ user }: SettingsClientProps) {
 										<Label htmlFor="order-updates">
 											Atualizações de Pedidos
 										</Label>
-										<p className="text-sm text-gray-500">
+										<p className="text-sm text-muted-foreground">
 											Status e atualizações dos pedidos recebidos
 										</p>
 									</div>
@@ -266,7 +266,7 @@ export default function SettingsClient({ user }: SettingsClientProps) {
 								<div className="flex items-center justify-between">
 									<div>
 										<Label htmlFor="new-orders">Novos Pedidos</Label>
-										<p className="text-sm text-gray-500">
+										<p className="text-sm text-muted-foreground">
 											Notificações quando novos pré-pedidos forem recebidos
 										</p>
 									</div>
@@ -300,7 +300,7 @@ export default function SettingsClient({ user }: SettingsClientProps) {
 									<Label htmlFor="language">Idioma</Label>
 									<select
 										id="language"
-										className="w-full p-2 border border-gray-300 rounded-md"
+										className="w-full p-2 border border-border rounded-md"
 										value={preferences.language}
 										onChange={(e) =>
 											setPreferences({
@@ -318,7 +318,7 @@ export default function SettingsClient({ user }: SettingsClientProps) {
 									<Label htmlFor="timezone">Fuso Horário</Label>
 									<select
 										id="timezone"
-										className="w-full p-2 border border-gray-300 rounded-md"
+										className="w-full p-2 border border-border rounded-md"
 										value={preferences.timezone}
 										onChange={(e) =>
 											setPreferences({
@@ -342,7 +342,7 @@ export default function SettingsClient({ user }: SettingsClientProps) {
 									<Label htmlFor="currency">Moeda</Label>
 									<select
 										id="currency"
-										className="w-full p-2 border border-gray-300 rounded-md"
+										className="w-full p-2 border border-border rounded-md"
 										value={preferences.currency}
 										onChange={(e) =>
 											setPreferences({
@@ -360,7 +360,7 @@ export default function SettingsClient({ user }: SettingsClientProps) {
 									<Label htmlFor="theme">Tema</Label>
 									<select
 										id="theme"
-										className="w-full p-2 border border-gray-300 rounded-md"
+										className="w-full p-2 border border-border rounded-md"
 										value={preferences.theme}
 										onChange={(e) =>
 											setPreferences({
@@ -429,7 +429,7 @@ export default function SettingsClient({ user }: SettingsClientProps) {
 								<div className="flex items-center justify-between">
 									<div>
 										<p className="font-medium">Último Login</p>
-										<p className="text-sm text-gray-500">
+										<p className="text-sm text-muted-foreground">
 											Hoje às 14:30 - IP: 192.168.1.1
 										</p>
 									</div>
@@ -438,7 +438,7 @@ export default function SettingsClient({ user }: SettingsClientProps) {
 								<div className="flex items-center justify-between">
 									<div>
 										<p className="font-medium">Conta Criada</p>
-										<p className="text-sm text-gray-500">
+										<p className="text-sm text-muted-foreground">
 											15 de Janeiro de 2024
 										</p>
 									</div>

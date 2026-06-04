@@ -157,8 +157,8 @@ export function ReportsClient({ user: _user }: ReportsClientProps) {
 		<div className="space-y-6">
 			<div className="flex items-center justify-between">
 				<div>
-					<h1 className="text-2xl font-semibold text-gray-900">Relatórios</h1>
-					<p className="text-sm text-gray-600 mt-1">
+					<h1 className="text-2xl font-semibold text-foreground">Relatórios</h1>
+					<p className="text-sm text-muted-foreground mt-1">
 						Análises detalhadas e métricas do sistema
 					</p>
 				</div>
@@ -222,20 +222,20 @@ export function ReportsClient({ user: _user }: ReportsClientProps) {
 					<CardContent className="p-6">
 						<div className="flex items-center justify-between">
 							<div>
-								<p className="text-sm font-medium text-gray-600">
+								<p className="text-sm font-medium text-muted-foreground">
 									Total de Usuários
 								</p>
-								<p className="text-2xl font-bold text-gray-900">
+								<p className="text-2xl font-bold text-foreground">
 									{statsData.totalUsers}
 								</p>
 							</div>
-							<div className="p-2 bg-blue-100 rounded-full">
-								<Users className="h-6 w-6 text-blue-600" />
+							<div className="p-2 bg-primary/10 rounded-full">
+								<Users className="h-6 w-6 text-primary" />
 							</div>
 						</div>
 						<div className="flex items-center mt-2">
-							<TrendingUp className="h-4 w-4 text-green-500 mr-1" />
-							<span className="text-sm text-green-500">
+							<TrendingUp className="h-4 w-4 text-success mr-1" />
+							<span className="text-sm text-success">
 								+{statsData.monthlyGrowth}% este mês
 							</span>
 						</div>
@@ -246,20 +246,20 @@ export function ReportsClient({ user: _user }: ReportsClientProps) {
 					<CardContent className="p-6">
 						<div className="flex items-center justify-between">
 							<div>
-								<p className="text-sm font-medium text-gray-600">
+								<p className="text-sm font-medium text-muted-foreground">
 									Empresas Ativas
 								</p>
-								<p className="text-2xl font-bold text-gray-900">
+								<p className="text-2xl font-bold text-foreground">
 									{statsData.totalCompanies}
 								</p>
 							</div>
-							<div className="p-2 bg-green-100 rounded-full">
-								<Building2 className="h-6 w-6 text-green-600" />
+							<div className="p-2 bg-success/10 rounded-full">
+								<Building2 className="h-6 w-6 text-success" />
 							</div>
 						</div>
 						<div className="flex items-center mt-2">
-							<TrendingUp className="h-4 w-4 text-green-500 mr-1" />
-							<span className="text-sm text-green-500">+8.2% este mês</span>
+							<TrendingUp className="h-4 w-4 text-success mr-1" />
+							<span className="text-sm text-success">+8.2% este mês</span>
 						</div>
 					</CardContent>
 				</Card>
@@ -268,20 +268,20 @@ export function ReportsClient({ user: _user }: ReportsClientProps) {
 					<CardContent className="p-6">
 						<div className="flex items-center justify-between">
 							<div>
-								<p className="text-sm font-medium text-gray-600">
+								<p className="text-sm font-medium text-muted-foreground">
 									Produtos Cadastrados
 								</p>
-								<p className="text-2xl font-bold text-gray-900">
+								<p className="text-2xl font-bold text-foreground">
 									{statsData.totalProducts.toLocaleString()}
 								</p>
 							</div>
-							<div className="p-2 bg-purple-100 rounded-full">
-								<Package className="h-6 w-6 text-purple-600" />
+							<div className="p-2 bg-chart-4/10 rounded-full">
+								<Package className="h-6 w-6 text-chart-4" />
 							</div>
 						</div>
 						<div className="flex items-center mt-2">
-							<TrendingUp className="h-4 w-4 text-green-500 mr-1" />
-							<span className="text-sm text-green-500">+15.7% este mês</span>
+							<TrendingUp className="h-4 w-4 text-success mr-1" />
+							<span className="text-sm text-success">+15.7% este mês</span>
 						</div>
 					</CardContent>
 				</Card>
@@ -290,10 +290,10 @@ export function ReportsClient({ user: _user }: ReportsClientProps) {
 					<CardContent className="p-6">
 						<div className="flex items-center justify-between">
 							<div>
-								<p className="text-sm font-medium text-gray-600">
+								<p className="text-sm font-medium text-muted-foreground">
 									Economia Média
 								</p>
-								<p className="text-2xl font-bold text-gray-900">
+								<p className="text-2xl font-bold text-foreground">
 									{statsData.avgSavings}%
 								</p>
 							</div>
@@ -302,8 +302,8 @@ export function ReportsClient({ user: _user }: ReportsClientProps) {
 							</div>
 						</div>
 						<div className="flex items-center mt-2">
-							<TrendingUp className="h-4 w-4 text-green-500 mr-1" />
-							<span className="text-sm text-green-500">+3.2% este mês</span>
+							<TrendingUp className="h-4 w-4 text-success mr-1" />
+							<span className="text-sm text-success">+3.2% este mês</span>
 						</div>
 					</CardContent>
 				</Card>
@@ -397,21 +397,21 @@ export function ReportsClient({ user: _user }: ReportsClientProps) {
 									className="flex items-center justify-between p-3 border rounded-lg"
 								>
 									<div className="flex items-center gap-3">
-										<div className="flex items-center justify-center w-8 h-8 bg-blue-100 text-blue-600 rounded-full text-sm font-semibold">
+										<div className="flex items-center justify-center w-8 h-8 bg-primary/10 text-primary rounded-full text-sm font-semibold">
 											{index + 1}
 										</div>
 										<div>
-											<p className="font-medium text-gray-900">
+											<p className="font-medium text-foreground">
 												{supplier.name}
 											</p>
-											<p className="text-sm text-gray-500">
+											<p className="text-sm text-muted-foreground">
 												{supplier.orders} pedidos
 											</p>
 										</div>
 									</div>
 									<Badge
 										variant="outline"
-										className="text-green-600 border-green-600"
+										className="text-success border-success"
 									>
 										{supplier.avgSavings}% economia
 									</Badge>
@@ -436,19 +436,19 @@ export function ReportsClient({ user: _user }: ReportsClientProps) {
 									key={activity.id}
 									className="flex items-start gap-3 p-3 border rounded-lg"
 								>
-									<div className="p-1.5 bg-blue-100 rounded-full mt-0.5">
-										<Activity className="h-3 w-3 text-blue-600" />
+									<div className="p-1.5 bg-primary/10 rounded-full mt-0.5">
+										<Activity className="h-3 w-3 text-primary" />
 									</div>
 									<div className="flex-1 min-w-0">
-										<p className="font-medium text-gray-900 text-sm">
+										<p className="font-medium text-foreground text-sm">
 											{activity.action}
 										</p>
-										<p className="text-sm text-gray-600">
+										<p className="text-sm text-muted-foreground">
 											{activity.user} - {activity.company}
 										</p>
 										<div className="flex items-center gap-1 mt-1">
-											<Clock className="h-3 w-3 text-gray-400" />
-											<span className="text-xs text-gray-400">
+											<Clock className="h-3 w-3 text-muted-foreground" />
+											<span className="text-xs text-muted-foreground">
 												{activity.time}
 											</span>
 										</div>

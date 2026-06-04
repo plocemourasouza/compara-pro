@@ -126,13 +126,13 @@ export default function ManualMatchDialog({
 				</DialogHeader>
 
 				{/* Client Product Info */}
-				<div className="p-4 bg-blue-50 rounded-lg">
-					<h4 className="font-semibold text-blue-900 mb-2">
+				<div className="p-4 bg-primary/10 rounded-lg">
+					<h4 className="font-semibold text-primary mb-2">
 						Produto Procurado:
 					</h4>
-					<p className="text-blue-800">{clientProduct.name}</p>
+					<p className="text-primary">{clientProduct.name}</p>
 					{(clientProduct.sku || clientProduct.code) && (
-						<div className="flex gap-2 mt-1 text-sm text-blue-700">
+						<div className="flex gap-2 mt-1 text-sm text-primary">
 							{clientProduct.sku && <span>SKU: {clientProduct.sku}</span>}
 							{clientProduct.code && <span>Código: {clientProduct.code}</span>}
 						</div>
@@ -141,7 +141,7 @@ export default function ManualMatchDialog({
 
 				{/* Search Input */}
 				<div className="relative">
-					<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+					<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
 					<Input
 						placeholder="Digite para buscar produtos dos fornecedores..."
 						value={searchTerm}
@@ -155,14 +155,14 @@ export default function ManualMatchDialog({
 					{loading ? (
 						<div className="flex items-center justify-center py-8">
 							<div className="text-center">
-								<Search className="h-8 w-8 animate-spin mx-auto mb-2 text-blue-500" />
-								<p className="text-gray-600">Buscando produtos...</p>
+								<Search className="h-8 w-8 animate-spin mx-auto mb-2 text-primary" />
+								<p className="text-muted-foreground">Buscando produtos...</p>
 							</div>
 						</div>
 					) : products.length === 0 ? (
 						<div className="flex items-center justify-center py-8">
-							<div className="text-center text-gray-500">
-								<Package className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+							<div className="text-center text-muted-foreground">
+								<Package className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
 								<h3 className="text-lg font-semibold mb-2">
 									{searchTerm.trim().length < 2
 										? "Digite pelo menos 2 caracteres"
@@ -183,8 +183,8 @@ export default function ManualMatchDialog({
 									type="button"
 									className={`w-full text-left p-4 border rounded-lg cursor-pointer transition-colors ${
 										selectedProduct === product.id
-											? "border-blue-500 bg-blue-50"
-											: "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+											? "border-primary bg-primary/10"
+											: "border-border hover:border-border hover:bg-muted"
 									}`}
 									onClick={() => setSelectedProduct(product.id)}
 								>
@@ -192,8 +192,8 @@ export default function ManualMatchDialog({
 										<div className="flex-1 mr-4">
 											<h4 className="font-semibold">{product.name}</h4>
 											<div className="flex items-center gap-2 mt-1">
-												<Building2 className="h-4 w-4 text-gray-500" />
-												<span className="text-sm text-gray-600">
+												<Building2 className="h-4 w-4 text-muted-foreground" />
+												<span className="text-sm text-muted-foreground">
 													{product.supplier.name}
 												</span>
 												<Badge variant="outline" className="text-xs">
@@ -202,7 +202,7 @@ export default function ManualMatchDialog({
 														: "Cliente"}
 												</Badge>
 											</div>
-											<div className="flex gap-4 mt-2 text-sm text-gray-600">
+											<div className="flex gap-4 mt-2 text-sm text-muted-foreground">
 												{product.sku && <span>SKU: {product.sku}</span>}
 												{product.code && <span>Código: {product.code}</span>}
 												{product.category && (
@@ -210,18 +210,18 @@ export default function ManualMatchDialog({
 												)}
 											</div>
 											{product.description && (
-												<p className="text-sm text-gray-600 mt-1 line-clamp-2">
+												<p className="text-sm text-muted-foreground mt-1 line-clamp-2">
 													{product.description}
 												</p>
 											)}
 										</div>
 										{product.price && (
 											<div className="text-right">
-												<p className="font-bold text-lg text-green-600">
+												<p className="font-bold text-lg text-success">
 													{formatCurrency(product.price)}
 												</p>
 												{product.unit && (
-													<p className="text-xs text-gray-500">
+													<p className="text-xs text-muted-foreground">
 														por {product.unit}
 													</p>
 												)}

@@ -110,8 +110,10 @@ export function SettingsClient({ user }: SettingsClientProps) {
 	return (
 		<div className="space-y-6">
 			<div>
-				<h1 className="text-2xl font-semibold text-gray-900">Configurações</h1>
-				<p className="text-sm text-gray-600 mt-1">
+				<h1 className="text-2xl font-semibold text-foreground">
+					Configurações
+				</h1>
+				<p className="text-sm text-muted-foreground mt-1">
 					Gerencie suas preferências de conta e configurações do sistema
 				</p>
 			</div>
@@ -159,7 +161,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
 								<div className="space-y-2">
 									<Label>Função</Label>
 									<div className="flex items-center gap-2">
-										<Shield className="h-4 w-4 text-gray-500" />
+										<Shield className="h-4 w-4 text-muted-foreground" />
 										{getRoleBadge(user.role)}
 									</div>
 								</div>
@@ -167,8 +169,8 @@ export function SettingsClient({ user }: SettingsClientProps) {
 								<div className="space-y-2">
 									<Label>Empresa</Label>
 									<div className="flex items-center gap-2">
-										<Building2 className="h-4 w-4 text-gray-500" />
-										<span className="text-sm text-gray-700">
+										<Building2 className="h-4 w-4 text-muted-foreground" />
+										<span className="text-sm text-foreground">
 											{user.company?.name || "Não associado"}
 										</span>
 									</div>
@@ -315,7 +317,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
 						<div className="flex items-center justify-between">
 							<div className="space-y-0.5">
 								<Label>Notificações por Email</Label>
-								<p className="text-sm text-gray-600">
+								<p className="text-sm text-muted-foreground">
 									Receba atualizações importantes por email
 								</p>
 							</div>
@@ -330,7 +332,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
 						<div className="flex items-center justify-between">
 							<div className="space-y-0.5">
 								<Label>Notificações Push</Label>
-								<p className="text-sm text-gray-600">
+								<p className="text-sm text-muted-foreground">
 									Receba notificações em tempo real no navegador
 								</p>
 							</div>
@@ -345,7 +347,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
 						<div className="flex items-center justify-between">
 							<div className="space-y-0.5">
 								<Label>Alertas de Preço</Label>
-								<p className="text-sm text-gray-600">
+								<p className="text-sm text-muted-foreground">
 									Seja notificado sobre mudanças significativas de preços
 								</p>
 							</div>
@@ -438,11 +440,11 @@ export function SettingsClient({ user }: SettingsClientProps) {
 						</CardHeader>
 						<CardContent>
 							<div className="space-y-4">
-								<div className="p-4 border border-blue-200 bg-blue-50 rounded-lg">
-									<h4 className="font-medium text-blue-900 mb-2">
+								<div className="p-4 border border-primary bg-primary/10 rounded-lg">
+									<h4 className="font-medium text-primary mb-2">
 										Permissões Administrativas
 									</h4>
-									<ul className="text-sm text-blue-800 space-y-1">
+									<ul className="text-sm text-primary space-y-1">
 										<li>• Gerenciar usuários e empresas</li>
 										<li>• Acessar relatórios do sistema</li>
 										<li>• Configurar parâmetros globais</li>
@@ -450,7 +452,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
 									</ul>
 								</div>
 
-								<div className="text-xs text-gray-500">
+								<div className="text-xs text-muted-foreground">
 									ID do usuário: {user.id}
 								</div>
 							</div>

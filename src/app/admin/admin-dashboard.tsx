@@ -120,7 +120,7 @@ export default function AdminDashboard({ user: _user }: AdminDashboardProps) {
 		return (
 			<div className="flex items-center justify-center p-8">
 				<div className="text-center">
-					<RefreshCw className="h-8 w-8 animate-spin mx-auto mb-2 text-blue-500" />
+					<RefreshCw className="h-8 w-8 animate-spin mx-auto mb-2 text-primary" />
 					<p>Carregando métricas...</p>
 				</div>
 			</div>
@@ -130,7 +130,7 @@ export default function AdminDashboard({ user: _user }: AdminDashboardProps) {
 	if (!metrics) {
 		return (
 			<div className="text-center p-8">
-				<AlertTriangle className="h-8 w-8 mx-auto mb-2 text-red-500" />
+				<AlertTriangle className="h-8 w-8 mx-auto mb-2 text-destructive" />
 				<p>Erro ao carregar métricas do sistema</p>
 			</div>
 		);
@@ -163,11 +163,11 @@ export default function AdminDashboard({ user: _user }: AdminDashboardProps) {
 						<div className="text-2xl font-bold">{metrics.users.total}</div>
 						<div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
 							<span className="flex items-center gap-1">
-								<CheckCircle className="h-3 w-3 text-green-500" />
+								<CheckCircle className="h-3 w-3 text-success" />
 								{metrics.users.active} ativos
 							</span>
 							<span className="flex items-center gap-1">
-								<XCircle className="h-3 w-3 text-red-500" />
+								<XCircle className="h-3 w-3 text-destructive" />
 								{metrics.users.inactive} inativos
 							</span>
 						</div>
@@ -225,7 +225,7 @@ export default function AdminDashboard({ user: _user }: AdminDashboardProps) {
 						<div className="space-y-4">
 							<div className="flex items-center justify-between">
 								<div className="flex items-center gap-2">
-									<div className="w-3 h-3 bg-purple-500 rounded-full" />
+									<div className="w-3 h-3 bg-chart-4 rounded-full" />
 									<span>Administradores</span>
 								</div>
 								<span className="font-semibold">
@@ -234,7 +234,7 @@ export default function AdminDashboard({ user: _user }: AdminDashboardProps) {
 							</div>
 							<div className="flex items-center justify-between">
 								<div className="flex items-center gap-2">
-									<div className="w-3 h-3 bg-blue-500 rounded-full" />
+									<div className="w-3 h-3 bg-primary rounded-full" />
 									<span>Fornecedores</span>
 								</div>
 								<span className="font-semibold">
@@ -243,7 +243,7 @@ export default function AdminDashboard({ user: _user }: AdminDashboardProps) {
 							</div>
 							<div className="flex items-center justify-between">
 								<div className="flex items-center gap-2">
-									<div className="w-3 h-3 bg-green-500 rounded-full" />
+									<div className="w-3 h-3 bg-success rounded-full" />
 									<span>Clientes</span>
 								</div>
 								<span className="font-semibold">
@@ -272,7 +272,7 @@ export default function AdminDashboard({ user: _user }: AdminDashboardProps) {
 													index === 0
 														? "bg-yellow-500"
 														: index === 1
-															? "bg-gray-400"
+															? "bg-secondary"
 															: "bg-orange-500"
 												}`}
 											/>
@@ -311,38 +311,38 @@ export default function AdminDashboard({ user: _user }: AdminDashboardProps) {
 				</CardHeader>
 				<CardContent>
 					<div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-						<div className="text-center p-4 bg-blue-50 rounded-lg">
-							<Clock className="h-6 w-6 mx-auto mb-2 text-blue-600" />
-							<div className="text-2xl font-bold text-blue-600">
+						<div className="text-center p-4 bg-primary/10 rounded-lg">
+							<Clock className="h-6 w-6 mx-auto mb-2 text-primary" />
+							<div className="text-2xl font-bold text-primary">
 								{metrics.preOrders.pending}
 							</div>
-							<p className="text-sm text-blue-600">Pendentes</p>
+							<p className="text-sm text-primary">Pendentes</p>
 						</div>
 
-						<div className="text-center p-4 bg-green-50 rounded-lg">
-							<CheckCircle className="h-6 w-6 mx-auto mb-2 text-green-600" />
-							<div className="text-2xl font-bold text-green-600">
+						<div className="text-center p-4 bg-success/10 rounded-lg">
+							<CheckCircle className="h-6 w-6 mx-auto mb-2 text-success" />
+							<div className="text-2xl font-bold text-success">
 								{metrics.preOrders.approved}
 							</div>
-							<p className="text-sm text-green-600">Aprovados</p>
+							<p className="text-sm text-success">Aprovados</p>
 						</div>
 
-						<div className="text-center p-4 bg-red-50 rounded-lg">
-							<XCircle className="h-6 w-6 mx-auto mb-2 text-red-600" />
-							<div className="text-2xl font-bold text-red-600">
+						<div className="text-center p-4 bg-destructive/10 rounded-lg">
+							<XCircle className="h-6 w-6 mx-auto mb-2 text-destructive" />
+							<div className="text-2xl font-bold text-destructive">
 								{metrics.preOrders.rejected}
 							</div>
-							<p className="text-sm text-red-600">Rejeitados</p>
+							<p className="text-sm text-destructive">Rejeitados</p>
 						</div>
 
-						<div className="text-center p-4 bg-purple-50 rounded-lg">
-							<DollarSign className="h-6 w-6 mx-auto mb-2 text-purple-600" />
-							<div className="text-lg font-bold text-purple-600">
+						<div className="text-center p-4 bg-chart-4/10 rounded-lg">
+							<DollarSign className="h-6 w-6 mx-auto mb-2 text-chart-4" />
+							<div className="text-lg font-bold text-chart-4">
 								{metrics.preOrders.pending +
 									metrics.preOrders.approved +
 									metrics.preOrders.rejected}
 							</div>
-							<p className="text-sm text-purple-600">Total</p>
+							<p className="text-sm text-chart-4">Total</p>
 						</div>
 					</div>
 				</CardContent>

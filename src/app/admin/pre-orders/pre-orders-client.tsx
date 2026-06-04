@@ -73,9 +73,9 @@ export default function PreOrdersClient({ user }: PreOrdersClientProps) {
 			case "ACTIVE":
 				return <Clock className="h-4 w-4 text-yellow-500" />;
 			case "FINALIZED":
-				return <CheckCircle className="h-4 w-4 text-green-500" />;
+				return <CheckCircle className="h-4 w-4 text-success" />;
 			case "REJECTED":
-				return <XCircle className="h-4 w-4 text-red-500" />;
+				return <XCircle className="h-4 w-4 text-destructive" />;
 			default:
 				return null;
 		}
@@ -99,11 +99,11 @@ export default function PreOrdersClient({ user }: PreOrdersClientProps) {
 			case "ACTIVE":
 				return "bg-yellow-100 text-yellow-800";
 			case "FINALIZED":
-				return "bg-green-100 text-green-800";
+				return "bg-success/10 text-success";
 			case "REJECTED":
-				return "bg-red-100 text-red-800";
+				return "bg-destructive/10 text-destructive";
 			default:
-				return "bg-gray-100 text-gray-800";
+				return "bg-muted text-muted-foreground";
 		}
 	};
 
@@ -128,7 +128,7 @@ export default function PreOrdersClient({ user }: PreOrdersClientProps) {
 		return (
 			<div className="flex items-center justify-center p-8">
 				<div className="text-center">
-					<Clock className="h-8 w-8 animate-spin mx-auto mb-2 text-blue-500" />
+					<Clock className="h-8 w-8 animate-spin mx-auto mb-2 text-primary" />
 					<p>Carregando pré-pedidos...</p>
 				</div>
 			</div>
@@ -149,11 +149,11 @@ export default function PreOrdersClient({ user }: PreOrdersClientProps) {
 			{preOrders.length === 0 ? (
 				<Card>
 					<CardContent className="flex flex-col items-center justify-center py-16">
-						<ShoppingCart className="h-16 w-16 text-gray-300 mb-4" />
-						<h3 className="text-lg font-semibold text-gray-600 mb-2">
+						<ShoppingCart className="h-16 w-16 text-muted-foreground mb-4" />
+						<h3 className="text-lg font-semibold text-muted-foreground mb-2">
 							Nenhum pré-pedido encontrado
 						</h3>
-						<p className="text-gray-500 text-center">
+						<p className="text-muted-foreground text-center">
 							{user.role === "CLIENT"
 								? "Quando você criar pré-pedidos, eles aparecerão aqui."
 								: "Quando recebermos pré-pedidos, eles aparecerão aqui."}
@@ -181,9 +181,9 @@ export default function PreOrdersClient({ user }: PreOrdersClientProps) {
 							<CardContent>
 								<div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
 									<div className="flex items-center gap-2">
-										<Building2 className="h-4 w-4 text-gray-500" />
+										<Building2 className="h-4 w-4 text-muted-foreground" />
 										<div>
-											<p className="text-sm text-gray-600">
+											<p className="text-sm text-muted-foreground">
 												{user.role === "CLIENT" ? "Fornecedor" : "Cliente"}
 											</p>
 											<p className="font-medium">
@@ -195,9 +195,9 @@ export default function PreOrdersClient({ user }: PreOrdersClientProps) {
 									</div>
 
 									<div className="flex items-center gap-2">
-										<Package className="h-4 w-4 text-gray-500" />
+										<Package className="h-4 w-4 text-muted-foreground" />
 										<div>
-											<p className="text-sm text-gray-600">Produtos</p>
+											<p className="text-sm text-muted-foreground">Produtos</p>
 											<p className="font-medium">
 												{preOrder.itemCount} itens ({preOrder.totalQuantity}{" "}
 												unidades)
@@ -207,8 +207,10 @@ export default function PreOrdersClient({ user }: PreOrdersClientProps) {
 
 									{preOrder.totalAmount && (
 										<div>
-											<p className="text-sm text-gray-600">Valor Total</p>
-											<p className="font-bold text-green-600">
+											<p className="text-sm text-muted-foreground">
+												Valor Total
+											</p>
+											<p className="font-bold text-success">
 												{formatCurrency(preOrder.totalAmount)}
 											</p>
 										</div>
@@ -216,7 +218,7 @@ export default function PreOrdersClient({ user }: PreOrdersClientProps) {
 								</div>
 
 								<div className="flex justify-between items-center">
-									<div className="flex items-center gap-1 text-sm text-gray-600">
+									<div className="flex items-center gap-1 text-sm text-muted-foreground">
 										<Calendar className="h-4 w-4" />
 										<span>Criado em {formatDate(preOrder.createdAt)}</span>
 										{preOrder.respondedAt && (
@@ -239,7 +241,7 @@ export default function PreOrdersClient({ user }: PreOrdersClientProps) {
 													<Button
 														variant="outline"
 														size="sm"
-														className="text-red-600 hover:text-red-600"
+														className="text-destructive hover:text-destructive"
 													>
 														<XCircle className="h-4 w-4 mr-2" />
 														Rejeitar

@@ -357,11 +357,11 @@ export default function CompaniesClient({ user: _user }: CompaniesClientProps) {
 	const getTypeBadgeColor = (type: string) => {
 		switch (type) {
 			case "SUPPLIER":
-				return "bg-blue-100 text-blue-800 hover:bg-blue-200";
+				return "bg-primary/10 text-primary hover:bg-primary/20";
 			case "CLIENT":
-				return "bg-green-100 text-green-800 hover:bg-green-200";
+				return "bg-success/10 text-success hover:bg-success/20";
 			default:
-				return "bg-gray-100 text-gray-800 hover:bg-gray-200";
+				return "bg-muted text-muted-foreground hover:bg-secondary";
 		}
 	};
 
@@ -685,7 +685,7 @@ export default function CompaniesClient({ user: _user }: CompaniesClientProps) {
 		return (
 			<div className="flex items-center justify-center min-h-[400px]">
 				<div className="text-center">
-					<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto" />
+					<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
 					<p className="mt-2 text-sm text-muted-foreground">
 						Carregando empresas...
 					</p>

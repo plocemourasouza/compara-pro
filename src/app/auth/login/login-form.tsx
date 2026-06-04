@@ -29,17 +29,17 @@ function LoginFormContent() {
 	}, [state, router]);
 
 	return (
-		<div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+		<div className="min-h-screen flex items-center justify-center bg-background">
 			<div className="w-full max-w-md space-y-6">
 				{/* Logo */}
 				<div className="text-center">
 					<Link href="/" className="inline-flex items-center space-x-2">
-						<BarChart3 className="h-8 w-8 text-blue-600" />
-						<span className="text-2xl font-bold text-gray-900">
+						<BarChart3 className="h-8 w-8 text-primary" />
+						<span className="text-2xl font-bold text-foreground">
 							PriceCompare
 						</span>
 					</Link>
-					<p className="mt-2 text-sm text-gray-600">
+					<p className="mt-2 text-sm text-muted-foreground">
 						Faça login para acessar sua conta
 					</p>
 				</div>
@@ -78,7 +78,7 @@ function LoginFormContent() {
 								/>
 							</div>
 							{state?.error && (
-								<div className="p-3 text-sm text-red-600 bg-red-50 rounded-md border border-red-200">
+								<div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md border border-destructive">
 									{state.error}
 								</div>
 							)}
@@ -88,10 +88,10 @@ function LoginFormContent() {
 						</form>
 
 						<div className="mt-6 text-center text-sm">
-							<span className="text-gray-600">Não tem uma conta? </span>
+							<span className="text-muted-foreground">Não tem uma conta? </span>
 							<Link
 								href="/auth/register"
-								className="font-medium text-blue-600 hover:text-blue-500"
+								className="font-medium text-primary hover:text-primary"
 							>
 								Cadastre-se aqui
 							</Link>
@@ -104,14 +104,16 @@ function LoginFormContent() {
 }
 
 const LoadingFallback = () => (
-	<div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+	<div className="min-h-screen flex items-center justify-center bg-background">
 		<div className="w-full max-w-md space-y-6">
 			<div className="text-center">
 				<div className="inline-flex items-center space-x-2">
-					<BarChart3 className="h-8 w-8 text-blue-600" />
-					<span className="text-2xl font-bold text-gray-900">PriceCompare</span>
+					<BarChart3 className="h-8 w-8 text-primary" />
+					<span className="text-2xl font-bold text-foreground">
+						PriceCompare
+					</span>
 				</div>
-				<p className="mt-2 text-sm text-gray-600">Carregando...</p>
+				<p className="mt-2 text-sm text-muted-foreground">Carregando...</p>
 			</div>
 		</div>
 	</div>

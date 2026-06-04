@@ -140,10 +140,10 @@ export default function DashboardHeader({ user }: DashboardHeaderProps) {
 	};
 
 	return (
-		<header className="bg-white border-b border-gray-200 px-6 py-4">
+		<header className="bg-background border-b border-border px-6 py-4">
 			<div className="flex items-center justify-between">
 				<div className="flex items-center space-x-4">
-					<h1 className="text-xl font-semibold text-gray-900">
+					<h1 className="text-xl font-semibold text-foreground">
 						Price Comparison Platform
 					</h1>
 				</div>
@@ -183,8 +183,8 @@ export default function DashboardHeader({ user }: DashboardHeaderProps) {
 							</div>
 							<div className="max-h-96 overflow-y-auto">
 								{notifications.length === 0 ? (
-									<div className="p-4 text-center text-gray-500">
-										<Bell className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+									<div className="p-4 text-center text-muted-foreground">
+										<Bell className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
 										<p>Nenhuma notificação</p>
 									</div>
 								) : (
@@ -192,8 +192,8 @@ export default function DashboardHeader({ user }: DashboardHeaderProps) {
 										<button
 											key={notification.id}
 											type="button"
-											className={`p-4 border-b hover:bg-gray-50 cursor-pointer w-full text-left ${
-												!notification.read ? "bg-blue-50" : ""
+											className={`p-4 border-b hover:bg-muted cursor-pointer w-full text-left ${
+												!notification.read ? "bg-primary/10" : ""
 											}`}
 											onClick={() => {
 												if (!notification.read) {
@@ -210,15 +210,15 @@ export default function DashboardHeader({ user }: DashboardHeaderProps) {
 													<h5 className="font-medium text-sm">
 														{notification.title}
 													</h5>
-													<p className="text-sm text-gray-600 mt-1">
+													<p className="text-sm text-muted-foreground mt-1">
 														{notification.message}
 													</p>
-													<p className="text-xs text-gray-500 mt-2">
+													<p className="text-xs text-muted-foreground mt-2">
 														{formatTimeAgo(notification.createdAt)}
 													</p>
 												</div>
 												{!notification.read && (
-													<div className="w-2 h-2 bg-blue-500 rounded-full mt-1" />
+													<div className="w-2 h-2 bg-primary rounded-full mt-1" />
 												)}
 											</div>
 										</button>
@@ -243,7 +243,7 @@ export default function DashboardHeader({ user }: DashboardHeaderProps) {
 								</Avatar>
 								<div className="text-left">
 									<div className="text-sm font-medium">{user.name}</div>
-									<div className="text-xs text-gray-500">
+									<div className="text-xs text-muted-foreground">
 										{user.company?.name}
 									</div>
 								</div>
@@ -259,7 +259,10 @@ export default function DashboardHeader({ user }: DashboardHeaderProps) {
 								<span>Configurações</span>
 							</DropdownMenuItem>
 							<DropdownMenuSeparator />
-							<DropdownMenuItem onClick={handleLogout} className="text-red-600">
+							<DropdownMenuItem
+								onClick={handleLogout}
+								className="text-destructive"
+							>
 								<LogOut className="mr-2 h-4 w-4" />
 								<span>Sair</span>
 							</DropdownMenuItem>

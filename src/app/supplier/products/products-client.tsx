@@ -316,9 +316,9 @@ export default function ProductsClient({ user }: ProductsClientProps) {
 					</Button>
 				</div>
 				<div className="space-y-4">
-					<div className="h-4 bg-gray-200 rounded animate-pulse" />
-					<div className="h-4 bg-gray-200 rounded animate-pulse" />
-					<div className="h-4 bg-gray-200 rounded animate-pulse" />
+					<div className="h-4 bg-secondary rounded animate-pulse" />
+					<div className="h-4 bg-secondary rounded animate-pulse" />
+					<div className="h-4 bg-secondary rounded animate-pulse" />
 				</div>
 			</div>
 		);
@@ -473,7 +473,7 @@ export default function ProductsClient({ user }: ProductsClientProps) {
 			<div className="flex gap-4 mb-6">
 				<div className="flex-1">
 					<div className="relative">
-						<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+						<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
 						<Input
 							placeholder="Buscar produtos..."
 							value={searchTerm}
@@ -578,12 +578,12 @@ export default function ProductsClient({ user }: ProductsClientProps) {
 									<TableCell>
 										<div className="space-y-1">
 											{product.sku && (
-												<div className="text-xs text-gray-500">
+												<div className="text-xs text-muted-foreground">
 													SKU: {product.sku}
 												</div>
 											)}
 											{product.code && (
-												<div className="text-xs text-gray-500">
+												<div className="text-xs text-muted-foreground">
 													Código: {product.code}
 												</div>
 											)}
@@ -598,8 +598,8 @@ export default function ProductsClient({ user }: ProductsClientProps) {
 											<Badge
 												className={
 													product.company.type === "SUPPLIER"
-														? "bg-blue-100 text-blue-800"
-														: "bg-green-100 text-green-800"
+														? "bg-primary/10 text-primary"
+														: "bg-success/10 text-success"
 												}
 											>
 												{product.company.name}

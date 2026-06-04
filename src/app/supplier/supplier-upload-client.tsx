@@ -171,12 +171,12 @@ export default function SupplierUploadClient({
 					</div>
 
 					{selectedFile && (
-						<div className="p-4 bg-gray-50 rounded-lg">
+						<div className="p-4 bg-muted rounded-lg">
 							<div className="flex items-center gap-3">
-								<FileText className="h-8 w-8 text-blue-500" />
+								<FileText className="h-8 w-8 text-primary" />
 								<div className="flex-1">
 									<p className="font-medium">{selectedFile.name}</p>
-									<p className="text-sm text-gray-600">
+									<p className="text-sm text-muted-foreground">
 										{formatFileSize(selectedFile.size)}
 									</p>
 								</div>
@@ -198,14 +198,14 @@ export default function SupplierUploadClient({
 						<div
 							className={`p-4 rounded-lg flex items-start gap-3 ${
 								uploadResult.success
-									? "bg-green-50 text-green-800"
-									: "bg-red-50 text-red-800"
+									? "bg-success/10 text-success"
+									: "bg-destructive/10 text-destructive"
 							}`}
 						>
 							{uploadResult.success ? (
-								<CheckCircle className="h-5 w-5 mt-0.5 text-green-600" />
+								<CheckCircle className="h-5 w-5 mt-0.5 text-success" />
 							) : (
-								<AlertCircle className="h-5 w-5 mt-0.5 text-red-600" />
+								<AlertCircle className="h-5 w-5 mt-0.5 text-destructive" />
 							)}
 							<div>
 								<p className="font-medium">
@@ -239,7 +239,7 @@ export default function SupplierUploadClient({
 					<p className="text-sm text-muted-foreground mb-3">
 						Seu arquivo deve conter as seguintes colunas:
 					</p>
-					<div className="bg-gray-50 p-4 rounded-lg">
+					<div className="bg-muted p-4 rounded-lg">
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
 							<div>
 								<strong>SKU ou Código:</strong> Código único do produto

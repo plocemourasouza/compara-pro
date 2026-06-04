@@ -339,12 +339,13 @@ export default function UsersClient({ user: _user }: UsersClientProps) {
 
 	const getRoleBadgeColor = (role: string): string => {
 		const roleColors = {
-			ADMIN: "bg-purple-100 text-purple-800",
-			SUPPLIER: "bg-blue-100 text-blue-800",
-			CLIENT: "bg-green-100 text-green-800",
+			ADMIN: "bg-chart-4/10 text-chart-4",
+			SUPPLIER: "bg-primary/10 text-primary",
+			CLIENT: "bg-success/10 text-success",
 		};
 		return (
-			roleColors[role as keyof typeof roleColors] || "bg-gray-100 text-gray-800"
+			roleColors[role as keyof typeof roleColors] ||
+			"bg-muted text-muted-foreground"
 		);
 	};
 
@@ -371,7 +372,7 @@ export default function UsersClient({ user: _user }: UsersClientProps) {
 		return (
 			<div className="flex items-center justify-center p-8">
 				<div className="text-center">
-					<RefreshCw className="h-8 w-8 animate-spin mx-auto mb-2 text-blue-500" />
+					<RefreshCw className="h-8 w-8 animate-spin mx-auto mb-2 text-primary" />
 					<p>Carregando usuários...</p>
 				</div>
 			</div>
@@ -556,7 +557,7 @@ export default function UsersClient({ user: _user }: UsersClientProps) {
 				{users.length === 0 ? (
 					<Card>
 						<CardContent className="p-8 text-center">
-							<Users className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+							<Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
 							<h3 className="text-lg font-medium mb-2">
 								Nenhum usuário encontrado
 							</h3>
@@ -574,8 +575,8 @@ export default function UsersClient({ user: _user }: UsersClientProps) {
 							<CardContent className="p-6">
 								<div className="flex items-center justify-between">
 									<div className="flex items-center space-x-4">
-										<div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-											<span className="text-blue-600 font-medium">
+										<div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+											<span className="text-primary font-medium">
 												{getUserInitials(userData.name)}
 											</span>
 										</div>
@@ -629,7 +630,7 @@ export default function UsersClient({ user: _user }: UsersClientProps) {
 														<Button
 															variant="outline"
 															size="sm"
-															className="text-red-600"
+															className="text-destructive"
 														>
 															<Trash2 className="h-4 w-4 mr-2" />
 															Desativar
@@ -650,7 +651,7 @@ export default function UsersClient({ user: _user }: UsersClientProps) {
 															<AlertDialogCancel>Cancelar</AlertDialogCancel>
 															<AlertDialogAction
 																onClick={() => handleDeleteUser(userData.id)}
-																className="bg-red-600 hover:bg-red-700"
+																className="bg-destructive hover:bg-destructive/90"
 																disabled={actionLoading}
 															>
 																{actionLoading ? "Desativando..." : "Desativar"}
@@ -665,7 +666,7 @@ export default function UsersClient({ user: _user }: UsersClientProps) {
 													<Button
 														variant="outline"
 														size="sm"
-														className="text-green-600"
+														className="text-success"
 													>
 														<RotateCcw className="h-4 w-4 mr-2" />
 														Reativar
@@ -685,7 +686,7 @@ export default function UsersClient({ user: _user }: UsersClientProps) {
 														<AlertDialogCancel>Cancelar</AlertDialogCancel>
 														<AlertDialogAction
 															onClick={() => handleReactivateUser(userData.id)}
-															className="bg-green-600 hover:bg-green-700"
+															className="bg-success hover:bg-success/90"
 															disabled={actionLoading}
 														>
 															{actionLoading ? "Reativando..." : "Reativar"}

@@ -193,13 +193,13 @@ export default function CompareClient({ user: _user }: CompareClientProps) {
 	const getMatchTypeColor = (type: string) => {
 		switch (type) {
 			case "SKU":
-				return "bg-green-100 text-green-800";
+				return "bg-success/10 text-success";
 			case "CODE":
-				return "bg-blue-100 text-blue-800";
+				return "bg-primary/10 text-primary";
 			case "NAME":
 				return "bg-yellow-100 text-yellow-800";
 			default:
-				return "bg-red-100 text-red-800";
+				return "bg-destructive/10 text-destructive";
 		}
 	};
 
@@ -363,11 +363,13 @@ export default function CompareClient({ user: _user }: CompareClientProps) {
 						<Card>
 							<CardContent className="p-6">
 								<div className="flex items-center">
-									<div className="p-2 bg-blue-100 rounded-lg">
-										<BarChart3 className="h-6 w-6 text-blue-600" />
+									<div className="p-2 bg-primary/10 rounded-lg">
+										<BarChart3 className="h-6 w-6 text-primary" />
 									</div>
 									<div className="ml-4">
-										<p className="text-sm font-medium text-gray-600">Total</p>
+										<p className="text-sm font-medium text-muted-foreground">
+											Total
+										</p>
 										<p className="text-2xl font-bold">
 											{comparison.totalProducts}
 										</p>
@@ -379,14 +381,14 @@ export default function CompareClient({ user: _user }: CompareClientProps) {
 						<Card>
 							<CardContent className="p-6">
 								<div className="flex items-center">
-									<div className="p-2 bg-green-100 rounded-lg">
-										<CheckCircle className="h-6 w-6 text-green-600" />
+									<div className="p-2 bg-success/10 rounded-lg">
+										<CheckCircle className="h-6 w-6 text-success" />
 									</div>
 									<div className="ml-4">
-										<p className="text-sm font-medium text-gray-600">
+										<p className="text-sm font-medium text-muted-foreground">
 											Encontrados
 										</p>
-										<p className="text-2xl font-bold text-green-600">
+										<p className="text-2xl font-bold text-success">
 											{comparison.matchedProducts}
 										</p>
 									</div>
@@ -397,14 +399,14 @@ export default function CompareClient({ user: _user }: CompareClientProps) {
 						<Card>
 							<CardContent className="p-6">
 								<div className="flex items-center">
-									<div className="p-2 bg-red-100 rounded-lg">
-										<XCircle className="h-6 w-6 text-red-600" />
+									<div className="p-2 bg-destructive/10 rounded-lg">
+										<XCircle className="h-6 w-6 text-destructive" />
 									</div>
 									<div className="ml-4">
-										<p className="text-sm font-medium text-gray-600">
+										<p className="text-sm font-medium text-muted-foreground">
 											Não Encontrados
 										</p>
-										<p className="text-2xl font-bold text-red-600">
+										<p className="text-2xl font-bold text-destructive">
 											{comparison.unmatchedProducts}
 										</p>
 									</div>
@@ -419,7 +421,7 @@ export default function CompareClient({ user: _user }: CompareClientProps) {
 										<TrendingUp className="h-6 w-6 text-yellow-600" />
 									</div>
 									<div className="ml-4">
-										<p className="text-sm font-medium text-gray-600">
+										<p className="text-sm font-medium text-muted-foreground">
 											Valor Total
 										</p>
 										<p className="text-2xl font-bold text-yellow-600">
@@ -439,7 +441,7 @@ export default function CompareClient({ user: _user }: CompareClientProps) {
 							<div className="flex gap-4 items-center">
 								<div className="flex-1">
 									<div className="relative">
-										<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+										<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
 										<Input
 											placeholder="Buscar produto..."
 											value={searchTerm}
@@ -518,7 +520,7 @@ export default function CompareClient({ user: _user }: CompareClientProps) {
 												<h4 className="font-semibold">
 													{match.clientProduct.name}
 												</h4>
-												<div className="flex gap-2 text-sm text-gray-600 mt-1">
+												<div className="flex gap-2 text-sm text-muted-foreground mt-1">
 													{match.clientProduct.sku && (
 														<span>SKU: {match.clientProduct.sku}</span>
 													)}
@@ -544,19 +546,19 @@ export default function CompareClient({ user: _user }: CompareClientProps) {
 												{match.supplierMatches.map((supplierMatch) => (
 													<div
 														key={supplierMatch.id}
-														className="flex justify-between items-center p-3 bg-gray-50 rounded"
+														className="flex justify-between items-center p-3 bg-muted rounded"
 													>
 														<div>
 															<p className="font-medium">
 																{supplierMatch.supplier.name}
 															</p>
-															<p className="text-sm text-gray-600">
+															<p className="text-sm text-muted-foreground">
 																{supplierMatch.product.name}
 															</p>
 														</div>
 														<div className="text-right">
 															<p
-																className={`font-bold ${supplierMatch.price === match.bestPrice ? "text-green-600" : "text-gray-900"}`}
+																className={`font-bold ${supplierMatch.price === match.bestPrice ? "text-success" : "text-foreground"}`}
 															>
 																{formatCurrency(supplierMatch.price)}
 															</p>
@@ -565,8 +567,8 @@ export default function CompareClient({ user: _user }: CompareClientProps) {
 												))}
 											</div>
 										) : (
-											<div className="text-center p-4 text-gray-500">
-												<XCircle className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+											<div className="text-center p-4 text-muted-foreground">
+												<XCircle className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
 												<p>Produto não encontrado nos fornecedores</p>
 												<Button
 													variant="outline"
@@ -584,8 +586,8 @@ export default function CompareClient({ user: _user }: CompareClientProps) {
 							</div>
 
 							{filteredMatches.length === 0 && (
-								<div className="text-center py-8 text-gray-500">
-									<Search className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+								<div className="text-center py-8 text-muted-foreground">
+									<Search className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
 									<h3 className="text-lg font-semibold mb-2">
 										Nenhum resultado encontrado
 									</h3>

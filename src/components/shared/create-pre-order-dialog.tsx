@@ -165,12 +165,12 @@ export default function CreatePreOrderDialog({
 
 				<div className="flex-1 overflow-y-auto space-y-4">
 					{/* Supplier Info */}
-					<div className="p-4 bg-blue-50 rounded-lg">
+					<div className="p-4 bg-primary/10 rounded-lg">
 						<div className="flex items-center gap-2 mb-2">
-							<Building2 className="h-5 w-5 text-blue-600" />
-							<h4 className="font-semibold text-blue-900">Fornecedor</h4>
+							<Building2 className="h-5 w-5 text-primary" />
+							<h4 className="font-semibold text-primary">Fornecedor</h4>
 						</div>
-						<p className="text-blue-800">{supplier.name}</p>
+						<p className="text-primary">{supplier.name}</p>
 					</div>
 
 					{/* Product Selection */}
@@ -181,8 +181,8 @@ export default function CreatePreOrderDialog({
 						</h4>
 
 						{supplierMatches.length === 0 ? (
-							<div className="text-center py-8 text-gray-500">
-								<Package className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+							<div className="text-center py-8 text-muted-foreground">
+								<Package className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
 								<p>Nenhum produto disponível para este fornecedor</p>
 							</div>
 						) : (
@@ -211,7 +211,7 @@ export default function CreatePreOrderDialog({
 													<h5 className="font-medium">
 														{match.clientProduct.name}
 													</h5>
-													<div className="flex gap-2 text-sm text-gray-600 mt-1">
+													<div className="flex gap-2 text-sm text-muted-foreground mt-1">
 														{match.clientProduct.sku && (
 															<span>SKU: {match.clientProduct.sku}</span>
 														)}
@@ -219,7 +219,7 @@ export default function CreatePreOrderDialog({
 															<span>Código: {match.clientProduct.code}</span>
 														)}
 													</div>
-													<div className="mt-2 text-sm text-gray-700">
+													<div className="mt-2 text-sm text-muted-foreground">
 														<span className="font-medium">
 															Produto do fornecedor:
 														</span>{" "}
@@ -228,7 +228,7 @@ export default function CreatePreOrderDialog({
 												</div>
 
 												<div className="text-right">
-													<div className="text-lg font-bold text-green-600">
+													<div className="text-lg font-bold text-success">
 														{formatCurrency(supplierMatch.price)}
 													</div>
 													{isSelected && (
@@ -252,7 +252,7 @@ export default function CreatePreOrderDialog({
 																}
 																className="w-20 mt-1"
 															/>
-															<div className="text-sm text-gray-600 mt-1">
+															<div className="text-sm text-muted-foreground mt-1">
 																Total:{" "}
 																{formatCurrency(supplierMatch.price * quantity)}
 															</div>
@@ -269,15 +269,15 @@ export default function CreatePreOrderDialog({
 
 					{/* Order Summary */}
 					{selectedMatches.length > 0 && (
-						<div className="p-4 bg-green-50 rounded-lg">
-							<h4 className="font-semibold text-green-900 mb-2">
+						<div className="p-4 bg-success/10 rounded-lg">
+							<h4 className="font-semibold text-success mb-2">
 								Resumo do Pedido
 							</h4>
 							<div className="flex justify-between items-center">
-								<span className="text-green-800">
+								<span className="text-success">
 									{selectedMatches.length} produtos selecionados
 								</span>
-								<span className="text-xl font-bold text-green-600">
+								<span className="text-xl font-bold text-success">
 									Total: {formatCurrency(calculateTotal())}
 								</span>
 							</div>

@@ -78,16 +78,18 @@ export default function SupplierSidebar({ user }: SupplierSidebarProps) {
 	};
 
 	return (
-		<div className="fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200">
+		<div className="fixed inset-y-0 left-0 z-50 w-64 bg-background border-r border-border">
 			<div className="flex flex-col h-full">
 				{/* Logo */}
-				<div className="flex items-center h-16 px-6 border-b border-gray-200">
-					<BarChart3 className="h-8 w-8 text-green-600" />
+				<div className="flex items-center h-16 px-6 border-b border-border">
+					<BarChart3 className="h-8 w-8 text-success" />
 					<div className="ml-3">
-						<div className="text-lg font-semibold text-gray-900">
+						<div className="text-lg font-semibold text-foreground">
 							PriceCompare
 						</div>
-						<div className="text-xs text-gray-500">Painel Fornecedor</div>
+						<div className="text-xs text-muted-foreground">
+							Painel Fornecedor
+						</div>
 					</div>
 				</div>
 
@@ -96,14 +98,14 @@ export default function SupplierSidebar({ user }: SupplierSidebarProps) {
 					{/* Voltar para Dashboard */}
 					<Link
 						href="/dashboard"
-						className="flex items-center px-3 py-2 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-100 hover:text-gray-900 mb-4"
+						className="flex items-center px-3 py-2 text-sm font-medium text-muted-foreground rounded-md hover:bg-muted hover:text-foreground mb-4"
 					>
 						<Home className="mr-3 h-4 w-4" />
 						Voltar ao Dashboard
 					</Link>
 
-					<div className="border-t border-gray-200 pt-4">
-						<div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+					<div className="border-t border-border pt-4">
+						<div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
 							Fornecedor
 						</div>
 
@@ -115,16 +117,16 @@ export default function SupplierSidebar({ user }: SupplierSidebarProps) {
 									href={item.href}
 									className={cn(
 										isActive
-											? "bg-green-100 text-green-700"
-											: "text-gray-600 hover:bg-gray-100 hover:text-gray-900",
+											? "bg-success/10 text-success"
+											: "text-muted-foreground hover:bg-muted hover:text-foreground",
 										"group flex items-center px-3 py-2 text-sm font-medium rounded-md",
 									)}
 								>
 									<item.icon
 										className={cn(
 											isActive
-												? "text-green-500"
-												: "text-gray-400 group-hover:text-gray-500",
+												? "text-success"
+												: "text-muted-foreground group-hover:text-muted-foreground",
 											"mr-3 h-5 w-5",
 										)}
 										aria-hidden="true"
@@ -142,7 +144,7 @@ export default function SupplierSidebar({ user }: SupplierSidebarProps) {
 				</nav>
 
 				{/* User Info */}
-				<div className="border-t border-gray-200 p-4">
+				<div className="border-t border-border p-4">
 					<div className="flex items-center">
 						<Avatar className="h-8 w-8">
 							<AvatarFallback>
@@ -154,15 +156,15 @@ export default function SupplierSidebar({ user }: SupplierSidebarProps) {
 							</AvatarFallback>
 						</Avatar>
 						<div className="ml-3">
-							<p className="text-sm font-medium text-gray-700">{user.name}</p>
-							<p className="text-xs text-gray-500">{user.email}</p>
+							<p className="text-sm font-medium text-foreground">{user.name}</p>
+							<p className="text-xs text-muted-foreground">{user.email}</p>
 						</div>
 					</div>
 					<Button
 						onClick={handleLogout}
 						variant="ghost"
 						size="sm"
-						className="w-full mt-3 text-gray-600 hover:text-gray-900"
+						className="w-full mt-3 text-muted-foreground hover:text-foreground"
 					>
 						<LogOut className="mr-2 h-4 w-4" />
 						Sair

@@ -95,13 +95,13 @@ function formatBytes(bytes: number): string {
 function getSystemHealthBadge(status: string): string {
 	switch (status) {
 		case "healthy":
-			return "bg-green-100 text-green-800 hover:bg-green-100";
+			return "bg-success/10 text-success hover:bg-success/10";
 		case "warning":
 			return "bg-yellow-100 text-yellow-800 hover:bg-yellow-100";
 		case "critical":
-			return "bg-red-100 text-red-800 hover:bg-red-100";
+			return "bg-destructive/10 text-destructive hover:bg-destructive/10";
 		default:
-			return "bg-gray-100 text-gray-800 hover:bg-gray-100";
+			return "bg-muted text-foreground hover:bg-muted";
 	}
 }
 
@@ -140,14 +140,14 @@ export default async function DashboardPage() {
 										<span>Uso</span>
 										<span>{systemHealth.memory.percentage.toFixed(1)}%</span>
 									</div>
-									<div className="w-full bg-gray-200 rounded-full h-2">
+									<div className="w-full bg-secondary rounded-full h-2">
 										<div
 											className={`h-2 rounded-full ${
 												systemHealth.memory.percentage > 80
-													? "bg-red-500"
+													? "bg-destructive"
 													: systemHealth.memory.percentage > 60
 														? "bg-yellow-500"
-														: "bg-green-500"
+														: "bg-success"
 											}`}
 											style={{
 												width: `${systemHealth.memory.percentage}%`,
@@ -171,14 +171,14 @@ export default async function DashboardPage() {
 										<span>Uso</span>
 										<span>{systemHealth.disk.percentage.toFixed(1)}%</span>
 									</div>
-									<div className="w-full bg-gray-200 rounded-full h-2">
+									<div className="w-full bg-secondary rounded-full h-2">
 										<div
 											className={`h-2 rounded-full ${
 												systemHealth.disk.percentage > 90
-													? "bg-red-500"
+													? "bg-destructive"
 													: systemHealth.disk.percentage > 75
 														? "bg-yellow-500"
-														: "bg-green-500"
+														: "bg-success"
 											}`}
 											style={{
 												width: `${systemHealth.disk.percentage}%`,

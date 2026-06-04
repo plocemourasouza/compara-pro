@@ -234,8 +234,10 @@ export default function ProductsClient({ user: _user }: ProductsClientProps) {
 		<div className="space-y-6">
 			<div className="flex justify-between items-center">
 				<div>
-					<h1 className="text-2xl font-bold text-gray-900">Produtos</h1>
-					<p className="text-gray-600">Gerencie todos os produtos do sistema</p>
+					<h1 className="text-2xl font-bold text-foreground">Produtos</h1>
+					<p className="text-muted-foreground">
+						Gerencie todos os produtos do sistema
+					</p>
 				</div>
 				<Dialog open={createDialog} onOpenChange={setCreateDialog}>
 					<DialogTrigger asChild>
@@ -368,7 +370,7 @@ export default function ProductsClient({ user: _user }: ProductsClientProps) {
 						<div>
 							<Label htmlFor="search">Buscar</Label>
 							<div className="relative">
-								<Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+								<Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
 								<Input
 									id="search"
 									placeholder="Nome, SKU ou código..."
@@ -444,8 +446,8 @@ export default function ProductsClient({ user: _user }: ProductsClientProps) {
 				{filteredProducts.length === 0 ? (
 					<Card>
 						<CardContent className="flex flex-col items-center justify-center h-32">
-							<Package className="h-8 w-8 text-gray-400 mb-2" />
-							<p className="text-gray-500">Nenhum produto encontrado</p>
+							<Package className="h-8 w-8 text-muted-foreground mb-2" />
+							<p className="text-muted-foreground">Nenhum produto encontrado</p>
 						</CardContent>
 					</Card>
 				) : (
@@ -460,7 +462,7 @@ export default function ProductsClient({ user: _user }: ProductsClientProps) {
 												<Badge variant="secondary">{product.category}</Badge>
 											)}
 										</div>
-										<div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
+										<div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-muted-foreground">
 											<div>
 												<span className="font-medium">SKU:</span>{" "}
 												{product.sku || "N/A"}
@@ -479,11 +481,11 @@ export default function ProductsClient({ user: _user }: ProductsClientProps) {
 											</div>
 										</div>
 										{product.description && (
-											<p className="text-sm text-gray-500 mt-2">
+											<p className="text-sm text-muted-foreground mt-2">
 												{product.description}
 											</p>
 										)}
-										<div className="text-xs text-gray-400 mt-2">
+										<div className="text-xs text-muted-foreground mt-2">
 											Criado em: {formatDate(product.createdAt)}
 										</div>
 									</div>

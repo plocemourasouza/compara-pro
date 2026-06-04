@@ -49,17 +49,17 @@ export default function RegisterPage() {
 	};
 
 	return (
-		<div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-indigo-50 py-12">
+		<div className="min-h-screen flex items-center justify-center bg-background py-12">
 			<div className="w-full max-w-md space-y-6">
 				{/* Logo */}
 				<div className="text-center">
 					<Link href="/" className="inline-flex items-center space-x-2">
-						<BarChart3 className="h-8 w-8 text-blue-600" />
-						<span className="text-2xl font-bold text-gray-900">
+						<BarChart3 className="h-8 w-8 text-primary" />
+						<span className="text-2xl font-bold text-foreground">
 							PriceCompare
 						</span>
 					</Link>
-					<p className="mt-2 text-sm text-gray-600">
+					<p className="mt-2 text-sm text-muted-foreground">
 						Crie sua conta e economize em suas compras
 					</p>
 				</div>
@@ -162,7 +162,7 @@ export default function RegisterPage() {
 							<input type="hidden" name="role" value="CLIENT" />
 
 							{(state?.error || clientError) && (
-								<div className="p-3 text-sm text-red-600 bg-red-50 rounded-md border border-red-200">
+								<div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md border border-destructive">
 									{state?.error || clientError}
 								</div>
 							)}
@@ -173,31 +173,31 @@ export default function RegisterPage() {
 						</form>
 
 						<div className="mt-6 text-center text-sm">
-							<span className="text-gray-600">Já tem uma conta? </span>
+							<span className="text-muted-foreground">Já tem uma conta? </span>
 							<Link
 								href="/auth/login"
-								className="font-medium text-blue-600 hover:text-blue-500"
+								className="font-medium text-primary hover:text-primary"
 							>
 								Faça login aqui
 							</Link>
 						</div>
 
 						{/* Benefícios */}
-						<div className="mt-6 pt-6 border-t border-gray-100">
-							<p className="text-xs text-gray-500 text-center mb-3">
+						<div className="mt-6 pt-6 border-t border-border">
+							<p className="text-xs text-muted-foreground text-center mb-3">
 								O que você ganha ao se cadastrar:
 							</p>
-							<div className="space-y-2 text-xs text-gray-600">
+							<div className="space-y-2 text-xs text-muted-foreground">
 								<div className="flex items-center gap-2">
-									<div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+									<div className="w-1.5 h-1.5 bg-success rounded-full"></div>
 									<span>Comparação automática de preços</span>
 								</div>
 								<div className="flex items-center gap-2">
-									<div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+									<div className="w-1.5 h-1.5 bg-success rounded-full"></div>
 									<span>Acesso a fornecedores verificados</span>
 								</div>
 								<div className="flex items-center gap-2">
-									<div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+									<div className="w-1.5 h-1.5 bg-success rounded-full"></div>
 									<span>Economia média de 30% nos custos</span>
 								</div>
 							</div>

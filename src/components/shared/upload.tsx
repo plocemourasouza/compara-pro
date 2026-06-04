@@ -40,17 +40,17 @@ export default function Upload({ onUpload, label }: UploadProps) {
 		// biome-ignore lint/a11y/noStaticElementInteractions: drag-and-drop upload zone; file input provides keyboard access
 		<div
 			className={`border-2 border-dashed rounded-lg p-8 text-center ${
-				dragging ? "border-blue-500 bg-blue-50" : "border-gray-300"
+				dragging ? "border-primary bg-primary/10" : "border-border"
 			}`}
 			onDragOver={handleDragOver}
 			onDragLeave={handleDragLeave}
 			onDrop={handleDrop}
 		>
-			<UploadIcon className="mx-auto h-12 w-12 text-gray-400" />
-			<p className="mt-2 text-sm text-gray-600">
+			<UploadIcon className="mx-auto h-12 w-12 text-muted-foreground" />
+			<p className="mt-2 text-sm text-muted-foreground">
 				Arraste e solte um arquivo Excel aqui, ou clique para selecionar
 			</p>
-			<p className="text-xs text-gray-500">Tamanho máximo: 10MB</p>
+			<p className="text-xs text-muted-foreground">Tamanho máximo: 10MB</p>
 			<input
 				type="file"
 				accept=".xlsx,.xls"

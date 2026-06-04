@@ -111,9 +111,9 @@ export default function UploadClient({ user }: UploadClientProps) {
 	const getPriceChangeIcon = (indicator?: string) => {
 		switch (indicator) {
 			case "UP":
-				return <TrendingUp className="h-4 w-4 text-red-500" />;
+				return <TrendingUp className="h-4 w-4 text-destructive" />;
 			case "DOWN":
-				return <TrendingDown className="h-4 w-4 text-green-500" />;
+				return <TrendingDown className="h-4 w-4 text-success" />;
 			case "SAME":
 				return <Minus className="h-4 w-4 text-yellow-500" />;
 			default:
@@ -223,30 +223,30 @@ export default function UploadClient({ user }: UploadClientProps) {
 						{...getRootProps()}
 						className={`
               border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors
-              ${isDragActive ? "border-blue-500 bg-blue-50" : "border-gray-300"}
-              ${uploading ? "opacity-50 cursor-not-allowed" : "hover:border-blue-400 hover:bg-blue-50"}
+              ${isDragActive ? "border-primary bg-primary/10" : "border-border"}
+              ${uploading ? "opacity-50 cursor-not-allowed" : "hover:border-primary hover:bg-primary/10"}
             `}
 					>
 						<input {...getInputProps()} />
-						<FileSpreadsheet className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+						<FileSpreadsheet className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
 
 						{isDragActive ? (
-							<p className="text-blue-600">Solte o arquivo aqui...</p>
+							<p className="text-primary">Solte o arquivo aqui...</p>
 						) : (
 							<div>
-								<p className="text-gray-600 mb-2">
+								<p className="text-muted-foreground mb-2">
 									Arraste um arquivo aqui ou clique para selecionar
 								</p>
-								<p className="text-sm text-gray-500">
+								<p className="text-sm text-muted-foreground">
 									Formatos suportados: .xlsx, .xls, .csv (máx. 10MB)
 								</p>
 							</div>
 						)}
 
 						{acceptedFiles.length > 0 && (
-							<div className="mt-4 p-2 bg-gray-100 rounded">
+							<div className="mt-4 p-2 bg-muted rounded">
 								<p className="text-sm font-medium">{acceptedFiles[0]?.name}</p>
-								<p className="text-xs text-gray-500">
+								<p className="text-xs text-muted-foreground">
 									{((acceptedFiles[0]?.size ?? 0) / 1024 / 1024).toFixed(2)} MB
 								</p>
 							</div>
@@ -278,38 +278,38 @@ export default function UploadClient({ user }: UploadClientProps) {
 				<Card>
 					<CardHeader>
 						<CardTitle className="flex items-center gap-2">
-							<CheckCircle className="h-5 w-5 text-green-500" />
+							<CheckCircle className="h-5 w-5 text-success" />
 							Upload Concluído
 						</CardTitle>
 					</CardHeader>
 					<CardContent className="space-y-4">
 						<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-							<div className="text-center p-4 bg-green-50 rounded-lg">
-								<div className="text-2xl font-bold text-green-600">
+							<div className="text-center p-4 bg-success/10 rounded-lg">
+								<div className="text-2xl font-bold text-success">
 									{uploadResult.processedRows}
 								</div>
-								<div className="text-sm text-green-700">Processados</div>
+								<div className="text-sm text-success">Processados</div>
 							</div>
 
-							<div className="text-center p-4 bg-blue-50 rounded-lg">
-								<div className="text-2xl font-bold text-blue-600">
+							<div className="text-center p-4 bg-primary/10 rounded-lg">
+								<div className="text-2xl font-bold text-primary">
 									{uploadResult.totalRows}
 								</div>
-								<div className="text-sm text-blue-700">Total</div>
+								<div className="text-sm text-primary">Total</div>
 							</div>
 
 							{uploadResult.errorRows > 0 && (
-								<div className="text-center p-4 bg-red-50 rounded-lg">
-									<div className="text-2xl font-bold text-red-600">
+								<div className="text-center p-4 bg-destructive/10 rounded-lg">
+									<div className="text-2xl font-bold text-destructive">
 										{uploadResult.errorRows}
 									</div>
-									<div className="text-sm text-red-700">Erros</div>
+									<div className="text-sm text-destructive">Erros</div>
 								</div>
 							)}
 						</div>
 
 						{uploadResult.priceChangeIndicator && user.role === "SUPPLIER" && (
-							<div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+							<div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
 								{getPriceChangeIcon(uploadResult.priceChangeIndicator)}
 								<span className="text-sm font-medium">
 									{getPriceChangeLabel(uploadResult.priceChangeIndicator)}
@@ -319,20 +319,20 @@ export default function UploadClient({ user }: UploadClientProps) {
 
 						{uploadResult.errors && uploadResult.errors.length > 0 && (
 							<div>
-								<h4 className="font-medium mb-2 text-red-600">
+								<h4 className="font-medium mb-2 text-destructive">
 									Erros Encontrados:
 								</h4>
 								<div className="max-h-40 overflow-y-auto space-y-1">
 									{uploadResult.errors.slice(0, 10).map((error) => (
 										<div
 											key={error.row}
-											className="text-sm text-red-600 p-2 bg-red-50 rounded"
+											className="text-sm text-destructive p-2 bg-destructive/10 rounded"
 										>
 											Linha {error.row}: {error.message}
 										</div>
 									))}
 									{uploadResult.errors.length > 10 && (
-										<div className="text-sm text-gray-500 p-2">
+										<div className="text-sm text-muted-foreground p-2">
 											... e mais {uploadResult.errors.length - 10} erros
 										</div>
 									)}

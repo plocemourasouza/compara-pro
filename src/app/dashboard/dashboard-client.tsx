@@ -34,9 +34,9 @@ export default function DashboardClient({ user }: { user: User }) {
 			case "ACTIVE":
 				return "bg-yellow-100 text-yellow-800";
 			case "FINALIZED":
-				return "bg-green-100 text-green-800";
+				return "bg-success/10 text-success";
 			default:
-				return "bg-gray-100 text-gray-800";
+				return "bg-muted text-foreground";
 		}
 	};
 

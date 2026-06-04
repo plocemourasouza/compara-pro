@@ -220,9 +220,9 @@ export default function HistoryClient({ user }: HistoryClientProps) {
 	const getStatusIcon = (status: string) => {
 		switch (status) {
 			case "COMPLETED":
-				return <CheckCircle className="h-4 w-4 text-green-500" />;
+				return <CheckCircle className="h-4 w-4 text-success" />;
 			case "FAILED":
-				return <XCircle className="h-4 w-4 text-red-500" />;
+				return <XCircle className="h-4 w-4 text-destructive" />;
 			case "PROCESSING":
 				return <Clock className="h-4 w-4 text-yellow-500" />;
 			default:
@@ -246,9 +246,9 @@ export default function HistoryClient({ user }: HistoryClientProps) {
 	const getPriceChangeIcon = (indicator?: string) => {
 		switch (indicator) {
 			case "UP":
-				return <TrendingUp className="h-4 w-4 text-red-500" />;
+				return <TrendingUp className="h-4 w-4 text-destructive" />;
 			case "DOWN":
-				return <TrendingDown className="h-4 w-4 text-green-500" />;
+				return <TrendingDown className="h-4 w-4 text-success" />;
 			case "SAME":
 				return <Minus className="h-4 w-4 text-yellow-500" />;
 			default:
@@ -290,7 +290,7 @@ export default function HistoryClient({ user }: HistoryClientProps) {
 		return (
 			<div className="flex items-center justify-center p-8">
 				<div className="text-center">
-					<Clock className="h-8 w-8 animate-spin mx-auto mb-2 text-blue-500" />
+					<Clock className="h-8 w-8 animate-spin mx-auto mb-2 text-primary" />
 					<p>Carregando histórico...</p>
 				</div>
 			</div>
@@ -300,7 +300,7 @@ export default function HistoryClient({ user }: HistoryClientProps) {
 	if (error) {
 		return (
 			<div className="flex items-center justify-center p-8">
-				<div className="text-center text-red-600">
+				<div className="text-center text-destructive">
 					<XCircle className="h-8 w-8 mx-auto mb-2" />
 					<p>{error}</p>
 					<Button onClick={fetchHistory} className="mt-4">
@@ -410,11 +410,11 @@ export default function HistoryClient({ user }: HistoryClientProps) {
 			{uploads.length === 0 ? (
 				<Card>
 					<CardContent className="flex flex-col items-center justify-center py-16">
-						<FileSpreadsheet className="h-16 w-16 text-gray-300 mb-4" />
-						<h3 className="text-lg font-semibold text-gray-600 mb-2">
+						<FileSpreadsheet className="h-16 w-16 text-muted-foreground mb-4" />
+						<h3 className="text-lg font-semibold text-muted-foreground mb-2">
 							Nenhum upload realizado
 						</h3>
-						<p className="text-gray-500 text-center">
+						<p className="text-muted-foreground text-center">
 							Quando você fizer upload de arquivos, eles aparecerão aqui.
 						</p>
 					</CardContent>
@@ -441,7 +441,7 @@ export default function HistoryClient({ user }: HistoryClientProps) {
 					{filteredUploads.map((upload) => (
 						<Card
 							key={upload.id}
-							className={upload.isActive ? "ring-2 ring-blue-500" : ""}
+							className={upload.isActive ? "ring-2 ring-primary" : ""}
 						>
 							<CardHeader className="pb-3">
 								<div className="flex items-center justify-between">
@@ -451,7 +451,7 @@ export default function HistoryClient({ user }: HistoryClientProps) {
 										{upload.isActive && (
 											<Badge
 												variant="secondary"
-												className="bg-blue-100 text-blue-700"
+												className="bg-primary/10 text-primary"
 											>
 												Ativo
 											</Badge>
@@ -489,14 +489,14 @@ export default function HistoryClient({ user }: HistoryClientProps) {
 									</div>
 									<div>
 										<p className="text-sm text-muted-foreground">Processadas</p>
-										<p className="font-medium text-green-600">
+										<p className="font-medium text-success">
 											{upload.processedRows}
 										</p>
 									</div>
 									{upload.errorRows > 0 && (
 										<div>
 											<p className="text-sm text-muted-foreground">Erros</p>
-											<p className="font-medium text-red-600">
+											<p className="font-medium text-destructive">
 												{upload.errorRows}
 											</p>
 										</div>
@@ -538,7 +538,7 @@ export default function HistoryClient({ user }: HistoryClientProps) {
 												</DialogHeader>
 												{detailLoading ? (
 													<div className="flex items-center justify-center p-8">
-														<Clock className="h-8 w-8 animate-spin text-blue-500" />
+														<Clock className="h-8 w-8 animate-spin text-primary" />
 													</div>
 												) : selectedUpload ? (
 													<div className="space-y-6">
@@ -612,7 +612,7 @@ export default function HistoryClient({ user }: HistoryClientProps) {
 																	</h4>
 																	<div className="border rounded-lg overflow-hidden">
 																		<table className="w-full text-sm">
-																			<thead className="bg-gray-50">
+																			<thead className="bg-muted">
 																				<tr>
 																					<th className="px-3 py-2 text-left">
 																						SKU
@@ -637,7 +637,7 @@ export default function HistoryClient({ user }: HistoryClientProps) {
 																							className={
 																								index % 2 === 0
 																									? "bg-white"
-																									: "bg-gray-50"
+																									: "bg-muted"
 																							}
 																						>
 																							<td className="px-3 py-2">
@@ -680,7 +680,7 @@ export default function HistoryClient({ user }: HistoryClientProps) {
 																	</h4>
 																	<div className="border rounded-lg overflow-hidden max-h-40 overflow-y-auto">
 																		<table className="w-full text-sm">
-																			<thead className="bg-red-50">
+																			<thead className="bg-destructive/10">
 																				<tr>
 																					<th className="px-3 py-2 text-left">
 																						Linha
@@ -698,7 +698,7 @@ export default function HistoryClient({ user }: HistoryClientProps) {
 																							className={
 																								index % 2 === 0
 																									? "bg-white"
-																									: "bg-red-50"
+																									: "bg-destructive/10"
 																							}
 																						>
 																							<td className="px-3 py-2">

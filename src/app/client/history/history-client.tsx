@@ -187,10 +187,10 @@ export default function HistoryClient({ user: _user }: HistoryClientProps) {
 	return (
 		<div className="space-y-6">
 			<div>
-				<h1 className="text-2xl font-bold text-gray-900">
+				<h1 className="text-2xl font-bold text-foreground">
 					Histórico de Uploads
 				</h1>
-				<p className="text-gray-600">
+				<p className="text-muted-foreground">
 					Visualize o histórico de todos os uploads realizados
 				</p>
 			</div>
@@ -205,7 +205,7 @@ export default function HistoryClient({ user: _user }: HistoryClientProps) {
 						<div>
 							<Label htmlFor="search">Buscar</Label>
 							<div className="relative">
-								<Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+								<Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
 								<Input
 									id="search"
 									placeholder="Nome do arquivo..."
@@ -268,8 +268,8 @@ export default function HistoryClient({ user: _user }: HistoryClientProps) {
 				{filteredUploads.length === 0 ? (
 					<Card>
 						<CardContent className="flex flex-col items-center justify-center h-32">
-							<FileText className="h-8 w-8 text-gray-400 mb-2" />
-							<p className="text-gray-500">Nenhum upload encontrado</p>
+							<FileText className="h-8 w-8 text-muted-foreground mb-2" />
+							<p className="text-muted-foreground">Nenhum upload encontrado</p>
 						</CardContent>
 					</Card>
 				) : (
@@ -304,7 +304,7 @@ export default function HistoryClient({ user: _user }: HistoryClientProps) {
 												</Badge>
 											)}
 										</div>
-										<div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
+										<div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-muted-foreground">
 											<div>
 												<span className="font-medium">Tipo:</span>{" "}
 												{upload.uploadType === "SUPPLIER_PRODUCTS"
@@ -320,7 +320,7 @@ export default function HistoryClient({ user: _user }: HistoryClientProps) {
 												{upload.totalRows} total, {upload.processedRows}{" "}
 												processadas
 												{upload.errorRows > 0 && (
-													<span className="text-red-500">
+													<span className="text-destructive">
 														, {upload.errorRows} com erro
 													</span>
 												)}
@@ -331,7 +331,7 @@ export default function HistoryClient({ user: _user }: HistoryClientProps) {
 											</div>
 										</div>
 										{upload.processedAt && (
-											<div className="text-xs text-gray-400 mt-2">
+											<div className="text-xs text-muted-foreground mt-2">
 												Processado em: {formatDate(upload.processedAt)}
 											</div>
 										)}
@@ -375,13 +375,13 @@ export default function HistoryClient({ user: _user }: HistoryClientProps) {
 							<div className="grid grid-cols-2 gap-4">
 								<div>
 									<Label className="font-medium">Arquivo</Label>
-									<p className="text-sm text-gray-600">
+									<p className="text-sm text-muted-foreground">
 										{selectedUpload.fileName}
 									</p>
 								</div>
 								<div>
 									<Label className="font-medium">Status</Label>
-									<p className="text-sm text-gray-600">
+									<p className="text-sm text-muted-foreground">
 										{getStatusLabel(selectedUpload.status)}
 									</p>
 								</div>
@@ -389,7 +389,7 @@ export default function HistoryClient({ user: _user }: HistoryClientProps) {
 							<div className="grid grid-cols-2 gap-4">
 								<div>
 									<Label className="font-medium">Tipo</Label>
-									<p className="text-sm text-gray-600">
+									<p className="text-sm text-muted-foreground">
 										{selectedUpload.uploadType === "SUPPLIER_PRODUCTS"
 											? "Produtos do Fornecedor"
 											: "Requisitos do Cliente"}
@@ -397,7 +397,7 @@ export default function HistoryClient({ user: _user }: HistoryClientProps) {
 								</div>
 								<div>
 									<Label className="font-medium">Tamanho</Label>
-									<p className="text-sm text-gray-600">
+									<p className="text-sm text-muted-foreground">
 										{formatFileSize(selectedUpload.fileSize)}
 									</p>
 								</div>
@@ -405,19 +405,19 @@ export default function HistoryClient({ user: _user }: HistoryClientProps) {
 							<div className="grid grid-cols-3 gap-4">
 								<div>
 									<Label className="font-medium">Total de Linhas</Label>
-									<p className="text-sm text-gray-600">
+									<p className="text-sm text-muted-foreground">
 										{selectedUpload.totalRows}
 									</p>
 								</div>
 								<div>
 									<Label className="font-medium">Processadas</Label>
-									<p className="text-sm text-gray-600">
+									<p className="text-sm text-muted-foreground">
 										{selectedUpload.processedRows}
 									</p>
 								</div>
 								<div>
 									<Label className="font-medium">Com Erro</Label>
-									<p className="text-sm text-gray-600">
+									<p className="text-sm text-muted-foreground">
 										{selectedUpload.errorRows}
 									</p>
 								</div>
@@ -425,14 +425,14 @@ export default function HistoryClient({ user: _user }: HistoryClientProps) {
 							<div className="grid grid-cols-2 gap-4">
 								<div>
 									<Label className="font-medium">Data de Upload</Label>
-									<p className="text-sm text-gray-600">
+									<p className="text-sm text-muted-foreground">
 										{formatDate(selectedUpload.uploadedAt)}
 									</p>
 								</div>
 								{selectedUpload.processedAt && (
 									<div>
 										<Label className="font-medium">Data de Processamento</Label>
-										<p className="text-sm text-gray-600">
+										<p className="text-sm text-muted-foreground">
 											{formatDate(selectedUpload.processedAt)}
 										</p>
 									</div>
@@ -441,7 +441,7 @@ export default function HistoryClient({ user: _user }: HistoryClientProps) {
 							{selectedUpload.priceChangeIndicator && (
 								<div>
 									<Label className="font-medium">Indicador de Preço</Label>
-									<p className="text-sm text-gray-600">
+									<p className="text-sm text-muted-foreground">
 										{getPriceChangeIcon(selectedUpload.priceChangeIndicator)}{" "}
 										{getPriceChangeLabel(selectedUpload.priceChangeIndicator)}
 									</p>

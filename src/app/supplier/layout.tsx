@@ -20,7 +20,7 @@ export default async function SupplierLayout({
 	}
 
 	return (
-		<div className="min-h-screen bg-gray-50">
+		<div className="min-h-screen bg-muted">
 			<div className="flex">
 				<SupplierSidebar user={user} />
 				<main className="flex-1 ml-64">
