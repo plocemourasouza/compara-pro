@@ -1,0 +1,305 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String         @id @default(cuid())
+  email         String         @unique
+  password      String
+  name          String
+  role          Role // ADMIN, SUPPLIER, CLIENT
+  companyId     String?
+  company       Company?       @relation(fields: [companyId], references: [id])
+  notifications Notification[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  deletedAt     DateTime?
+
+  @@map("users")
+}
+
+model Company {
+  id        String      @id @default(cuid())
+  name      String // Nome fantasia
+  legalName String? // Razão social
+  cnpj      String?     @unique
+  type      CompanyType // SUPPLIER, CLIENT
+  taxRegime TaxRegime? // Enquadramento tributário
+  email     String?
+  phone     String?
+
+  // Dados do responsável
+  responsibleName  String?
+  responsibleEmail String?
+  responsiblePhone String?
+
+  // Dados de localização
+  addressType      String? // Tipo de logradouro (Rua, Av, etc)
+  street           String? // Logradouro
+  number           String? // Número
+  neighborhood     String? // Bairro
+  city             String? // Cidade
+  state            String? // UF
+  zipCode          String? // CEP
+  addressReference String? // Referência
+
+  users             User[]
+  products          Product[]
+  uploadHistory     UploadHistory[]
+  clientComparisons Comparison[]    @relation("ClientComparison")
+  supplierMatches   SupplierMatch[] @relation("SupplierMatches")
+  clientPreOrders   PreOrder[]      @relation("ClientPreOrders")
+  supplierPreOrders PreOrder[]      @relation("SupplierPreOrders")
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  deletedAt         DateTime?
+
+  @@map("companies")
+}
+
+model Product {
+  id           String         @id @default(cuid())
+  code         String?
+  sku          String?
+  name         String
+  price        Float?
+  description  String?
+  category     String?
+  unit         String?
+  companyId    String
+  company      Company        @relation(fields: [companyId], references: [id])
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  deletedAt    DateTime?
+  PreOrderItem PreOrderItem[]
+
+  @@unique([companyId, sku]) // Evita duplicatas por empresa
+  @@map("products")
+}
+
+model PreOrder {
+  id           String         @id @default(cuid())
+  comparisonId String?
+  comparison   Comparison?    @relation(fields: [comparisonId], references: [id])
+  clientId     String
+  client       Company        @relation("ClientPreOrders", fields: [clientId], references: [id])
+  supplierId   String
+  supplier     Company        @relation("SupplierPreOrders", fields: [supplierId], references: [id])
+  status       PreOrderStatus // ACTIVE, FINALIZED, REJECTED
+  totalAmount  Float?
+  notes        String?
+  items        PreOrderItem[]
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  respondedAt  DateTime?
+  deletedAt    DateTime?
+
+  @@map("pre_orders")
+}
+
+model PreOrderItem {
+  id         String           @id @default(cuid())
+  preOrderId String
+  preOrder   PreOrder         @relation(fields: [preOrderId], references: [id])
+  matchId    String?
+  match      ComparisonMatch? @relation(fields: [matchId], references: [id])
+  productId  String
+  product    Product          @relation(fields: [productId], references: [id])
+  quantity   Int              @default(1)
+  price      Float
+  totalPrice Float
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+  deletedAt  DateTime?
+
+  @@map("pre_order_items")
+}
+
+enum Role {
+  ADMIN
+  SUPPLIER
+  CLIENT
+}
+
+enum CompanyType {
+  SUPPLIER
+  CLIENT
+}
+
+enum TaxRegime {
+  MEI
+  SIMPLES_NACIONAL
+  LUCRO_PRESUMIDO
+  LUCRO_REAL
+}
+
+enum PreOrderStatus {
+  ACTIVE
+  FINALIZED
+  REJECTED
+}
+
+// New models for enhanced functionality
+
+model UploadHistory {
+  id                   String            @id @default(cuid())
+  companyId            String
+  company              Company           @relation(fields: [companyId], references: [id])
+  fileName             String
+  fileSize             Int
+  totalRows            Int
+  processedRows        Int
+  errorRows            Int
+  uploadType           UploadType // SUPPLIER_PRODUCTS, CLIENT_REQUIREMENTS
+  status               UploadStatus // PROCESSING, COMPLETED, FAILED
+  isActive             Boolean           @default(false) // Only one active per company for suppliers
+  priceChangeIndicator PriceChange? // UP, DOWN, SAME, FIRST_UPLOAD
+  uploadedAt           DateTime          @default(now())
+  processedAt          DateTime?
+  products             UploadedProduct[]
+  comparisons          Comparison[]      @relation("ComparisonUpload")
+
+  @@map("upload_history")
+}
+
+model UploadedProduct {
+  id              String            @id @default(cuid())
+  uploadId        String
+  upload          UploadHistory     @relation(fields: [uploadId], references: [id])
+  originalRow     Int // Row number in original file
+  sku             String?
+  code            String?
+  name            String
+  price           Float?
+  description     String?
+  category        String?
+  unit            String?
+  quantity        Int? // Available quantity
+  clientMatches   ComparisonMatch[] @relation("ClientProduct")
+  supplierMatches SupplierMatch[]   @relation("SupplierProduct")
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@map("uploaded_products")
+}
+
+model Comparison {
+  id                   String            @id @default(cuid())
+  clientUploadId       String
+  clientUpload         UploadHistory     @relation("ComparisonUpload", fields: [clientUploadId], references: [id])
+  clientId             String
+  client               Company           @relation("ClientComparison", fields: [clientId], references: [id])
+  totalProducts        Int
+  matchedProducts      Int
+  unmatchedProducts    Int
+  bestPriceTotal       Float?
+  previousTotal        Float?
+  priceChangeIndicator PriceChange?
+  matches              ComparisonMatch[]
+  preOrders            PreOrder[]
+  createdAt            DateTime          @default(now())
+
+  @@map("comparisons")
+}
+
+model ComparisonMatch {
+  id              String          @id @default(cuid())
+  comparisonId    String
+  comparison      Comparison      @relation(fields: [comparisonId], references: [id])
+  clientProductId String
+  clientProduct   UploadedProduct @relation("ClientProduct", fields: [clientProductId], references: [id])
+  productName     String // Cached product name for display
+  supplierMatches SupplierMatch[]
+  bestPrice       Float?
+  bestSupplierId  String?
+  matchType       MatchType // SKU, CODE, NAME, MANUAL
+  confidence      Float // 0-1 for name matching
+  preOrderItems   PreOrderItem[]
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@map("comparison_matches")
+}
+
+model SupplierMatch {
+  id                String          @id @default(cuid())
+  comparisonMatchId String
+  comparisonMatch   ComparisonMatch @relation(fields: [comparisonMatchId], references: [id])
+  supplierProductId String
+  supplierProduct   UploadedProduct @relation("SupplierProduct", fields: [supplierProductId], references: [id])
+  supplierCompanyId String
+  supplierCompany   Company         @relation("SupplierMatches", fields: [supplierCompanyId], references: [id])
+  price             Float
+  availableQuantity Int             @default(0)
+  isActive          Boolean         @default(true)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@unique([comparisonMatchId, supplierCompanyId])
+  @@map("supplier_matches")
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id])
+  type      NotificationType
+  title     String
+  message   String
+  metadata  Json? // Additional data for the notification
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  @@map("notifications")
+}
+
+// New enums
+
+enum UploadType {
+  SUPPLIER_PRODUCTS
+  CLIENT_REQUIREMENTS
+}
+
+enum UploadStatus {
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum PriceChange {
+  UP
+  DOWN
+  SAME
+  FIRST_UPLOAD
+}
+
+enum MatchType {
+  SKU
+  CODE
+  NAME
+  MANUAL
+}
+
+enum NotificationType {
+  PRE_ORDER_CREATED
+  PRE_ORDER_APPROVED
+  PRE_ORDER_REJECTED
+  UPLOAD_COMPLETED
+  UPLOAD_FAILED
+  PRICE_ALERT
+  MATCH_CREATED
+  COMPARISON_COMPLETED
+  SYSTEM_UPDATE
+}
