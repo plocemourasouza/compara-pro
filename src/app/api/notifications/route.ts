@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { requireAuth } from "@/lib/auth-server";
+import { AuthError, requireAuth } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
 
 export async function GET(request: NextRequest) {
@@ -50,6 +50,12 @@ export async function GET(request: NextRequest) {
 			unreadCount,
 		});
 	} catch (error) {
+		if (error instanceof AuthError) {
+			return NextResponse.json(
+				{ error: error.message },
+				{ status: error.status },
+			);
+		}
 		console.error("Get notifications error:", error);
 		return NextResponse.json(
 			{ error: "Erro interno do servidor" },

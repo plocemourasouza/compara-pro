@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { requireAuth } from "@/lib/auth-server";
+import { AuthError, requireAuth } from "@/lib/auth-server";
 import { ProductMatcher } from "@/lib/services/product-matcher";
 
 const createComparisonSchema = z.object({
@@ -46,6 +46,12 @@ export async function POST(request: NextRequest) {
 			comparisonId,
 		});
 	} catch (error) {
+		if (error instanceof AuthError) {
+			return NextResponse.json(
+				{ error: error.message },
+				{ status: error.status },
+			);
+		}
 		console.error("Create comparison error:", error);
 
 		if (error instanceof Error) {

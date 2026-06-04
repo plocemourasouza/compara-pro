@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { requireAuth } from "@/lib/auth-server";
+import { AuthError, requireAuth } from "@/lib/auth-server";
 import { PreOrderService } from "@/lib/services/pre-order-service";
 import { createPreOrderSchema } from "@/lib/validations/pre-order";
 
@@ -44,6 +44,13 @@ export async function POST(request: NextRequest) {
 		);
 	} catch (error) {
 		console.error("Create pre-order error:", error);
+
+		if (error instanceof AuthError) {
+			return NextResponse.json(
+				{ error: error.message },
+				{ status: error.status },
+			);
+		}
 
 		if (error instanceof Error) {
 			return NextResponse.json({ error: error.message }, { status: 400 });

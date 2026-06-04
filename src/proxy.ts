@@ -34,8 +34,12 @@ const secretKey = JWT_SECRET ? new TextEncoder().encode(JWT_SECRET) : null;
 export async function proxy(request: NextRequest) {
 	const { pathname } = request.nextUrl;
 
-	// Permitir rotas públicas
-	if (publicRoutes.some((route) => pathname.startsWith(route))) {
+	// Permitir rotas públicas. "/" deve casar exato — startsWith("/") seria
+	// sempre verdadeiro e desativaria o proxy para todas as rotas.
+	const isPublic = publicRoutes.some((route) =>
+		route === "/" ? pathname === "/" : pathname.startsWith(route),
+	);
+	if (isPublic) {
 		return NextResponse.next();
 	}
 

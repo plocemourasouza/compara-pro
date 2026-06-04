@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { requireAuth } from "@/lib/auth-server";
+import { AuthError, requireAuth } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
 
 export async function GET(
@@ -91,6 +91,12 @@ export async function GET(
 
 		return NextResponse.json(formattedComparison);
 	} catch (error) {
+		if (error instanceof AuthError) {
+			return NextResponse.json(
+				{ error: error.message },
+				{ status: error.status },
+			);
+		}
 		console.error("Get comparison error:", error);
 
 		if (error instanceof Error) {

@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { requireAuth } from "@/lib/auth-server";
+import { AuthError, requireAuth } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
 import { FileProcessor } from "@/lib/services/file-processor";
 import { uploadFileSchema } from "@/lib/validations/upload";
@@ -70,6 +70,13 @@ export async function POST(request: NextRequest) {
 		});
 	} catch (error) {
 		console.error("Upload error:", error);
+
+		if (error instanceof AuthError) {
+			return NextResponse.json(
+				{ error: error.message },
+				{ status: error.status },
+			);
+		}
 
 		if (
 			error instanceof Error &&
@@ -142,6 +149,14 @@ export async function GET(request: NextRequest) {
 		});
 	} catch (error) {
 		console.error("Get upload error:", error);
+
+		if (error instanceof AuthError) {
+			return NextResponse.json(
+				{ error: error.message },
+				{ status: error.status },
+			);
+		}
+
 		return NextResponse.json(
 			{ error: "Erro interno do servidor" },
 			{ status: 500 },

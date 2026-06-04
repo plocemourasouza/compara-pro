@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { requireAuth } from "@/lib/auth-server";
+import { AuthError, requireAuth } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
 
 export async function PUT(
@@ -30,6 +30,12 @@ export async function PUT(
 
 		return NextResponse.json({ success: true });
 	} catch (error) {
+		if (error instanceof AuthError) {
+			return NextResponse.json(
+				{ error: error.message },
+				{ status: error.status },
+			);
+		}
 		console.error("Mark notification as read error:", error);
 		return NextResponse.json(
 			{ error: "Erro interno do servidor" },

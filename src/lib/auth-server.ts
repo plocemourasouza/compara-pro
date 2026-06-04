@@ -37,15 +37,25 @@ export async function getCurrentUser() {
 	}
 }
 
+/** Thrown by requireAuth — carries the HTTP status so routes return 401/403, not 500. */
+export class AuthError extends Error {
+	readonly status: number;
+	constructor(message: string, status: number) {
+		super(message);
+		this.name = "AuthError";
+		this.status = status;
+	}
+}
+
 export async function requireAuth(allowedRoles?: string[]) {
 	const user = await getCurrentUser();
 
 	if (!user) {
-		throw new Error("Usuário não autenticado");
+		throw new AuthError("Usuário não autenticado", 401);
 	}
 
 	if (allowedRoles && !allowedRoles.includes(user.role)) {
-		throw new Error("Acesso negado");
+		throw new AuthError("Acesso negado", 403);
 	}
 
 	return user;
