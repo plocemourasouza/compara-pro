@@ -51,7 +51,9 @@ export const openaiProvider: AiProvider = {
 				},
 				body: JSON.stringify({
 					model: p.model,
-					max_tokens: p.maxTokens ?? 1024,
+					// Newer OpenAI models reject max_tokens; max_completion_tokens is the
+					// forward-compatible replacement (also accepted by current chat models).
+					max_completion_tokens: p.maxTokens ?? 1024,
 					messages: [
 						{ role: "system", content: p.system },
 						{ role: "user", content: p.prompt },

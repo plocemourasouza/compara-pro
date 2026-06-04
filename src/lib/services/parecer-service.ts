@@ -2,26 +2,19 @@ import { getAiConfigForServer } from "@/lib/ai/config-service";
 import { getProvider } from "@/lib/ai/registry";
 import { cache } from "@/lib/cache";
 import { prisma } from "@/lib/db";
+import {
+	computeParecerFacts,
+	fallbackNarrative,
+	type ParecerFacts,
+	type ParecerOportunidade,
+	type ParecerTotais,
+} from "./parecer-facts";
 
-export interface ParecerOportunidade {
-	produto: string;
-	fornecedorRecomendado: string;
-	precoRecomendado: number;
-	precoAlternativaMax: number;
-	economiaUnitaria: number;
-	economiaPercentual: number;
-}
-
-export interface ParecerTotais {
-	totalProdutos: number;
-	produtosComMatch: number;
-	produtosSemMatch: number;
-	totalMelhorPreco: number;
-	economiaEstimada: number;
-	economiaPercentual: number;
-	fornecedoresEnvolvidos: number;
-	fornecedorMaisVantajoso: { nome: string; itens: number } | null;
-}
+export type {
+	ParecerFacts,
+	ParecerOportunidade,
+	ParecerTotais,
+} from "./parecer-facts";
 
 export interface Parecer {
 	resumo: string;
@@ -30,11 +23,6 @@ export interface Parecer {
 	vantagens: string[];
 	geradoPorIA: boolean;
 	geradoEm: string;
-}
-
-interface ParecerFacts {
-	oportunidades: ParecerOportunidade[];
-	totais: ParecerTotais;
 }
 
 const SYSTEM_PROMPT =
@@ -87,69 +75,12 @@ export class ParecerService {
 			throw new Error("Comparação não encontrada");
 		}
 
-		const oportunidades: ParecerOportunidade[] = [];
-		let economiaEstimada = 0;
-		const bestSupplierWins = new Map<string, number>();
-
-		for (const match of comparison.matches) {
-			if (match.supplierMatches.length === 0) continue;
-
-			const prices = match.supplierMatches.map((sm) => sm.price);
-			const best = match.bestPrice ?? Math.min(...prices);
-			const maxAlt = Math.max(...prices);
-			const bestSm =
-				match.supplierMatches.find((sm) => sm.price === best) ??
-				match.supplierMatches[0];
-			if (!bestSm) continue;
-
-			const fornecedor = bestSm.supplierCompany.name;
-			bestSupplierWins.set(
-				fornecedor,
-				(bestSupplierWins.get(fornecedor) ?? 0) + 1,
-			);
-
-			const economiaUnitaria = maxAlt - best;
-			economiaEstimada += economiaUnitaria;
-
-			if (economiaUnitaria > 0) {
-				oportunidades.push({
-					produto: match.clientProduct.name,
-					fornecedorRecomendado: fornecedor,
-					precoRecomendado: best,
-					precoAlternativaMax: maxAlt,
-					economiaUnitaria,
-					economiaPercentual:
-						maxAlt > 0 ? (economiaUnitaria / maxAlt) * 100 : 0,
-				});
-			}
-		}
-
-		oportunidades.sort((a, b) => b.economiaUnitaria - a.economiaUnitaria);
-
-		let fornecedorMaisVantajoso: ParecerTotais["fornecedorMaisVantajoso"] =
-			null;
-		for (const [nome, itens] of bestSupplierWins) {
-			if (!fornecedorMaisVantajoso || itens > fornecedorMaisVantajoso.itens) {
-				fornecedorMaisVantajoso = { nome, itens };
-			}
-		}
-
-		const totalMelhorPreco = comparison.bestPriceTotal ?? 0;
-		const totais: ParecerTotais = {
-			totalProdutos: comparison.totalProducts,
-			produtosComMatch: comparison.matchedProducts,
-			produtosSemMatch: comparison.unmatchedProducts,
-			totalMelhorPreco,
-			economiaEstimada,
-			economiaPercentual:
-				totalMelhorPreco + economiaEstimada > 0
-					? (economiaEstimada / (totalMelhorPreco + economiaEstimada)) * 100
-					: 0,
-			fornecedoresEnvolvidos: bestSupplierWins.size,
-			fornecedorMaisVantajoso,
-		};
-
-		return { oportunidades: oportunidades.slice(0, 5), totais };
+		return computeParecerFacts(comparison.matches, {
+			totalProducts: comparison.totalProducts,
+			matchedProducts: comparison.matchedProducts,
+			unmatchedProducts: comparison.unmatchedProducts,
+			bestPriceTotal: comparison.bestPriceTotal,
+		});
 	}
 
 	private static async generateNarrative(
@@ -176,22 +107,36 @@ export class ParecerService {
 				);
 			}
 		}
-		return { ...ParecerService.fallbackNarrative(facts), geradoPorIA: false };
+		return { ...fallbackNarrative(facts), geradoPorIA: false };
 	}
 
 	private static buildPrompt(facts: ParecerFacts): string {
+		const round = (n: number) => Math.round(n * 100) / 100;
 		const fatos = {
-			totais: facts.totais,
-			melhoresOportunidades: facts.oportunidades,
+			totais: {
+				...facts.totais,
+				totalMelhorPreco: round(facts.totais.totalMelhorPreco),
+				economiaEstimada: round(facts.totais.economiaEstimada),
+				economiaPercentual: round(facts.totais.economiaPercentual),
+			},
+			melhoresOportunidades: facts.oportunidades.map((o) => ({
+				...o,
+				precoRecomendado: round(o.precoRecomendado),
+				precoAlternativaMax: round(o.precoAlternativaMax),
+				economiaUnitaria: round(o.economiaUnitaria),
+				economiaPercentual: round(o.economiaPercentual),
+			})),
 		};
 		return [
 			"Analise o cruzamento de planilhas de uma comparação de preços B2B.",
+			"Valores monetários em reais (R$); percentuais já arredondados.",
 			"Fatos já calculados (não altere os números):",
 			JSON.stringify(fatos, null, 2),
 			"",
 			'Responda APENAS com JSON válido no formato: {"resumo": string, "vantagens": string[]}.',
 			"- resumo: parecer de 2 a 4 frases sobre a operação, destacando a economia e a recomendação.",
 			"- vantagens: 3 a 5 itens curtos com as vantagens da sugestão do sistema.",
+			"- Use R$ e % ao citar valores; não escreva números com muitas casas decimais.",
 		].join("\n");
 	}
 
@@ -221,43 +166,4 @@ export class ParecerService {
 		const trimmed = text.trim();
 		return trimmed ? { resumo: trimmed.slice(0, 800), vantagens: [] } : null;
 	}
-
-	private static fallbackNarrative(facts: ParecerFacts): {
-		resumo: string;
-		vantagens: string[];
-	} {
-		const t = facts.totais;
-		const economia = formatBRL(t.economiaEstimada);
-		const total = formatBRL(t.totalMelhorPreco);
-		const pct = t.economiaPercentual.toFixed(1).replace(".", ",");
-		const consolidacao = t.fornecedorMaisVantajoso
-			? `O fornecedor mais vantajoso é ${t.fornecedorMaisVantajoso.nome}, com o melhor preço em ${t.fornecedorMaisVantajoso.itens} item(ns). `
-			: "";
-
-		const resumo =
-			`A sugestão do sistema reúne ${t.produtosComMatch} de ${t.totalProdutos} produtos no melhor preço, ` +
-			`totalizando ${total} e uma economia estimada de ${economia} (${pct}%) frente às alternativas mais caras. ` +
-			`${consolidacao}` +
-			(t.produtosSemMatch > 0
-				? `${t.produtosSemMatch} produto(s) não tiveram correspondência e podem ser buscados manualmente.`
-				: "Todos os produtos tiveram correspondência.");
-
-		const vantagens = [
-			`Economia estimada de ${economia} (${pct}%) sobre as alternativas mais caras.`,
-			`Melhor preço aplicado em ${t.produtosComMatch} produto(s).`,
-			t.fornecedorMaisVantajoso
-				? `Possibilidade de consolidar pedidos em ${t.fornecedorMaisVantajoso.nome}.`
-				: "Comparação entre múltiplos fornecedores num só lugar.",
-			"Você pode ajustar a indicação por produto antes de confirmar o pré-pedido.",
-		];
-
-		return { resumo, vantagens };
-	}
-}
-
-function formatBRL(value: number): string {
-	return new Intl.NumberFormat("pt-BR", {
-		style: "currency",
-		currency: "BRL",
-	}).format(value);
 }
