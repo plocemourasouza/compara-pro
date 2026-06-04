@@ -332,8 +332,8 @@ export default function AiConfigCard() {
 					<Textarea
 						value={prompt}
 						onChange={(e) => setPrompt(e.target.value)}
-						rows={14}
-						className="min-h-[300px] resize-y font-mono text-xs leading-relaxed"
+						rows={30}
+						className="min-h-[480px] resize-y font-mono text-xs leading-relaxed"
 						placeholder={DEFAULT_PARECER_SYSTEM_PROMPT}
 					/>
 					<p className="text-right text-xs text-muted-foreground">
