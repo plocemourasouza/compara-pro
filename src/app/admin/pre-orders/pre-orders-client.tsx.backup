@@ -1,0 +1,864 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Textarea } from '@/components/ui/textarea'
+import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Checkbox } from '@/components/ui/checkbox'
+import { 
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter
+} from '@/components/ui/dialog'
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
+import { 
+  ShoppingCart, 
+  Calendar,
+  Package,
+  Building2,
+  CheckCircle,
+  XCircle,
+  Clock,
+  Eye,
+  MessageSquare,
+  Search,
+  Filter,
+  ArrowUpDown,
+  RefreshCw,
+  CheckSquare,
+  Square,
+  Users,
+  DollarSign,
+  MessageCircle,
+  Download
+} from 'lucide-react'
+
+type User = {
+  id: string
+  name: string
+  email: string
+  role: string
+  company: {
+    id: string
+    name: string
+    type: string
+  } | null
+}
+
+interface PreOrder {
+  id: string
+  status: 'ACTIVE' | 'FINALIZED' | 'REJECTED'
+  totalAmount?: number
+  itemCount: number
+  totalQuantity: number
+  createdAt: string
+  respondedAt?: string
+  notes?: string
+  client: { id: string; name: string }
+  supplier: { id: string; name: string }
+  items?: PreOrderItem[]
+}
+
+interface PreOrderItem {
+  id: string
+  productName: string
+  quantity: number
+  price: number
+  totalPrice: number
+  supplierProduct?: {
+    sku?: string
+    code?: string
+    category?: string
+  }
+}
+
+interface PreOrderDetail extends PreOrder {
+  items: PreOrderItem[]
+  comparison?: {
+    id: string
+    fileName: string
+    createdAt: string
+  }
+}
+
+interface PreOrdersClientProps {
+  user: User
+}
+
+export default function PreOrdersClient({ user }: PreOrdersClientProps) {
+  const [preOrders, setPreOrders] = useState<PreOrder[]>([])
+  const [filteredPreOrders, setFilteredPreOrders] = useState<PreOrder[]>([])
+  const [loading, setLoading] = useState(true)
+  const [selectedPreOrder, setSelectedPreOrder] = useState<PreOrderDetail | null>(null)
+  const [detailLoading, setDetailLoading] = useState(false)
+  const [responseDialog, setResponseDialog] = useState<{
+    open: boolean
+    preOrderId?: string
+    action?: 'APPROVE' | 'REJECT'
+  }>({ open: false })
+  const [responseNotes, setResponseNotes] = useState('')
+  const [responding, setResponding] = useState(false)
+  
+  // Filtros e seleção
+  const [searchTerm, setSearchTerm] = useState('')
+  const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [sortBy, setSortBy] = useState<'date' | 'amount' | 'items'>('date')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set())
+  const [bulkAction, setBulkAction] = useState<'approve' | 'reject' | null>(null)
+
+  useEffect(() => {
+    fetchPreOrders()
+  }, [])
+
+  useEffect(() => {
+    applyFilters()
+  }, [preOrders, searchTerm, statusFilter, sortBy, sortOrder])
+
+  const fetchPreOrders = async () => {
+    try {
+      const response = await fetch('/api/pre-order/list')
+      
+      if (response.ok) {
+        const data = await response.json()
+        setPreOrders(data.preOrders)
+      }
+    } catch (error) {
+      console.error('Fetch pre-orders error:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const applyFilters = () => {
+    let filtered = [...preOrders]
+
+    // Filtro por busca
+    if (searchTerm) {
+      filtered = filtered.filter(preOrder => 
+        preOrder.client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        preOrder.supplier.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        preOrder.id.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    }
+
+    // Filtro por status
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(preOrder => preOrder.status === statusFilter)
+    }
+
+    // Ordenação
+    filtered.sort((a, b) => {
+      let comparison = 0
+      
+      switch (sortBy) {
+        case 'date':
+          comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          break
+        case 'amount':
+          comparison = (a.totalAmount || 0) - (b.totalAmount || 0)
+          break
+        case 'items':
+          comparison = a.itemCount - b.itemCount
+          break
+      }
+
+      return sortOrder === 'asc' ? comparison : -comparison
+    })
+
+    setFilteredPreOrders(filtered)
+  }
+
+  const fetchPreOrderDetail = async (preOrderId: string) => {
+    setDetailLoading(true)
+    try {
+      const response = await fetch(`/api/pre-order/${preOrderId}`)
+      
+      if (response.ok) {
+        const data = await response.json()
+        setSelectedPreOrder(data.preOrder)
+      }
+    } catch (error) {
+      console.error('Fetch pre-order detail error:', error)
+    } finally {
+      setDetailLoading(false)
+    }
+  }
+
+  const toggleSelectAll = () => {
+    if (selectedItems.size === filteredPreOrders.length) {
+      setSelectedItems(new Set())
+    } else {
+      setSelectedItems(new Set(filteredPreOrders.map(p => p.id)))
+    }
+  }
+
+  const toggleSelectItem = (preOrderId: string) => {
+    const newSelected = new Set(selectedItems)
+    if (newSelected.has(preOrderId)) {
+      newSelected.delete(preOrderId)
+    } else {
+      newSelected.add(preOrderId)
+    }
+    setSelectedItems(newSelected)
+  }
+
+  const handleBulkAction = async (action: 'approve' | 'reject') => {
+    if (selectedItems.size === 0) return
+
+    setBulkAction(action)
+    try {
+      const response = await fetch('/api/pre-order/bulk-action', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          preOrderIds: Array.from(selectedItems),
+          action: action.toUpperCase(),
+          notes: responseNotes.trim() || undefined
+        })
+      })
+
+      if (response.ok) {
+        await fetchPreOrders()
+        setSelectedItems(new Set())
+        setResponseNotes('')
+      } else {
+        const errorData = await response.json()
+        alert(errorData.error || `Erro ao ${action === 'approve' ? 'aprovar' : 'rejeitar'} pré-pedidos`)
+      }
+    } catch (error) {
+      console.error('Bulk action error:', error)
+    } finally {
+      setBulkAction(null)
+    }
+  }
+
+  const handleRespond = (preOrderId: string, action: 'APPROVE' | 'REJECT') => {
+    setResponseDialog({
+      open: true,
+      preOrderId,
+      action
+    })
+    setResponseNotes('')
+  }
+
+  const submitResponse = async () => {
+    if (!responseDialog.preOrderId || !responseDialog.action) return
+
+    setResponding(true)
+    try {
+      const response = await fetch(`/api/pre-order/${responseDialog.preOrderId}/respond`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: responseDialog.action,
+          notes: responseNotes.trim() || undefined
+        })
+      })
+
+      if (response.ok) {
+        setResponseDialog({ open: false })
+        setResponseNotes('')
+        await fetchPreOrders() // Refresh list
+      } else {
+        const errorData = await response.json()
+        alert(errorData.error || 'Erro ao responder pré-pedido')
+      }
+    } catch (error) {
+      console.error('Response error:', error)
+      alert('Erro ao responder pré-pedido')
+    } finally {
+      setResponding(false)
+    }
+  }
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'ACTIVE': return <Clock className="h-4 w-4 text-yellow-500" />
+      case 'FINALIZED': return <CheckCircle className="h-4 w-4 text-green-500" />
+      case 'REJECTED': return <XCircle className="h-4 w-4 text-red-500" />
+      default: return null
+    }
+  }
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'ACTIVE': return 'Pendente'
+      case 'FINALIZED': return 'Aprovado'
+      case 'REJECTED': return 'Rejeitado'
+      default: return status
+    }
+  }
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'ACTIVE': return 'bg-yellow-100 text-yellow-800'
+      case 'FINALIZED': return 'bg-green-100 text-green-800'
+      case 'REJECTED': return 'bg-red-100 text-red-800'
+      default: return 'bg-gray-100 text-gray-800'
+    }
+  }
+
+  const formatDate = (dateString: string) => {
+    return new Intl.DateTimeFormat('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    }).format(new Date(dateString))
+  }
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(value)
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="text-center">
+          <Clock className="h-8 w-8 animate-spin mx-auto mb-2 text-blue-500" />
+          <p>Carregando pré-pedidos...</p>
+        </div>
+      </div>
+    )
+  }
+
+  const canApproveReject = user.role === 'SUPPLIER'
+  const activePreOrders = filteredPreOrders.filter(p => p.status === 'ACTIVE')
+  const selectedActivePreOrders = activePreOrders.filter(p => selectedItems.has(p.id))
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold">Pré-pedidos</h1>
+        <p className="text-muted-foreground">
+          {user.role === 'CLIENT' 
+            ? 'Acompanhe seus pré-pedidos enviados aos fornecedores'
+            : 'Gerencie os pré-pedidos recebidos dos clientes'
+          }
+        </p>
+      </div>
+
+      {/* Filtros */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Filter className="h-5 w-5" />
+              Filtros
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={fetchPreOrders}
+              disabled={loading}
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              Atualizar
+            </Button>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Buscar</label>
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Empresa, ID..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Status</label>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="ACTIVE">Pendente</SelectItem>
+                  <SelectItem value="FINALIZED">Aprovado</SelectItem>
+                  <SelectItem value="REJECTED">Rejeitado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Ordenar por</label>
+              <Select value={sortBy} onValueChange={(value: 'date' | 'amount' | 'items') => setSortBy(value)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="date">Data</SelectItem>
+                  <SelectItem value="amount">Valor</SelectItem>
+                  <SelectItem value="items">Itens</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Ordem</label>
+              <Button
+                variant="outline"
+                onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                className="w-full justify-start"
+              >
+                <ArrowUpDown className="h-4 w-4 mr-2" />
+                {sortOrder === 'asc' ? 'Crescente' : 'Decrescente'}
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Ações em massa para fornecedores */}
+      {canApproveReject && selectedItems.size > 0 && (
+        <Card className="border-blue-200 bg-blue-50">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <CheckSquare className="h-5 w-5 text-blue-600" />
+                  <span className="font-medium">
+                    {selectedItems.size} pré-pedido{selectedItems.size > 1 ? 's' : ''} selecionado{selectedItems.size > 1 ? 's' : ''}
+                  </span>
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  ({selectedActivePreOrders.length} pendente{selectedActivePreOrders.length !== 1 ? 's' : ''})
+                </div>
+              </div>
+              
+              <div className="flex gap-2">
+                {selectedActivePreOrders.length > 0 && (
+                  <>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="outline" size="sm" className="text-red-600">
+                          <XCircle className="h-4 w-4 mr-2" />
+                          Rejeitar Selecionados
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Rejeitar Pré-pedidos</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Tem certeza que deseja rejeitar {selectedActivePreOrders.length} pré-pedido{selectedActivePreOrders.length > 1 ? 's' : ''}?
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <div className="my-4">
+                          <Textarea
+                            placeholder="Motivo da rejeição (obrigatório)..."
+                            value={responseNotes}
+                            onChange={(e) => setResponseNotes(e.target.value)}
+                            rows={3}
+                          />
+                        </div>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => handleBulkAction('reject')}
+                            disabled={!responseNotes.trim() || bulkAction === 'reject'}
+                            className="bg-red-600 hover:bg-red-700"
+                          >
+                            {bulkAction === 'reject' ? 'Rejeitando...' : 'Rejeitar'}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button size="sm">
+                          <CheckCircle className="h-4 w-4 mr-2" />
+                          Aprovar Selecionados
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Aprovar Pré-pedidos</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Tem certeza que deseja aprovar {selectedActivePreOrders.length} pré-pedido{selectedActivePreOrders.length > 1 ? 's' : ''}?
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <div className="my-4">
+                          <Textarea
+                            placeholder="Observações (opcional)..."
+                            value={responseNotes}
+                            onChange={(e) => setResponseNotes(e.target.value)}
+                            rows={3}
+                          />
+                        </div>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => handleBulkAction('approve')}
+                            disabled={bulkAction === 'approve'}
+                            className="bg-green-600 hover:bg-green-700"
+                          >
+                            {bulkAction === 'approve' ? 'Aprovando...' : 'Aprovar'}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {preOrders.length === 0 ? (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-16">
+            <ShoppingCart className="h-16 w-16 text-gray-300 mb-4" />
+            <h3 className="text-lg font-semibold text-gray-600 mb-2">
+              Nenhum pré-pedido encontrado
+            </h3>
+            <p className="text-gray-500 text-center">
+              {user.role === 'CLIENT' 
+                ? 'Quando você criar pré-pedidos, eles aparecerão aqui.'
+                : 'Quando recebermos pré-pedidos, eles aparecerão aqui.'
+              }
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-4">
+          {/* Contador e seleção */}
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-4">
+              <p className="text-sm text-muted-foreground">
+                {filteredPreOrders.length} de {preOrders.length} pré-pedidos
+              </p>
+              {canApproveReject && (
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    checked={selectedItems.size === filteredPreOrders.length && filteredPreOrders.length > 0}
+                    onCheckedChange={toggleSelectAll}
+                  />
+                  <span className="text-sm text-muted-foreground">Selecionar todos</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="grid gap-4">
+            {filteredPreOrders.map((preOrder) => (
+            <Card key={preOrder.id} className={selectedItems.has(preOrder.id) ? 'ring-2 ring-blue-500' : ''}>
+              <CardHeader>
+                <div className="flex justify-between items-start">
+                  <CardTitle className="flex items-center gap-2">
+                    {canApproveReject && (
+                      <Checkbox
+                        checked={selectedItems.has(preOrder.id)}
+                        onCheckedChange={() => toggleSelectItem(preOrder.id)}
+                      />
+                    )}
+                    <ShoppingCart className="h-5 w-5" />
+                    Pré-pedido #{preOrder.id.slice(-8)}
+                  </CardTitle>
+                  <div className="flex items-center gap-2">
+                    {getStatusIcon(preOrder.status)}
+                    <Badge className={getStatusColor(preOrder.status)}>
+                      {getStatusLabel(preOrder.status)}
+                    </Badge>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                  <div className="flex items-center gap-2">
+                    <Building2 className="h-4 w-4 text-gray-500" />
+                    <div>
+                      <p className="text-sm text-gray-600">
+                        {user.role === 'CLIENT' ? 'Fornecedor' : 'Cliente'}
+                      </p>
+                      <p className="font-medium">
+                        {user.role === 'CLIENT' ? preOrder.supplier.name : preOrder.client.name}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <Package className="h-4 w-4 text-gray-500" />
+                    <div>
+                      <p className="text-sm text-gray-600">Produtos</p>
+                      <p className="font-medium">
+                        {preOrder.itemCount} itens ({preOrder.totalQuantity} unidades)
+                      </p>
+                    </div>
+                  </div>
+
+                  {preOrder.totalAmount && (
+                    <div>
+                      <p className="text-sm text-gray-600">Valor Total</p>
+                      <p className="font-bold text-green-600">
+                        {formatCurrency(preOrder.totalAmount)}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-1 text-sm text-gray-600">
+                    <Calendar className="h-4 w-4" />
+                    <span>Criado em {formatDate(preOrder.createdAt)}</span>
+                    {preOrder.respondedAt && (
+                      <span> • Respondido em {formatDate(preOrder.respondedAt)}</span>
+                    )}
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => fetchPreOrderDetail(preOrder.id)}
+                        >
+                          <Eye className="h-4 w-4 mr-2" />
+                          Ver Detalhes
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                        <DialogHeader>
+                          <DialogTitle>Detalhes do Pré-pedido</DialogTitle>
+                        </DialogHeader>
+                        {detailLoading ? (
+                          <div className="flex items-center justify-center p-8">
+                            <Clock className="h-8 w-8 animate-spin text-blue-500" />
+                          </div>
+                        ) : selectedPreOrder ? (
+                          <div className="space-y-6">
+                            {/* Informações Gerais */}
+                            <div className="grid grid-cols-2 gap-6">
+                              <div className="space-y-4">
+                                <h4 className="font-semibold flex items-center gap-2">
+                                  <Building2 className="h-4 w-4" />
+                                  Informações Gerais
+                                </h4>
+                                <div className="space-y-2 text-sm">
+                                  <div><strong>ID:</strong> {selectedPreOrder.id}</div>
+                                  <div><strong>Cliente:</strong> {selectedPreOrder.client.name}</div>
+                                  <div><strong>Fornecedor:</strong> {selectedPreOrder.supplier.name}</div>
+                                  <div><strong>Status:</strong> {getStatusLabel(selectedPreOrder.status)}</div>
+                                  <div><strong>Criado em:</strong> {formatDate(selectedPreOrder.createdAt)}</div>
+                                  {selectedPreOrder.respondedAt && (
+                                    <div><strong>Respondido em:</strong> {formatDate(selectedPreOrder.respondedAt)}</div>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="space-y-4">
+                                <h4 className="font-semibold flex items-center gap-2">
+                                  <DollarSign className="h-4 w-4" />
+                                  Resumo Financeiro
+                                </h4>
+                                <div className="space-y-2 text-sm">
+                                  <div><strong>Total de itens:</strong> {selectedPreOrder.itemCount}</div>
+                                  <div><strong>Quantidade total:</strong> {selectedPreOrder.totalQuantity}</div>
+                                  {selectedPreOrder.totalAmount && (
+                                    <div><strong>Valor total:</strong> {formatCurrency(selectedPreOrder.totalAmount)}</div>
+                                  )}
+                                  {selectedPreOrder.comparison && (
+                                    <>
+                                      <div><strong>Comparação:</strong> {selectedPreOrder.comparison.fileName}</div>
+                                      <div><strong>Data da comparação:</strong> {formatDate(selectedPreOrder.comparison.createdAt)}</div>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Observações */}
+                            {selectedPreOrder.notes && (
+                              <div>
+                                <h4 className="font-semibold mb-2 flex items-center gap-2">
+                                  <MessageCircle className="h-4 w-4" />
+                                  Observações
+                                </h4>
+                                <div className="bg-gray-50 p-3 rounded-lg text-sm">
+                                  {selectedPreOrder.notes}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Itens do Pré-pedido */}
+                            {selectedPreOrder.items && selectedPreOrder.items.length > 0 && (
+                              <div>
+                                <h4 className="font-semibold mb-4 flex items-center gap-2">
+                                  <Package className="h-4 w-4" />
+                                  Itens do Pré-pedido ({selectedPreOrder.items.length})
+                                </h4>
+                                <div className="border rounded-lg overflow-hidden">
+                                  <table className="w-full text-sm">
+                                    <thead className="bg-gray-50">
+                                      <tr>
+                                        <th className="px-3 py-2 text-left">Produto</th>
+                                        <th className="px-3 py-2 text-left">SKU/Código</th>
+                                        <th className="px-3 py-2 text-right">Qtd</th>
+                                        <th className="px-3 py-2 text-right">Preço Unit.</th>
+                                        <th className="px-3 py-2 text-right">Total</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {selectedPreOrder.items.map((item, index) => (
+                                        <tr key={item.id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                                          <td className="px-3 py-2">
+                                            <div>
+                                              <div className="font-medium">{item.productName}</div>
+                                              {item.supplierProduct?.category && (
+                                                <div className="text-xs text-gray-500">{item.supplierProduct.category}</div>
+                                              )}
+                                            </div>
+                                          </td>
+                                          <td className="px-3 py-2">
+                                            {item.supplierProduct?.sku || item.supplierProduct?.code || '-'}
+                                          </td>
+                                          <td className="px-3 py-2 text-right">{item.quantity}</td>
+                                          <td className="px-3 py-2 text-right">{formatCurrency(item.price)}</td>
+                                          <td className="px-3 py-2 text-right font-medium">{formatCurrency(item.totalPrice)}</td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                    <tfoot className="bg-gray-100">
+                                      <tr>
+                                        <td colSpan={4} className="px-3 py-2 font-medium text-right">Total Geral:</td>
+                                        <td className="px-3 py-2 text-right font-bold">
+                                          {formatCurrency(selectedPreOrder.items.reduce((sum, item) => sum + item.totalPrice, 0))}
+                                        </td>
+                                      </tr>
+                                    </tfoot>
+                                  </table>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        ) : null}
+                        <DialogFooter>
+                          <Button variant="outline">
+                            <Download className="h-4 w-4 mr-2" />
+                            Exportar PDF
+                          </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+                    
+                    {user.role === 'SUPPLIER' && preOrder.status === 'ACTIVE' && (
+                      <>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleRespond(preOrder.id, 'REJECT')}
+                          className="text-red-600 hover:text-red-600"
+                        >
+                          <XCircle className="h-4 w-4 mr-2" />
+                          Rejeitar
+                        </Button>
+                        <Button 
+                          size="sm"
+                          onClick={() => handleRespond(preOrder.id, 'APPROVE')}
+                        >
+                          <CheckCircle className="h-4 w-4 mr-2" />
+                          Aprovar
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Response Dialog */}
+      <Dialog open={responseDialog.open} onOpenChange={(open) => setResponseDialog({ open })}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {responseDialog.action === 'APPROVE' ? (
+                <CheckCircle className="h-5 w-5 text-green-500" />
+              ) : (
+                <XCircle className="h-5 w-5 text-red-500" />
+              )}
+              {responseDialog.action === 'APPROVE' ? 'Aprovar' : 'Rejeitar'} Pré-pedido
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <p>
+              Tem certeza que deseja{' '}
+              <strong>
+                {responseDialog.action === 'APPROVE' ? 'aprovar' : 'rejeitar'}
+              </strong>{' '}
+              este pré-pedido?
+            </p>
+
+            <div>
+              <label className="text-sm font-medium mb-2 block">
+                Observações {responseDialog.action === 'REJECT' ? '(obrigatório)' : '(opcional)'}
+              </label>
+              <Textarea
+                placeholder={
+                  responseDialog.action === 'APPROVE' 
+                    ? 'Adicione observações sobre a aprovação...'
+                    : 'Explique o motivo da rejeição...'
+                }
+                value={responseNotes}
+                onChange={(e) => setResponseNotes(e.target.value)}
+                rows={3}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setResponseDialog({ open: false })}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={submitResponse}
+              disabled={
+                responding || 
+                (responseDialog.action === 'REJECT' && !responseNotes.trim())
+              }
+              className={
+                responseDialog.action === 'APPROVE' 
+                  ? 'bg-green-600 hover:bg-green-700' 
+                  : 'bg-red-600 hover:bg-red-700'
+              }
+            >
+              {responding ? 'Processando...' : 
+               responseDialog.action === 'APPROVE' ? 'Aprovar' : 'Rejeitar'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  )
+}

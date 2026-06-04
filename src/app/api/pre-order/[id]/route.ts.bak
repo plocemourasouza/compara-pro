@@ -1,0 +1,43 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { requireAuth } from '@/lib/auth-server'
+import { PreOrderService } from '@/lib/services/pre-order-service'
+
+}
+
+export async function GET(
+  request: NextRequest,
+  { params }: RouteParams
+) {
+  try {
+    const user = await requireAuth(['CLIENT', 'SUPPLIER'])
+    
+    if (!user.company) {
+      return NextResponse.json(
+        { error: 'Usuário deve estar associado a uma empresa' },
+        { status: 400 }
+      )
+    }
+
+    const preOrder = await PreOrderService.getPreOrder(
+      resolvedParams.id,
+      user.company.id
+    )
+
+    return NextResponse.json(preOrder)
+
+  } catch (error) {
+    console.error('Get pre-order error:', error)
+    
+    if (error instanceof Error) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.message.includes('não encontrado') ? 404 : 400 }
+      )
+    }
+
+    return NextResponse.json(
+      { error: 'Erro interno do servidor' },
+      { status: 500 }
+    )
+  }
+}

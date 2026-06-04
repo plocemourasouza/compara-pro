@@ -1,0 +1,66 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { requireAuth } from '@/lib/auth-server'
+import { PreOrderService } from '@/lib/services/pre-order-service'
+import { preOrderResponseSchema } from '@/lib/validations/pre-order'
+
+}
+
+export async function PUT(
+  request: NextRequest,
+  { params }: RouteParams
+) {
+  try {
+    const user = await requireAuth(['SUPPLIER'])
+    
+    if (!user.company) {
+      return NextResponse.json(
+        { error: 'Usuário deve estar associado a uma empresa' },
+        { status: 400 }
+      )
+    }
+
+    const body = await request.json()
+    
+    // Validar dados de entrada
+    const validationResult = preOrderResponseSchema.safeParse(body)
+    if (!validationResult.success) {
+      return NextResponse.json(
+        { 
+          error: 'Dados inválidos', 
+          details: validationResult.error.errors 
+        },
+        { status: 400 }
+      )
+    }
+
+    const { action, notes } = validationResult.data
+
+    // Responder ao pré-pedido
+    await PreOrderService.respondToPreOrder(
+      resolvedParams.id,
+      user.company.id,
+      action,
+      notes
+    )
+
+    return NextResponse.json({
+      success: true,
+      message: `Pré-pedido ${action === 'APPROVE' ? 'aprovado' : 'rejeitado'} com sucesso`
+    })
+
+  } catch (error) {
+    console.error('Respond to pre-order error:', error)
+    
+    if (error instanceof Error) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 400 }
+      )
+    }
+
+    return NextResponse.json(
+      { error: 'Erro interno do servidor' },
+      { status: 500 }
+    )
+  }
+}
