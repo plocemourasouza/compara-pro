@@ -1,4 +1,4 @@
-# CompareProo
+# ComparaPro
 
 Plataforma **B2B de comparação de preços**. Compradores sobem suas listas de necessidades, fornecedores
 sobem suas listas de preços, e o sistema **cruza** os dois automaticamente. Um **agente de IA** avalia o
