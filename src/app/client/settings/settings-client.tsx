@@ -83,7 +83,7 @@ export default function SettingsClient({ user }: SettingsClientProps) {
 	return (
 		<div className="space-y-6">
 			<div>
-				<h1 className="text-2xl font-bold text-foreground">Configurações</h1>
+				<h1 className="text-2xl font-bold tracking-tight">Configurações</h1>
 				<p className="text-muted-foreground">
 					Gerencie suas configurações pessoais e preferências
 				</p>

@@ -378,7 +378,9 @@ export default function CompareClient({ user: _user }: CompareClientProps) {
 	return (
 		<div className="space-y-6">
 			<div>
-				<h1 className="text-3xl font-bold">Comparação de Preços</h1>
+				<h1 className="text-2xl font-bold tracking-tight">
+					Comparação de Preços
+				</h1>
 				<p className="text-muted-foreground">
 					Compare os preços dos seus produtos com diferentes fornecedores
 				</p>

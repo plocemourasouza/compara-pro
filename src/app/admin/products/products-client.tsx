@@ -1,6 +1,6 @@
 "use client";
 
-import { Package, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { EntityDetailModal } from "@/components/shared/entity-detail-modal";
@@ -127,12 +127,9 @@ export default function ProductsClient({ user: _user }: ProductsClientProps) {
 	return (
 		<div className="space-y-6 p-6">
 			{/* Header */}
-			<div className="flex items-center justify-between">
+			<div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
 				<div>
-					<h1 className="flex items-center gap-2 text-2xl font-bold">
-						<Package className="h-6 w-6" />
-						Produtos
-					</h1>
+					<h1 className="text-2xl font-bold tracking-tight">Produtos</h1>
 					<p className="text-muted-foreground">
 						Gerencie os produtos de todas as empresas
 					</p>

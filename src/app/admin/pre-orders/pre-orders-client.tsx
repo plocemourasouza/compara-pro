@@ -76,7 +76,7 @@ export default function PreOrdersClient({ user: _user }: PreOrdersClientProps) {
 	return (
 		<div className="space-y-6">
 			<div>
-				<h1 className="text-3xl font-bold">Pré-pedidos</h1>
+				<h1 className="text-2xl font-bold tracking-tight">Pré-pedidos</h1>
 				<p className="text-muted-foreground">
 					Acompanhe todos os pré-pedidos do sistema
 				</p>

@@ -139,7 +139,9 @@ export default function SupplierUploadClient({
 	return (
 		<div className="space-y-6">
 			<div>
-				<h1 className="text-3xl font-bold">Upload de Lista de Preços</h1>
+				<h1 className="text-2xl font-bold tracking-tight">
+					Upload de Lista de Preços
+				</h1>
 				<p className="text-muted-foreground">
 					Envie sua lista de produtos e preços em formato Excel ou CSV
 				</p>

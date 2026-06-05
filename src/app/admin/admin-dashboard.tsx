@@ -138,9 +138,11 @@ export default function AdminDashboard({ user: _user }: AdminDashboardProps) {
 
 	return (
 		<div className="space-y-6">
-			<div className="flex justify-between items-center">
+			<div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
 				<div>
-					<h1 className="text-3xl font-bold">Dashboard Administrativo</h1>
+					<h1 className="text-2xl font-bold tracking-tight">
+						Dashboard Administrativo
+					</h1>
 					<p className="text-muted-foreground">
 						Visão geral do sistema e métricas executivas
 					</p>

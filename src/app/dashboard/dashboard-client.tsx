@@ -43,9 +43,9 @@ export default function DashboardClient({ user }: { user: User }) {
 	return (
 		<div className="p-6 space-y-6">
 			{/* Header */}
-			<div className="flex justify-between items-center">
+			<div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
 				<div>
-					<h1 className="text-3xl font-bold">Dashboard</h1>
+					<h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
 					<p className="text-muted-foreground">
 						Bem-vindo, {user.name} - {user.company?.name}
 					</p>

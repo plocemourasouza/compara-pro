@@ -184,7 +184,7 @@ export default function UploadClient({ user }: UploadClientProps) {
 	return (
 		<div className="space-y-6">
 			<div>
-				<h1 className="text-3xl font-bold">Upload de Arquivo</h1>
+				<h1 className="text-2xl font-bold tracking-tight">Upload de Arquivo</h1>
 				<p className="text-muted-foreground">
 					Faça upload da sua {uploadLabel.toLowerCase()}
 				</p>

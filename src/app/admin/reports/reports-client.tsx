@@ -135,12 +135,10 @@ export function ReportsClient({ user: _user }: ReportsClientProps) {
 
 	return (
 		<div className="space-y-6">
-			<div className="flex items-center justify-between">
+			<div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
 				<div>
-					<h1 className="text-2xl font-semibold text-foreground">Relatórios</h1>
-					<p className="text-sm text-muted-foreground mt-1">
-						Métricas reais do sistema
-					</p>
+					<h1 className="text-2xl font-bold tracking-tight">Relatórios</h1>
+					<p className="text-muted-foreground">Métricas reais do sistema</p>
 				</div>
 				<Button
 					onClick={exportCsv}
