@@ -20,13 +20,17 @@ que o fornecedor aprova ou rejeita.
 - **Fluxo do fornecedor** — lista de pré-pedidos recebidos, aprovar/rejeitar (com motivo).
 - **Área administrativa** — usuários, empresas, produtos, histórico de uploads, relatórios (métricas
   reais + export CSV), configurações (perfil/senha/preferências + IA).
+- **Padrão único de listas** — toda lista usa **data-table** (ordenação/busca/paginação); clicar na
+  linha abre uma **modal de detalhe**, e o cadastro (criar/editar) acontece em **rota dedicada**
+  (`/novo`, `/[id]/editar`) com formulários react-hook-form + Zod.
 - **Notificações** in-app e por **e-mail** (Resend, opcional — habilita com `RESEND_API_KEY`).
 
 ## Stack
 
 Next.js 16 (App Router, Turbopack) · React 19 · TypeScript 6 (strict) · Prisma 7 + PostgreSQL
-(driver adapter `@prisma/adapter-pg`) · Tailwind CSS 4 · Biome · Vitest · auth JWT com `jose`/
-`jsonwebtoken` · cripto AES-256-GCM para a chave de IA.
+(driver adapter `@prisma/adapter-pg`) · Tailwind CSS 4 · shadcn/ui + TanStack Table · react-hook-form
++ Zod · Biome · Vitest · Playwright · auth JWT com `jose`/`jsonwebtoken` · cripto AES-256-GCM para a
+chave de IA.
 
 ## Rodando localmente
 
