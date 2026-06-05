@@ -6,7 +6,13 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
 import {
 	Form,
 	FormControl,
@@ -164,7 +170,7 @@ export function CompanyForm({
 	const isSubmitting = form.formState.isSubmitting;
 
 	return (
-		<div className="space-y-6">
+		<div className="mx-auto max-w-3xl space-y-6">
 			<div className="flex items-center gap-3">
 				<Button variant="ghost" size="sm" onClick={() => router.back()}>
 					<ArrowLeft className="h-4 w-4" />
@@ -189,13 +195,16 @@ export function CompanyForm({
 								<Building2 className="h-5 w-5" />
 								Dados da Empresa
 							</CardTitle>
+							<CardDescription>
+								Identificação fiscal e contato da empresa.
+							</CardDescription>
 						</CardHeader>
-						<CardContent className="grid grid-cols-1 gap-4 md:grid-cols-2">
+						<CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-6">
 							<FormField
 								control={form.control}
 								name="name"
 								render={({ field }) => (
-									<FormItem>
+									<FormItem className="sm:col-span-3">
 										<FormLabel>Nome Fantasia *</FormLabel>
 										<FormControl>
 											<Input
@@ -211,7 +220,7 @@ export function CompanyForm({
 								control={form.control}
 								name="legalName"
 								render={({ field }) => (
-									<FormItem>
+									<FormItem className="sm:col-span-3">
 										<FormLabel>Razão Social *</FormLabel>
 										<FormControl>
 											<Input placeholder="Razão social da empresa" {...field} />
@@ -224,7 +233,7 @@ export function CompanyForm({
 								control={form.control}
 								name="cnpj"
 								render={({ field }) => (
-									<FormItem>
+									<FormItem className="sm:col-span-2">
 										<FormLabel>CNPJ *</FormLabel>
 										<FormControl>
 											<Input
@@ -243,11 +252,11 @@ export function CompanyForm({
 								control={form.control}
 								name="type"
 								render={({ field }) => (
-									<FormItem>
+									<FormItem className="sm:col-span-2">
 										<FormLabel>Tipo *</FormLabel>
 										<Select value={field.value} onValueChange={field.onChange}>
 											<FormControl>
-												<SelectTrigger>
+												<SelectTrigger className="w-full">
 													<SelectValue />
 												</SelectTrigger>
 											</FormControl>
@@ -264,11 +273,11 @@ export function CompanyForm({
 								control={form.control}
 								name="taxRegime"
 								render={({ field }) => (
-									<FormItem>
+									<FormItem className="sm:col-span-2">
 										<FormLabel>Enquadramento Tributário *</FormLabel>
 										<Select value={field.value} onValueChange={field.onChange}>
 											<FormControl>
-												<SelectTrigger>
+												<SelectTrigger className="w-full">
 													<SelectValue />
 												</SelectTrigger>
 											</FormControl>
@@ -288,7 +297,7 @@ export function CompanyForm({
 								control={form.control}
 								name="email"
 								render={({ field }) => (
-									<FormItem>
+									<FormItem className="sm:col-span-3">
 										<FormLabel>E-mail da Empresa</FormLabel>
 										<FormControl>
 											<Input
@@ -305,7 +314,7 @@ export function CompanyForm({
 								control={form.control}
 								name="phone"
 								render={({ field }) => (
-									<FormItem>
+									<FormItem className="sm:col-span-3">
 										<FormLabel>Telefone da Empresa</FormLabel>
 										<FormControl>
 											<Input
@@ -329,13 +338,16 @@ export function CompanyForm({
 								<User className="h-5 w-5" />
 								Dados do Responsável
 							</CardTitle>
+							<CardDescription>
+								Pessoa de contato responsável pela empresa.
+							</CardDescription>
 						</CardHeader>
-						<CardContent className="grid grid-cols-1 gap-4 md:grid-cols-2">
+						<CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-6">
 							<FormField
 								control={form.control}
 								name="responsibleName"
 								render={({ field }) => (
-									<FormItem>
+									<FormItem className="sm:col-span-6">
 										<FormLabel>Nome do Responsável *</FormLabel>
 										<FormControl>
 											<Input placeholder="Nome completo" {...field} />
@@ -348,7 +360,7 @@ export function CompanyForm({
 								control={form.control}
 								name="responsibleEmail"
 								render={({ field }) => (
-									<FormItem>
+									<FormItem className="sm:col-span-3">
 										<FormLabel>E-mail do Responsável *</FormLabel>
 										<FormControl>
 											<Input
@@ -365,7 +377,7 @@ export function CompanyForm({
 								control={form.control}
 								name="responsiblePhone"
 								render={({ field }) => (
-									<FormItem>
+									<FormItem className="sm:col-span-3">
 										<FormLabel>Telefone do Responsável *</FormLabel>
 										<FormControl>
 											<Input
@@ -389,17 +401,18 @@ export function CompanyForm({
 								<MapPin className="h-5 w-5" />
 								Dados de Localização
 							</CardTitle>
+							<CardDescription>Endereço completo da empresa.</CardDescription>
 						</CardHeader>
-						<CardContent className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+						<CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-6">
 							<FormField
 								control={form.control}
 								name="addressType"
 								render={({ field }) => (
-									<FormItem>
+									<FormItem className="sm:col-span-2">
 										<FormLabel>Tipo de Logradouro *</FormLabel>
 										<Select value={field.value} onValueChange={field.onChange}>
 											<FormControl>
-												<SelectTrigger>
+												<SelectTrigger className="w-full">
 													<SelectValue />
 												</SelectTrigger>
 											</FormControl>
@@ -419,7 +432,7 @@ export function CompanyForm({
 								control={form.control}
 								name="street"
 								render={({ field }) => (
-									<FormItem className="md:col-span-2">
+									<FormItem className="sm:col-span-4">
 										<FormLabel>Logradouro *</FormLabel>
 										<FormControl>
 											<Input
@@ -435,7 +448,7 @@ export function CompanyForm({
 								control={form.control}
 								name="number"
 								render={({ field }) => (
-									<FormItem>
+									<FormItem className="sm:col-span-2">
 										<FormLabel>Número *</FormLabel>
 										<FormControl>
 											<Input placeholder="123" {...field} />
@@ -448,7 +461,7 @@ export function CompanyForm({
 								control={form.control}
 								name="neighborhood"
 								render={({ field }) => (
-									<FormItem>
+									<FormItem className="sm:col-span-4">
 										<FormLabel>Bairro *</FormLabel>
 										<FormControl>
 											<Input placeholder="Nome do bairro" {...field} />
@@ -461,7 +474,7 @@ export function CompanyForm({
 								control={form.control}
 								name="city"
 								render={({ field }) => (
-									<FormItem>
+									<FormItem className="sm:col-span-2">
 										<FormLabel>Cidade *</FormLabel>
 										<FormControl>
 											<Input placeholder="Nome da cidade" {...field} />
@@ -474,11 +487,11 @@ export function CompanyForm({
 								control={form.control}
 								name="state"
 								render={({ field }) => (
-									<FormItem>
+									<FormItem className="sm:col-span-2">
 										<FormLabel>Estado *</FormLabel>
 										<Select value={field.value} onValueChange={field.onChange}>
 											<FormControl>
-												<SelectTrigger>
+												<SelectTrigger className="w-full">
 													<SelectValue />
 												</SelectTrigger>
 											</FormControl>
@@ -498,7 +511,7 @@ export function CompanyForm({
 								control={form.control}
 								name="zipCode"
 								render={({ field }) => (
-									<FormItem>
+									<FormItem className="sm:col-span-2">
 										<FormLabel>CEP *</FormLabel>
 										<FormControl>
 											<Input
@@ -517,7 +530,7 @@ export function CompanyForm({
 								control={form.control}
 								name="addressReference"
 								render={({ field }) => (
-									<FormItem className="md:col-span-2 lg:col-span-3">
+									<FormItem className="sm:col-span-6">
 										<FormLabel>Referência</FormLabel>
 										<FormControl>
 											<Input

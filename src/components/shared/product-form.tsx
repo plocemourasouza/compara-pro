@@ -6,7 +6,13 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
 import {
 	Form,
 	FormControl,
@@ -127,7 +133,7 @@ export function ProductForm({
 	const isSubmitting = form.formState.isSubmitting;
 
 	return (
-		<div className="space-y-6">
+		<div className="mx-auto max-w-3xl space-y-6">
 			<div className="flex items-center gap-3">
 				<Button variant="ghost" size="sm" onClick={() => router.back()}>
 					<ArrowLeft className="h-4 w-4" />
@@ -149,13 +155,16 @@ export function ProductForm({
 					<Card>
 						<CardHeader>
 							<CardTitle className="text-lg">Dados do Produto</CardTitle>
+							<CardDescription>
+								Informações de catálogo e precificação.
+							</CardDescription>
 						</CardHeader>
-						<CardContent className="grid grid-cols-1 gap-4 md:grid-cols-2">
+						<CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-6">
 							<FormField
 								control={form.control}
 								name="code"
 								render={({ field }) => (
-									<FormItem>
+									<FormItem className="sm:col-span-3">
 										<FormLabel>Código</FormLabel>
 										<FormControl>
 											<Input placeholder="Código do produto" {...field} />
@@ -168,7 +177,7 @@ export function ProductForm({
 								control={form.control}
 								name="sku"
 								render={({ field }) => (
-									<FormItem>
+									<FormItem className="sm:col-span-3">
 										<FormLabel>SKU</FormLabel>
 										<FormControl>
 											<Input placeholder="SKU do produto" {...field} />
@@ -181,7 +190,7 @@ export function ProductForm({
 								control={form.control}
 								name="name"
 								render={({ field }) => (
-									<FormItem className="md:col-span-2">
+									<FormItem className="sm:col-span-6">
 										<FormLabel>Nome do Produto *</FormLabel>
 										<FormControl>
 											<Input placeholder="Nome do produto" {...field} />
@@ -194,7 +203,7 @@ export function ProductForm({
 								control={form.control}
 								name="price"
 								render={({ field }) => (
-									<FormItem>
+									<FormItem className="sm:col-span-2">
 										<FormLabel>Preço</FormLabel>
 										<FormControl>
 											<Input
@@ -212,7 +221,7 @@ export function ProductForm({
 								control={form.control}
 								name="unit"
 								render={({ field }) => (
-									<FormItem>
+									<FormItem className="sm:col-span-2">
 										<FormLabel>Unidade</FormLabel>
 										<FormControl>
 											<Input placeholder="Unidade (kg, l, etc)" {...field} />
@@ -225,7 +234,7 @@ export function ProductForm({
 								control={form.control}
 								name="category"
 								render={({ field }) => (
-									<FormItem className="md:col-span-2">
+									<FormItem className="sm:col-span-2">
 										<FormLabel>Categoria</FormLabel>
 										<FormControl>
 											<Input placeholder="Categoria do produto" {...field} />
@@ -238,7 +247,7 @@ export function ProductForm({
 								control={form.control}
 								name="description"
 								render={({ field }) => (
-									<FormItem className="md:col-span-2">
+									<FormItem className="sm:col-span-6">
 										<FormLabel>Descrição</FormLabel>
 										<FormControl>
 											<Textarea
@@ -256,14 +265,14 @@ export function ProductForm({
 									control={form.control}
 									name="companyId"
 									render={({ field }) => (
-										<FormItem className="md:col-span-2">
+										<FormItem className="sm:col-span-6">
 											<FormLabel>Empresa *</FormLabel>
 											<Select
 												value={field.value}
 												onValueChange={field.onChange}
 											>
 												<FormControl>
-													<SelectTrigger>
+													<SelectTrigger className="w-full">
 														<SelectValue placeholder="Selecione uma empresa" />
 													</SelectTrigger>
 												</FormControl>

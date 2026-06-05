@@ -6,7 +6,13 @@ import { useRouter } from "next/navigation";
 import { type Resolver, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
 import {
 	Form,
 	FormControl,
@@ -115,7 +121,7 @@ export function UserForm({ mode, userId, defaultValues }: UserFormProps) {
 	const isSubmitting = form.formState.isSubmitting;
 
 	return (
-		<div className="space-y-6">
+		<div className="mx-auto max-w-3xl space-y-6">
 			<div className="flex items-center gap-3">
 				<Button variant="ghost" size="sm" onClick={() => router.back()}>
 					<ArrowLeft className="h-4 w-4" />
@@ -137,6 +143,9 @@ export function UserForm({ mode, userId, defaultValues }: UserFormProps) {
 					<Card>
 						<CardHeader>
 							<CardTitle className="text-lg">Dados do Usuário</CardTitle>
+							<CardDescription>
+								Credenciais de acesso e nível de permissão.
+							</CardDescription>
 						</CardHeader>
 						<CardContent className="grid grid-cols-1 gap-4 md:grid-cols-2">
 							<FormField
@@ -200,7 +209,7 @@ export function UserForm({ mode, userId, defaultValues }: UserFormProps) {
 										<FormLabel>Papel *</FormLabel>
 										<Select value={field.value} onValueChange={field.onChange}>
 											<FormControl>
-												<SelectTrigger>
+												<SelectTrigger className="w-full">
 													<SelectValue />
 												</SelectTrigger>
 											</FormControl>
