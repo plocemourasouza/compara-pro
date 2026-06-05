@@ -353,14 +353,18 @@ export class PreOrderService {
 	}
 
 	static async listPreOrders(
-		companyId: string,
-		role: "CLIENT" | "SUPPLIER",
+		companyId: string | null,
+		role: "CLIENT" | "SUPPLIER" | "ADMIN",
 		page: number = 1,
 		limit: number = 10,
 	) {
 		try {
 			const where =
-				role === "CLIENT" ? { clientId: companyId } : { supplierId: companyId };
+				role === "ADMIN"
+					? {}
+					: role === "CLIENT"
+						? { clientId: companyId ?? "" }
+						: { supplierId: companyId ?? "" };
 
 			const [preOrders, total] = await Promise.all([
 				prisma.preOrder.findMany({

@@ -4,9 +4,10 @@ import { PreOrderService } from "@/lib/services/pre-order-service";
 
 export async function GET(request: NextRequest) {
 	try {
-		const user = await requireAuth(["CLIENT", "SUPPLIER"]);
+		const user = await requireAuth(["CLIENT", "SUPPLIER", "ADMIN"]);
 
-		if (!user.company) {
+		// Não-admin precisa de empresa; admin enxerga todos os pré-pedidos.
+		if (user.role !== "ADMIN" && !user.company) {
 			return NextResponse.json(
 				{ error: "Usuário deve estar associado a uma empresa" },
 				{ status: 400 },
@@ -18,8 +19,8 @@ export async function GET(request: NextRequest) {
 		const limit = parseInt(searchParams.get("limit") || "10", 10);
 
 		const result = await PreOrderService.listPreOrders(
-			user.company.id,
-			user.role as "CLIENT" | "SUPPLIER",
+			user.company?.id ?? null,
+			user.role as "CLIENT" | "SUPPLIER" | "ADMIN",
 			page,
 			Math.min(limit, 50), // Max 50 per page
 		);

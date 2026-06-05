@@ -170,7 +170,29 @@ async function makeCompanyWithUser({ name, type, cnpj, email }) {
 			{ sku: "XYZ-99", name: "Item Inexistente", quantity: 10 },
 		]);
 
-		console.log("SEED_OK fornecedores=2 comprador=1 (senha demo1234)");
+		const alfaProducts = await prisma.product.findMany({
+			where: { companyId: alfa.id },
+			take: 2,
+		});
+		const preOrderItems = alfaProducts.map((p, i) => {
+			const quantity = i === 0 ? 500 : 100;
+			const price = p.price ?? 0;
+			return { productId: p.id, quantity, price, totalPrice: price * quantity };
+		});
+		await prisma.preOrder.create({
+			data: {
+				clientId: buyer.id,
+				supplierId: alfa.id,
+				status: "ACTIVE",
+				totalAmount: preOrderItems.reduce((s, it) => s + it.totalPrice, 0),
+				notes: "Pré-pedido de demonstração.",
+				items: { create: preOrderItems },
+			},
+		});
+
+		console.log(
+			"SEED_OK fornecedores=2 comprador=1 pre-pedido=1 (senha demo1234)",
+		);
 	} catch (e) {
 		console.log("SEED_ERR " + String(e.message).split("\n")[0]);
 	} finally {

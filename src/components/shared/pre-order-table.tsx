@@ -19,6 +19,16 @@ export interface PreOrder {
 	supplier: { id: string; name: string };
 }
 
+export interface PreOrderItem {
+	id: string;
+	name: string;
+	sku?: string | null;
+	code?: string | null;
+	quantity: number;
+	price: number;
+	totalPrice: number;
+}
+
 export const PRE_ORDER_STATUS: Record<
 	PreOrderStatus,
 	{ label: string; className: string }
