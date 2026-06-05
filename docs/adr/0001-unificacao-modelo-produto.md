@@ -1,6 +1,6 @@
 # ADR 0001 — Unificação do modelo de produto (catálogo ↔ matching)
 
-- **Status:** Aprovada (decisões confirmadas — pronta para migração)
+- **Status:** Implementada e verificada (paridade via `verify-cycle.cjs` → FINALIZED)
 - **Data:** 2026-06
 - **Contexto da feature:** F6 do plano de pendências
 

@@ -86,5 +86,4 @@ nunca exposta. Advisories de dependência aceitas estão documentadas em [SECURI
 
 ## Status
 
-MVP funcional. Em evolução: testes automatizados de rota/E2E e unificação do modelo de produto
-(catálogo ↔ matching).
+MVP funcional. Em evolução: testes E2E automatizados (Playwright).

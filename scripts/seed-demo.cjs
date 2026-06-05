@@ -46,6 +46,50 @@ async function makeUploadWithProducts(companyId, uploadType, products) {
 	return upload;
 }
 
+async function makeCatalog(companyId, items) {
+	const upload = await prisma.uploadHistory.create({
+		data: {
+			companyId,
+			fileName: "catalogo.xlsx",
+			fileSize: 2048,
+			totalRows: items.length,
+			processedRows: items.length,
+			errorRows: 0,
+			uploadType: "SUPPLIER_PRODUCTS",
+			status: "COMPLETED",
+			isActive: true,
+			priceChangeIndicator: "FIRST_UPLOAD",
+			processedAt: new Date(),
+		},
+	});
+	await prisma.product.createMany({
+		data: items.map((p) => ({
+			companyId,
+			name: p.name,
+			sku: p.sku ?? null,
+			code: p.code ?? null,
+			price: p.price ?? null,
+			quantity: p.quantity ?? null,
+			unit: "un",
+			isActive: true,
+			lastUploadId: upload.id,
+		})),
+	});
+	await prisma.uploadedProduct.createMany({
+		data: items.map((p, i) => ({
+			uploadId: upload.id,
+			originalRow: i + 2,
+			sku: p.sku ?? null,
+			code: p.code ?? null,
+			name: p.name,
+			price: p.price ?? null,
+			quantity: p.quantity ?? null,
+			unit: "un",
+		})),
+	});
+	return upload;
+}
+
 async function makeCompanyWithUser({ name, type, cnpj, email }) {
 	const company = await prisma.company.create({
 		data: { name, type, cnpj, email },
@@ -78,7 +122,7 @@ async function makeCompanyWithUser({ name, type, cnpj, email }) {
 			cnpj: "11111111000111",
 			email: "fornecedor.alfa@demo.com",
 		});
-		await makeUploadWithProducts(alfa.id, "SUPPLIER_PRODUCTS", [
+		await makeCatalog(alfa.id, [
 			{ sku: "PAR-M6", name: "Parafuso M6", price: 0.5 },
 			{ sku: "CAN-AZ", name: "Caneta Azul", price: 1.5 },
 			{ code: "PAP-A4", name: "Papel A4 75g", price: 20.0 },
@@ -90,7 +134,7 @@ async function makeCompanyWithUser({ name, type, cnpj, email }) {
 			cnpj: "22222222000122",
 			email: "fornecedor.beta@demo.com",
 		});
-		await makeUploadWithProducts(beta.id, "SUPPLIER_PRODUCTS", [
+		await makeCatalog(beta.id, [
 			{ sku: "PAR-M6", name: "Parafuso M6 Inox", price: 0.45 },
 			{ sku: "CAN-AZ", name: "Caneta Azul BIC", price: 1.2 },
 			{ code: "PAP-A4", name: "Papel A4 Sulfite", price: 18.5 },

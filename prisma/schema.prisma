@@ -70,21 +70,27 @@ model Company {
 }
 
 model Product {
-  id           String         @id @default(cuid())
-  code         String?
-  sku          String?
-  name         String
-  price        Float?
-  description  String?
-  category     String?
-  unit         String?
-  companyId    String
-  company      Company        @relation(fields: [companyId], references: [id])
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-  deletedAt    DateTime?
+  id              String          @id @default(cuid())
+  code            String?
+  sku             String?
+  name            String
+  price           Float?
+  description     String?
+  category        String?
+  unit            String?
+  quantity        Int?
+  companyId       String
+  company         Company         @relation(fields: [companyId], references: [id])
+  isActive        Boolean         @default(true) // faz parte da lista vigente do fornecedor
+  lastUploadId    String? // último upload que escreveu este produto
+  supplierMatches SupplierMatch[] @relation("SupplierProduct")
+  preOrderItems   PreOrderItem[]  @relation("PreOrderProduct")
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  deletedAt       DateTime?
 
   @@unique([companyId, sku]) // Evita duplicatas por empresa
+  @@index([companyId, code])
   @@map("products")
 }
 
@@ -115,7 +121,7 @@ model PreOrderItem {
   matchId    String?
   match      ComparisonMatch? @relation(fields: [matchId], references: [id])
   productId  String
-  product    UploadedProduct  @relation("PreOrderProduct", fields: [productId], references: [id])
+  product    Product          @relation("PreOrderProduct", fields: [productId], references: [id])
   quantity   Int              @default(1)
   price      Float
   totalPrice Float
@@ -187,8 +193,6 @@ model UploadedProduct {
   unit            String?
   quantity        Int? // Available quantity
   clientMatches   ComparisonMatch[] @relation("ClientProduct")
-  supplierMatches SupplierMatch[]   @relation("SupplierProduct")
-  preOrderItems   PreOrderItem[]    @relation("PreOrderProduct")
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
 
@@ -238,7 +242,7 @@ model SupplierMatch {
   comparisonMatchId String
   comparisonMatch   ComparisonMatch @relation(fields: [comparisonMatchId], references: [id])
   supplierProductId String
-  supplierProduct   UploadedProduct @relation("SupplierProduct", fields: [supplierProductId], references: [id])
+  supplierProduct   Product         @relation("SupplierProduct", fields: [supplierProductId], references: [id])
   supplierCompanyId String
   supplierCompany   Company         @relation("SupplierMatches", fields: [supplierCompanyId], references: [id])
   price             Float

@@ -279,58 +279,47 @@ export class OptimizedProductMatcher {
 	)
 	private static async getActiveSupplierProductsCached(requestId?: string) {
 		try {
-			const activeUploads = await prisma.uploadHistory.findMany({
+			// Supplier catalog (products) is the single source for matching.
+			const products = await prisma.product.findMany({
 				where: {
-					uploadType: "SUPPLIER_PRODUCTS",
 					isActive: true,
-					status: "COMPLETED",
+					deletedAt: null,
+					price: { gt: 0 },
+					company: { type: "SUPPLIER" },
+					OR: [
+						{ sku: { not: null } },
+						{ code: { not: null } },
+						{ name: { not: "" } },
+					],
 				},
 				select: {
 					id: true,
-					companyId: true,
-					company: {
-						select: {
-							id: true,
-							name: true,
-							type: true,
-						},
-					},
-					products: {
-						where: {
-							AND: [
-								{ price: { gt: 0 } }, // Only products with valid prices
-								{
-									OR: [
-										{ sku: { not: null } },
-										{ code: { not: null } },
-										{ name: { not: "" } },
-									],
-								},
-							],
-						},
-						select: {
-							id: true,
-							sku: true,
-							code: true,
-							name: true,
-							price: true,
-							description: true,
-							category: true,
-							unit: true,
-							quantity: true,
-						},
-					},
+					sku: true,
+					code: true,
+					name: true,
+					price: true,
+					description: true,
+					category: true,
+					unit: true,
+					quantity: true,
+					lastUploadId: true,
+					company: { select: { id: true, name: true, type: true } },
 				},
 			});
 
-			// Flatten and enrich with supplier info
-			return activeUploads.flatMap((upload) =>
-				upload.products.map((product) => ({
-					...product,
-					supplier: upload.company,
-					uploadId: upload.id,
-				})),
-			);
+			return products.map((product) => ({
+				id: product.id,
+				sku: product.sku,
+				code: product.code,
+				name: product.name,
+				price: product.price,
+				description: product.description,
+				category: product.category,
+				unit: product.unit,
+				quantity: product.quantity,
+				supplier: product.company,
+				uploadId: product.lastUploadId ?? "",
+			}));
 		} catch (error) {
 			console.error("Error fetching supplier products:", error);
 			throw ErrorFactory.database.recordNotFound(

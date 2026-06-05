@@ -60,6 +60,15 @@ export class FileProcessor {
 				data: { totalRows },
 			});
 
+			// Supplier upload: reset the catalog's active flag; rows in this upload
+			// are reactivated as they are upserted during processing.
+			if (uploadType === "SUPPLIER_PRODUCTS") {
+				await prisma.product.updateMany({
+					where: { companyId, deletedAt: null },
+					data: { isActive: false },
+				});
+			}
+
 			// Process data
 			const result = await FileProcessor.processData(
 				data,
@@ -137,11 +146,51 @@ export class FileProcessor {
 		}
 	}
 
+	/** Upsert a supplier row into the products catalog (sku → code → name). */
+	private static async upsertCatalogProduct(
+		companyId: string,
+		uploadId: string,
+		p: SupplierProduct,
+	) {
+		const base = {
+			name: p.name,
+			sku: p.sku ?? null,
+			code: p.code ?? null,
+			price: p.price ?? null,
+			description: p.description ?? null,
+			category: p.category ?? null,
+			unit: p.unit ?? null,
+			isActive: true,
+			lastUploadId: uploadId,
+		};
+		if (p.sku) {
+			await prisma.product.upsert({
+				where: { companyId_sku: { companyId, sku: p.sku } },
+				create: { ...base, companyId },
+				update: base,
+			});
+			return;
+		}
+		const existing = await prisma.product.findFirst({
+			where: {
+				companyId,
+				deletedAt: null,
+				...(p.code ? { code: p.code } : { name: p.name }),
+			},
+			select: { id: true },
+		});
+		if (existing) {
+			await prisma.product.update({ where: { id: existing.id }, data: base });
+		} else {
+			await prisma.product.create({ data: { ...base, companyId } });
+		}
+	}
+
 	private static async processData(
 		data: Record<string, unknown>[],
 		uploadId: string,
 		uploadType: "SUPPLIER_PRODUCTS" | "CLIENT_REQUIREMENTS",
-		_companyId: string,
+		companyId: string,
 	) {
 		const errors: ProcessingError[] = [];
 		const processedProducts: (SupplierProduct | ClientRequirement)[] = [];
@@ -193,6 +242,15 @@ export class FileProcessor {
 						...validatedData,
 					},
 				});
+
+				// Supplier rows feed the catalog (single source for matching).
+				if (uploadType === "SUPPLIER_PRODUCTS") {
+					await FileProcessor.upsertCatalogProduct(
+						companyId,
+						uploadId,
+						validatedData as SupplierProduct,
+					);
+				}
 
 				processedProducts.push(validatedData);
 				processedRows++;

@@ -13,6 +13,7 @@
 		"test": "vitest run",
 		"test:watch": "vitest",
 		"seed:demo": "node scripts/seed-demo.cjs",
+		"reset:data": "node scripts/reset-data.cjs",
 		"verify:parecer": "node scripts/verify-parecer.cjs",
 		"verify:cycle": "node scripts/verify-cycle.cjs",
 		"verify:prompt": "node scripts/verify-prompt.cjs"
