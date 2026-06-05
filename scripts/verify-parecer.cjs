@@ -18,7 +18,9 @@ const B = "http://localhost:3000";
 		where: { companyId: u.companyId, uploadType: "CLIENT_REQUIREMENTS" },
 		select: { id: true },
 	});
-	const cookie = "auth_token=" + jwt.sign({ userId: u.id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+	const cookie =
+		"auth_token=" +
+		jwt.sign({ userId: u.id }, process.env.JWT_SECRET, { expiresIn: "7d" });
 
 	const cr = await fetch(B + "/api/comparison/create", {
 		method: "POST",
@@ -30,7 +32,9 @@ const B = "http://localhost:3000";
 	const cid = cj.comparisonId;
 	if (!cid) return process.exit(0);
 
-	const pr = await fetch(B + "/api/comparison/" + cid + "/parecer", { headers: { Cookie: cookie } });
+	const pr = await fetch(B + "/api/comparison/" + cid + "/parecer", {
+		headers: { Cookie: cookie },
+	});
 	const pj = await pr.json();
 	const p = pj.parecer || {};
 	console.log("PARECER_STATUS", pr.status);

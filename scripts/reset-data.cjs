@@ -27,7 +27,9 @@ const prisma = new PrismaClient({
 		const companies = await prisma.company.findMany({
 			select: { id: true, _count: { select: { users: true } } },
 		});
-		const empty = companies.filter((c) => c._count.users === 0).map((c) => c.id);
+		const empty = companies
+			.filter((c) => c._count.users === 0)
+			.map((c) => c.id);
 		if (empty.length) {
 			await prisma.company.deleteMany({ where: { id: { in: empty } } });
 		}

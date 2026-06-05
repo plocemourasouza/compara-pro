@@ -9,7 +9,8 @@ const prisma = new PrismaClient({
 });
 const B = "http://localhost:3000";
 const sign = (id) =>
-	"auth_token=" + jwt.sign({ userId: id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+	"auth_token=" +
+	jwt.sign({ userId: id }, process.env.JWT_SECRET, { expiresIn: "7d" });
 
 (async () => {
 	const admin = await prisma.user.findFirst({
@@ -24,7 +25,9 @@ const sign = (id) =>
 	const buyerCookie = sign(buyer.id);
 
 	const cur = await (
-		await fetch(B + "/api/admin/ai-config", { headers: { Cookie: adminCookie } })
+		await fetch(B + "/api/admin/ai-config", {
+			headers: { Cookie: adminCookie },
+		})
 	).json();
 	console.log("config atual: provider=" + cur.provider + " model=" + cur.model);
 
@@ -78,7 +81,11 @@ const sign = (id) =>
 	const reset = await fetch(B + "/api/admin/ai-config", {
 		method: "POST",
 		headers: { "Content-Type": "application/json", Cookie: adminCookie },
-		body: JSON.stringify({ provider: cur.provider, model: cur.model, systemPrompt: "" }),
+		body: JSON.stringify({
+			provider: cur.provider,
+			model: cur.model,
+			systemPrompt: "",
+		}),
 	});
 	const resetJson = await reset.json();
 	console.log(

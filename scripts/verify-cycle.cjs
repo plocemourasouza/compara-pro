@@ -9,7 +9,8 @@ const prisma = new PrismaClient({
 });
 const B = "http://localhost:3000";
 const sign = (id) =>
-	"auth_token=" + jwt.sign({ userId: id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+	"auth_token=" +
+	jwt.sign({ userId: id }, process.env.JWT_SECRET, { expiresIn: "7d" });
 
 (async () => {
 	const buyer = await prisma.user.findUnique({
@@ -39,7 +40,9 @@ const sign = (id) =>
 	console.log("1) comparison:", cid ? "ok" : "FAIL");
 
 	const cmp = await (
-		await fetch(B + "/api/comparison/" + cid, { headers: { Cookie: buyerCookie } })
+		await fetch(B + "/api/comparison/" + cid, {
+			headers: { Cookie: buyerCookie },
+		})
 	).json();
 	const selected = [];
 	for (const m of cmp.matches || []) {
@@ -57,11 +60,17 @@ const sign = (id) =>
 		}),
 	});
 	const bj = await batch.json();
-	console.log("3) create-batch:", batch.status, JSON.stringify(bj).slice(0, 120));
+	console.log(
+		"3) create-batch:",
+		batch.status,
+		JSON.stringify(bj).slice(0, 120),
+	);
 	const poId = (bj.preOrderIds || [])[0];
 
 	const list = await (
-		await fetch(B + "/api/pre-order/list?limit=50", { headers: { Cookie: supCookie } })
+		await fetch(B + "/api/pre-order/list?limit=50", {
+			headers: { Cookie: supCookie },
+		})
 	).json();
 	const found = (list.preOrders || []).find((p) => p.id === poId);
 	console.log(
