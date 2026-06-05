@@ -66,7 +66,7 @@ export function EntityDetailModal<T>({
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent className="flex h-[60vh] w-[40vw] max-w-[40vw] flex-col gap-0 overflow-hidden p-0 sm:max-w-[40vw]">
+			<DialogContent className="flex max-h-[60vh] w-[40vw] max-w-[40vw] flex-col gap-0 overflow-hidden p-0 sm:max-w-[40vw]">
 				<DialogHeader className="border-b px-6 py-4">
 					<DialogTitle>{title}</DialogTitle>
 					<DialogDescription className={description ? undefined : "sr-only"}>
@@ -74,7 +74,7 @@ export function EntityDetailModal<T>({
 					</DialogDescription>
 				</DialogHeader>
 
-				<div className="flex-1 overflow-y-auto px-6 py-5">
+				<div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
 					{record && (
 						<div className="space-y-7">
 							{sections.map((section, sectionIndex) => {

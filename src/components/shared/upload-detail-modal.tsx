@@ -108,7 +108,7 @@ export function UploadDetailModal({
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent className="flex h-[60vh] w-[40vw] max-w-[40vw] flex-col gap-0 overflow-hidden p-0 sm:max-w-[40vw]">
+			<DialogContent className="flex max-h-[60vh] w-[40vw] max-w-[40vw] flex-col gap-0 overflow-hidden p-0 sm:max-w-[40vw]">
 				<DialogHeader className="border-b px-6 py-4">
 					<DialogTitle>Detalhes do Upload</DialogTitle>
 					<DialogDescription className="sr-only">
@@ -116,7 +116,7 @@ export function UploadDetailModal({
 					</DialogDescription>
 				</DialogHeader>
 
-				<div className="flex-1 overflow-y-auto px-6 py-4">
+				<div className="min-h-0 flex-1 overflow-y-auto px-6 py-4">
 					{loading ? (
 						<div className="flex items-center justify-center p-8">
 							<Clock className="h-8 w-8 animate-spin text-primary" />

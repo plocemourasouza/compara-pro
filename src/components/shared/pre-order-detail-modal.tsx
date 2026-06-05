@@ -72,7 +72,7 @@ export function PreOrderDetailModal({
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent className="flex h-[60vh] w-[40vw] max-w-[40vw] flex-col gap-0 overflow-hidden p-0 sm:max-w-[40vw]">
+			<DialogContent className="flex max-h-[60vh] w-[40vw] max-w-[40vw] flex-col gap-0 overflow-hidden p-0 sm:max-w-[40vw]">
 				<DialogHeader className="border-b px-6 py-4">
 					<DialogTitle>
 						Pré-pedido {preOrder ? `#${preOrder.id.slice(-8)}` : ""}
@@ -82,7 +82,7 @@ export function PreOrderDetailModal({
 					</DialogDescription>
 				</DialogHeader>
 
-				<div className="flex-1 space-y-7 overflow-y-auto px-6 py-5">
+				<div className="min-h-0 flex-1 space-y-7 overflow-y-auto px-6 py-5">
 					{preOrder && (
 						<dl className="grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2">
 							<Field label="Cliente" value={preOrder.client.name} />
@@ -174,7 +174,7 @@ export function PreOrderDetailModal({
 													<TableCell className="text-right tabular-nums">
 														{item.quantity}
 													</TableCell>
-													<TableCell className="text-right tabular-nums text-muted-foreground">
+													<TableCell className="text-right tabular-nums">
 														{formatters.currency(item.price)}
 													</TableCell>
 													<TableCell className="text-right font-medium tabular-nums">
