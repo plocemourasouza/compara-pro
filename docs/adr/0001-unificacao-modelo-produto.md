@@ -1,6 +1,6 @@
 # ADR 0001 — Unificação do modelo de produto (catálogo ↔ matching)
 
-- **Status:** Proposta (aguardando aprovação antes da migração)
+- **Status:** Aprovada (decisões confirmadas — pronta para migração)
 - **Data:** 2026-06
 - **Contexto da feature:** F6 do plano de pendências
 
@@ -72,8 +72,10 @@ Adotar o **catálogo (`products`) como fonte única**, alimentado pelos uploads:
 Migração versionada (`prisma migrate`) → `migrate resolve`/revert. Enquanto o matching ainda puder ler
 `uploaded_products`, a volta é trocar o ponto de leitura de volta.
 
-## Pendências de decisão (para aprovação)
+## Decisões confirmadas
 
-- [ ] Confirmar a **chave de upsert** (sku → code → name?).
-- [ ] Confirmar como portar **comparações/pré-pedidos existentes** (backfill vs. histórico congelado).
-- [ ] Confirmar onde mora o "ativo": flag em `products` vs. derivar do último upload.
+- [x] **Chave de upsert:** `SKU → código → nome` (precedência; primeiro que casar identifica o produto).
+- [x] **Dados existentes:** **reset** — o banco só tem dados de demonstração; limpar + re-seedar no novo
+  modelo (sem backfill de referências antigas).
+- [x] **"Ativo":** **flag `isActive` em `products`** (+ `lastUploadId`); cada upload reativa os seus
+  produtos e inativa o resto daquele fornecedor.
