@@ -67,7 +67,7 @@ export function EntityDetailModal<T>({
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent className="h-[80vh] w-[60vw] max-w-[60vw] overflow-y-auto sm:max-w-[60vw]">
+			<DialogContent className="h-[60vh] w-[40vw] max-w-[40vw] overflow-y-auto sm:max-w-[40vw]">
 				<DialogHeader>
 					<DialogTitle>{title}</DialogTitle>
 					<DialogDescription className={description ? undefined : "sr-only"}>
