@@ -135,7 +135,7 @@ export default function ProductsClient({ user }: ProductsClientProps) {
 	const uniqueCompanies = new Set(products.map((p) => p.company.id)).size;
 
 	return (
-		<div className="space-y-6 p-6">
+		<div className="space-y-6">
 			{/* Header */}
 			<div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
 				<div>
