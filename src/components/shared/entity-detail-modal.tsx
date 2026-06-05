@@ -13,7 +13,6 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
-import { Separator } from "@/components/ui/separator";
 
 export interface DetailField<T> {
 	label: string;
@@ -75,9 +74,9 @@ export function EntityDetailModal<T>({
 					</DialogDescription>
 				</DialogHeader>
 
-				<div className="flex-1 overflow-y-auto px-6 py-4">
+				<div className="flex-1 overflow-y-auto px-6 py-5">
 					{record && (
-						<div className="space-y-6">
+						<div className="space-y-7">
 							{sections.map((section, sectionIndex) => {
 								const visibleFields = section.fields.filter((field) => {
 									if (field.hideWhenEmpty === false) return true;
@@ -85,35 +84,36 @@ export function EntityDetailModal<T>({
 								});
 								if (visibleFields.length === 0) return null;
 								return (
-									<div
+									<section
 										key={section.title ?? `section-${sectionIndex}`}
 										className="space-y-3"
 									>
 										{section.title && (
-											<h3 className="flex items-center gap-2 text-base font-semibold">
-												{section.icon}
+											<h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+												{section.icon && (
+													<span className="text-muted-foreground [&_svg]:size-4">
+														{section.icon}
+													</span>
+												)}
 												{section.title}
 											</h3>
 										)}
-										<div className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
+										<dl className="grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2">
 											{visibleFields.map((field) => (
 												<div
 													key={field.label}
 													className={field.full ? "sm:col-span-2" : undefined}
 												>
-													<dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+													<dt className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
 														{field.label}
 													</dt>
-													<dd className="mt-0.5 text-sm">
+													<dd className="mt-1 text-sm leading-relaxed text-foreground">
 														{field.value(record)}
 													</dd>
 												</div>
 											))}
-										</div>
-										{section.title &&
-											sectionIndex < sections.length - 1 &&
-											visibleFields.length > 0 && <Separator />}
-									</div>
+										</dl>
+									</section>
 								);
 							})}
 						</div>

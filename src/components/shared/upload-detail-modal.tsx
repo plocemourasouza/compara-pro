@@ -6,9 +6,11 @@ import { toast } from "sonner";
 import {
 	formatFileSize,
 	getStatusLabel,
+	getStatusVariant,
 	getUploadTypeLabel,
 	type UploadDetail,
 } from "@/components/shared/upload-table";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -19,6 +21,15 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
+import { Progress } from "@/components/ui/progress";
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from "@/components/ui/table";
 import { formatters } from "@/lib/utils/masks";
 
 interface UploadDetailModalProps {
@@ -89,10 +100,11 @@ export function UploadDetailModal({
 		}
 	};
 
-	const successRate =
+	const successRateValue =
 		detail && detail.totalRows > 0
-			? ((detail.processedRows / detail.totalRows) * 100).toFixed(1)
-			: "0";
+			? (detail.processedRows / detail.totalRows) * 100
+			: 0;
+	const successRate = successRateValue.toFixed(1);
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
@@ -110,11 +122,13 @@ export function UploadDetailModal({
 							<Clock className="h-8 w-8 animate-spin text-primary" />
 						</div>
 					) : detail ? (
-						<div className="space-y-6">
-							<div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-								<div className="space-y-2">
-									<h4 className="font-semibold">Informações Gerais</h4>
-									<dl className="space-y-1 text-sm">
+						<div className="space-y-7">
+							<div className="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2">
+								<section className="space-y-3">
+									<h4 className="text-sm font-semibold text-foreground">
+										Informações Gerais
+									</h4>
+									<dl className="space-y-2.5">
 										<Info label="Arquivo" value={detail.fileName} />
 										<Info
 											label="Tipo"
@@ -126,7 +140,11 @@ export function UploadDetailModal({
 										/>
 										<Info
 											label="Status"
-											value={getStatusLabel(detail.status)}
+											value={
+												<Badge variant={getStatusVariant(detail.status)}>
+													{getStatusLabel(detail.status)}
+												</Badge>
+											}
 										/>
 										<Info
 											label="Upload"
@@ -139,83 +157,123 @@ export function UploadDetailModal({
 											/>
 										)}
 									</dl>
-								</div>
-								<div className="space-y-2">
-									<h4 className="font-semibold">Estatísticas</h4>
-									<dl className="space-y-1 text-sm">
-										<Info label="Total de linhas" value={detail.totalRows} />
-										<Info label="Processadas" value={detail.processedRows} />
-										<Info label="Com erro" value={detail.errorRows} />
-										<Info label="Taxa de sucesso" value={`${successRate}%`} />
-									</dl>
-								</div>
+								</section>
+								<section className="space-y-3">
+									<h4 className="text-sm font-semibold text-foreground">
+										Estatísticas
+									</h4>
+									<div className="grid grid-cols-3 gap-2">
+										<Stat label="Total" value={detail.totalRows} />
+										<Stat
+											label="Processadas"
+											value={detail.processedRows}
+											tone="success"
+										/>
+										<Stat
+											label="Com erro"
+											value={detail.errorRows}
+											tone={detail.errorRows > 0 ? "destructive" : "muted"}
+										/>
+									</div>
+									<div className="space-y-1.5 rounded-lg border bg-muted/30 p-3">
+										<div className="flex items-baseline justify-between">
+											<span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+												Taxa de sucesso
+											</span>
+											<span
+												className={`text-sm font-semibold tabular-nums ${
+													detail.errorRows > 0
+														? "text-foreground"
+														: "text-success"
+												}`}
+											>
+												{successRate}%
+											</span>
+										</div>
+										<Progress value={successRateValue} />
+									</div>
+								</section>
 							</div>
 
-							{detail.products && detail.products.length > 0 && (
-								<div>
-									<h4 className="mb-2 font-semibold">
+							{detail.products && detail.products.length > 0 ? (
+								<section className="space-y-3">
+									<h4 className="text-sm font-semibold text-foreground">
 										Produtos (primeiros 10)
 									</h4>
 									<div className="overflow-hidden rounded-lg border">
-										<table className="w-full text-sm">
-											<thead className="bg-muted">
-												<tr>
-													<th className="px-3 py-2 text-left">SKU</th>
-													<th className="px-3 py-2 text-left">Nome</th>
-													<th className="px-3 py-2 text-left">Preço</th>
-													<th className="px-3 py-2 text-left">Categoria</th>
-												</tr>
-											</thead>
-											<tbody>
+										<Table>
+											<TableHeader>
+												<TableRow className="bg-muted hover:bg-muted">
+													<TableHead>SKU</TableHead>
+													<TableHead>Nome</TableHead>
+													<TableHead className="text-right">Preço</TableHead>
+													<TableHead>Categoria</TableHead>
+												</TableRow>
+											</TableHeader>
+											<TableBody>
 												{detail.products.slice(0, 10).map((product) => (
-													<tr key={product.id} className="border-t">
-														<td className="px-3 py-2">
-															{product.sku || product.code || "-"}
-														</td>
-														<td className="px-3 py-2">{product.name}</td>
-														<td className="px-3 py-2">
+													<TableRow key={product.id}>
+														<TableCell className="font-mono text-xs text-muted-foreground">
+															{product.sku || product.code || "—"}
+														</TableCell>
+														<TableCell className="font-medium">
+															{product.name}
+														</TableCell>
+														<TableCell className="text-right tabular-nums">
 															{product.price
 																? formatters.currency(product.price)
-																: "-"}
-														</td>
-														<td className="px-3 py-2">
-															{product.category || "-"}
-														</td>
-													</tr>
+																: "—"}
+														</TableCell>
+														<TableCell className="text-muted-foreground">
+															{product.category || "—"}
+														</TableCell>
+													</TableRow>
 												))}
-											</tbody>
-										</table>
+											</TableBody>
+										</Table>
 									</div>
 									{detail.products.length > 10 && (
-										<p className="mt-2 text-sm text-muted-foreground">
+										<p className="text-xs text-muted-foreground">
 											E mais {detail.products.length - 10} produtos...
 										</p>
 									)}
-								</div>
+								</section>
+							) : (
+								<p className="rounded-lg border border-dashed py-6 text-center text-sm text-muted-foreground">
+									Nenhum produto importado neste upload.
+								</p>
 							)}
 
 							{detail.errors && detail.errors.length > 0 && (
-								<div>
-									<h4 className="mb-2 font-semibold">Erros Encontrados</h4>
-									<div className="max-h-40 overflow-y-auto overflow-hidden rounded-lg border">
-										<table className="w-full text-sm">
-											<thead className="bg-destructive/10">
-												<tr>
-													<th className="px-3 py-2 text-left">Linha</th>
-													<th className="px-3 py-2 text-left">Erro</th>
-												</tr>
-											</thead>
-											<tbody>
+								<section className="space-y-3">
+									<h4 className="text-sm font-semibold text-destructive">
+										Erros Encontrados
+									</h4>
+									<div className="max-h-40 overflow-y-auto overflow-hidden rounded-lg border border-destructive/30">
+										<Table>
+											<TableHeader>
+												<TableRow className="bg-destructive/10 hover:bg-destructive/10">
+													<TableHead className="w-20 text-right">
+														Linha
+													</TableHead>
+													<TableHead>Erro</TableHead>
+												</TableRow>
+											</TableHeader>
+											<TableBody>
 												{detail.errors.map((err) => (
-													<tr key={err.row} className="border-t">
-														<td className="px-3 py-2">{err.row}</td>
-														<td className="px-3 py-2">{err.error}</td>
-													</tr>
+													<TableRow key={err.row}>
+														<TableCell className="text-right tabular-nums text-muted-foreground">
+															{err.row}
+														</TableCell>
+														<TableCell className="whitespace-normal text-destructive">
+															{err.error}
+														</TableCell>
+													</TableRow>
 												))}
-											</tbody>
-										</table>
+											</TableBody>
+										</Table>
 									</div>
-								</div>
+								</section>
 							)}
 						</div>
 					) : null}
@@ -241,9 +299,42 @@ export function UploadDetailModal({
 
 function Info({ label, value }: { label: string; value: React.ReactNode }) {
 	return (
-		<div className="flex justify-between gap-4">
-			<dt className="text-muted-foreground">{label}</dt>
-			<dd className="text-right font-medium">{value}</dd>
+		<div className="flex items-center justify-between gap-4">
+			<dt className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+				{label}
+			</dt>
+			<dd className="text-right text-sm font-medium text-foreground">
+				{value}
+			</dd>
+		</div>
+	);
+}
+
+function Stat({
+	label,
+	value,
+	tone = "default",
+}: {
+	label: string;
+	value: React.ReactNode;
+	tone?: "default" | "success" | "destructive" | "muted";
+}) {
+	const toneClass =
+		tone === "success"
+			? "text-success"
+			: tone === "destructive"
+				? "text-destructive"
+				: tone === "muted"
+					? "text-muted-foreground"
+					: "text-foreground";
+	return (
+		<div className="rounded-lg border bg-muted/30 px-2.5 py-2 text-center">
+			<div className={`text-lg font-semibold tabular-nums ${toneClass}`}>
+				{value}
+			</div>
+			<div className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+				{label}
+			</div>
 		</div>
 	);
 }
