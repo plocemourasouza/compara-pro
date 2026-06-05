@@ -1,52 +1,40 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
+import { PreOrderDetailModal } from "@/components/shared/pre-order-detail-modal";
 import {
-	Building2,
-	Calendar,
-	CheckCircle,
-	Clock,
-	Eye,
-	Package,
-	ShoppingCart,
-	XCircle,
-} from "lucide-react";
-import { useEffect, useState } from "react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+	getPreOrderColumns,
+	type PreOrder,
+} from "@/components/shared/pre-order-table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DataTable } from "@/components/ui/data-table";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 
 type User = {
 	id: string;
 	name: string;
 	email: string;
 	role: string;
-	company: {
-		id: string;
-		name: string;
-		type: string;
-	} | null;
+	company: { id: string; name: string; type: string } | null;
 };
-
-interface PreOrder {
-	id: string;
-	status: "ACTIVE" | "FINALIZED" | "REJECTED";
-	totalAmount?: number;
-	itemCount: number;
-	totalQuantity: number;
-	createdAt: string;
-	respondedAt?: string;
-	notes?: string;
-	client: { id: string; name: string };
-	supplier: { id: string; name: string };
-}
 
 interface PreOrdersClientProps {
 	user: User;
 }
 
-export default function PreOrdersClient({ user }: PreOrdersClientProps) {
+export default function PreOrdersClient({ user: _user }: PreOrdersClientProps) {
 	const [preOrders, setPreOrders] = useState<PreOrder[]>([]);
 	const [loading, setLoading] = useState(true);
+	const [statusFilter, setStatusFilter] = useState("all");
+	const [selected, setSelected] = useState<PreOrder | null>(null);
+	const [detailOpen, setDetailOpen] = useState(false);
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: mount-only fetch
 	useEffect(() => {
@@ -56,209 +44,80 @@ export default function PreOrdersClient({ user }: PreOrdersClientProps) {
 	const fetchPreOrders = async () => {
 		try {
 			const response = await fetch("/api/pre-order/list");
-
 			if (response.ok) {
 				const data = await response.json();
-				setPreOrders(data.preOrders);
+				setPreOrders(data.preOrders ?? []);
+			} else {
+				toast.error("Erro ao carregar pré-pedidos");
 			}
 		} catch (error) {
 			console.error("Fetch pre-orders error:", error);
+			toast.error("Erro ao carregar pré-pedidos");
 		} finally {
 			setLoading(false);
 		}
 	};
 
-	const getStatusIcon = (status: string) => {
-		switch (status) {
-			case "ACTIVE":
-				return <Clock className="h-4 w-4 text-yellow-500" />;
-			case "FINALIZED":
-				return <CheckCircle className="h-4 w-4 text-success" />;
-			case "REJECTED":
-				return <XCircle className="h-4 w-4 text-destructive" />;
-			default:
-				return null;
-		}
+	const openDetail = (order: PreOrder) => {
+		setSelected(order);
+		setDetailOpen(true);
 	};
 
-	const getStatusLabel = (status: string) => {
-		switch (status) {
-			case "ACTIVE":
-				return "Pendente";
-			case "FINALIZED":
-				return "Aprovado";
-			case "REJECTED":
-				return "Rejeitado";
-			default:
-				return status;
-		}
-	};
+	const columns = useMemo(() => getPreOrderColumns(), []);
 
-	const getStatusColor = (status: string) => {
-		switch (status) {
-			case "ACTIVE":
-				return "bg-yellow-100 text-yellow-800";
-			case "FINALIZED":
-				return "bg-success/10 text-success";
-			case "REJECTED":
-				return "bg-destructive/10 text-destructive";
-			default:
-				return "bg-muted text-muted-foreground";
-		}
-	};
-
-	const formatDate = (dateString: string) => {
-		return new Intl.DateTimeFormat("pt-BR", {
-			day: "2-digit",
-			month: "2-digit",
-			year: "numeric",
-			hour: "2-digit",
-			minute: "2-digit",
-		}).format(new Date(dateString));
-	};
-
-	const formatCurrency = (value: number) => {
-		return new Intl.NumberFormat("pt-BR", {
-			style: "currency",
-			currency: "BRL",
-		}).format(value);
-	};
-
-	if (loading) {
-		return (
-			<div className="flex items-center justify-center p-8">
-				<div className="text-center">
-					<Clock className="h-8 w-8 animate-spin mx-auto mb-2 text-primary" />
-					<p>Carregando pré-pedidos...</p>
-				</div>
-			</div>
-		);
-	}
+	const filteredOrders = useMemo(
+		() =>
+			statusFilter === "all"
+				? preOrders
+				: preOrders.filter((o) => o.status === statusFilter),
+		[preOrders, statusFilter],
+	);
 
 	return (
 		<div className="space-y-6">
 			<div>
 				<h1 className="text-3xl font-bold">Pré-pedidos</h1>
 				<p className="text-muted-foreground">
-					{user.role === "CLIENT"
-						? "Acompanhe seus pré-pedidos enviados aos fornecedores"
-						: "Gerencie os pré-pedidos recebidos dos clientes"}
+					Acompanhe todos os pré-pedidos do sistema
 				</p>
 			</div>
 
-			{preOrders.length === 0 ? (
-				<Card>
-					<CardContent className="flex flex-col items-center justify-center py-16">
-						<ShoppingCart className="h-16 w-16 text-muted-foreground mb-4" />
-						<h3 className="text-lg font-semibold text-muted-foreground mb-2">
-							Nenhum pré-pedido encontrado
-						</h3>
-						<p className="text-muted-foreground text-center">
-							{user.role === "CLIENT"
-								? "Quando você criar pré-pedidos, eles aparecerão aqui."
-								: "Quando recebermos pré-pedidos, eles aparecerão aqui."}
-						</p>
-					</CardContent>
-				</Card>
-			) : (
-				<div className="grid gap-4">
-					{preOrders.map((preOrder) => (
-						<Card key={preOrder.id}>
-							<CardHeader>
-								<div className="flex justify-between items-start">
-									<CardTitle className="flex items-center gap-2">
-										<ShoppingCart className="h-5 w-5" />
-										Pré-pedido #{preOrder.id.slice(-8)}
-									</CardTitle>
-									<div className="flex items-center gap-2">
-										{getStatusIcon(preOrder.status)}
-										<Badge className={getStatusColor(preOrder.status)}>
-											{getStatusLabel(preOrder.status)}
-										</Badge>
-									</div>
-								</div>
-							</CardHeader>
-							<CardContent>
-								<div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-									<div className="flex items-center gap-2">
-										<Building2 className="h-4 w-4 text-muted-foreground" />
-										<div>
-											<p className="text-sm text-muted-foreground">
-												{user.role === "CLIENT" ? "Fornecedor" : "Cliente"}
-											</p>
-											<p className="font-medium">
-												{user.role === "CLIENT"
-													? preOrder.supplier.name
-													: preOrder.client.name}
-											</p>
-										</div>
-									</div>
+			<Card>
+				<CardHeader>
+					<CardTitle>Pré-pedidos</CardTitle>
+				</CardHeader>
+				<CardContent>
+					<DataTable
+						columns={columns}
+						data={filteredOrders}
+						searchKey="ref"
+						searchPlaceholder="Buscar por cliente, fornecedor ou nº..."
+						onRowClick={openDetail}
+						isLoading={loading}
+						emptyState="Nenhum pré-pedido encontrado."
+						toolbar={
+							<Select value={statusFilter} onValueChange={setStatusFilter}>
+								<SelectTrigger className="w-44">
+									<SelectValue placeholder="Status" />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="all">Todos os status</SelectItem>
+									<SelectItem value="ACTIVE">Pendente</SelectItem>
+									<SelectItem value="FINALIZED">Aprovado</SelectItem>
+									<SelectItem value="REJECTED">Rejeitado</SelectItem>
+									<SelectItem value="EXPIRED">Expirado</SelectItem>
+								</SelectContent>
+							</Select>
+						}
+					/>
+				</CardContent>
+			</Card>
 
-									<div className="flex items-center gap-2">
-										<Package className="h-4 w-4 text-muted-foreground" />
-										<div>
-											<p className="text-sm text-muted-foreground">Produtos</p>
-											<p className="font-medium">
-												{preOrder.itemCount} itens ({preOrder.totalQuantity}{" "}
-												unidades)
-											</p>
-										</div>
-									</div>
-
-									{preOrder.totalAmount && (
-										<div>
-											<p className="text-sm text-muted-foreground">
-												Valor Total
-											</p>
-											<p className="font-bold text-success">
-												{formatCurrency(preOrder.totalAmount)}
-											</p>
-										</div>
-									)}
-								</div>
-
-								<div className="flex justify-between items-center">
-									<div className="flex items-center gap-1 text-sm text-muted-foreground">
-										<Calendar className="h-4 w-4" />
-										<span>Criado em {formatDate(preOrder.createdAt)}</span>
-										{preOrder.respondedAt && (
-											<span>
-												{" "}
-												• Respondido em {formatDate(preOrder.respondedAt)}
-											</span>
-										)}
-									</div>
-
-									<div className="flex gap-2">
-										<Button variant="outline" size="sm">
-											<Eye className="h-4 w-4 mr-2" />
-											Ver Detalhes
-										</Button>
-
-										{user.role === "SUPPLIER" &&
-											preOrder.status === "ACTIVE" && (
-												<>
-													<Button
-														variant="outline"
-														size="sm"
-														className="text-destructive hover:text-destructive"
-													>
-														<XCircle className="h-4 w-4 mr-2" />
-														Rejeitar
-													</Button>
-													<Button size="sm">
-														<CheckCircle className="h-4 w-4 mr-2" />
-														Aprovar
-													</Button>
-												</>
-											)}
-									</div>
-								</div>
-							</CardContent>
-						</Card>
-					))}
-				</div>
-			)}
+			<PreOrderDetailModal
+				open={detailOpen}
+				onOpenChange={setDetailOpen}
+				preOrder={selected}
+			/>
 		</div>
 	);
 }

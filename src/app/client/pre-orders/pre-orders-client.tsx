@@ -17,71 +17,46 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 
-interface SupplierUser {
+type User = {
 	id: string;
 	name: string;
 	email: string;
 	role: string;
 	company: { id: string; name: string; type: string } | null;
-}
+};
 
 interface PreOrdersClientProps {
-	user: SupplierUser;
+	user: User;
 }
 
-export default function PreOrdersClient({ user }: PreOrdersClientProps) {
-	const [orders, setOrders] = useState<PreOrder[]>([]);
+export default function PreOrdersClient({ user: _user }: PreOrdersClientProps) {
+	const [preOrders, setPreOrders] = useState<PreOrder[]>([]);
 	const [loading, setLoading] = useState(true);
-	const [busy, setBusy] = useState(false);
 	const [statusFilter, setStatusFilter] = useState("all");
 	const [selected, setSelected] = useState<PreOrder | null>(null);
 	const [detailOpen, setDetailOpen] = useState(false);
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: mount-only fetch
 	useEffect(() => {
-		void load();
+		fetchPreOrders();
 	}, []);
 
-	async function load() {
-		setLoading(true);
+	const fetchPreOrders = async () => {
 		try {
-			const res = await fetch("/api/pre-order/list?limit=50");
-			const data = (await res.json()) as {
-				preOrders?: PreOrder[];
-				error?: string;
-			};
-			if (!res.ok) throw new Error(data.error ?? "Erro ao carregar");
-			setOrders(data.preOrders ?? []);
-		} catch (err) {
-			toast.error(err instanceof Error ? err.message : "Erro ao carregar");
+			const response = await fetch("/api/pre-order/list");
+			if (response.ok) {
+				const data = await response.json();
+				setPreOrders(data.preOrders ?? []);
+			} else {
+				toast.error("Erro ao carregar pré-pedidos");
+			}
+		} catch (error) {
+			console.error("Fetch pre-orders error:", error);
+			toast.error("Erro ao carregar pré-pedidos");
 		} finally {
 			setLoading(false);
 		}
-	}
-
-	async function respond(
-		id: string,
-		action: "APPROVE" | "REJECT",
-		notes?: string,
-	) {
-		setBusy(true);
-		try {
-			const res = await fetch("/api/pre-order/bulk-action", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ preOrderIds: [id], action, notes }),
-			});
-			const data = (await res.json()) as { message?: string; error?: string };
-			if (!res.ok) throw new Error(data.error ?? "Erro");
-			toast.success(data.message ?? "Pré-pedido atualizado");
-			setDetailOpen(false);
-			await load();
-		} catch (err) {
-			toast.error(err instanceof Error ? err.message : "Erro");
-		} finally {
-			setBusy(false);
-		}
-	}
+	};
 
 	const openDetail = (order: PreOrder) => {
 		setSelected(order);
@@ -93,17 +68,17 @@ export default function PreOrdersClient({ user }: PreOrdersClientProps) {
 	const filteredOrders = useMemo(
 		() =>
 			statusFilter === "all"
-				? orders
-				: orders.filter((o) => o.status === statusFilter),
-		[orders, statusFilter],
+				? preOrders
+				: preOrders.filter((o) => o.status === statusFilter),
+		[preOrders, statusFilter],
 	);
 
 	return (
 		<div className="space-y-6">
 			<div>
-				<h1 className="text-3xl font-bold">Pré-pedidos recebidos</h1>
+				<h1 className="text-3xl font-bold">Meus pré-pedidos</h1>
 				<p className="text-muted-foreground">
-					Olá {user.name} — aprove ou rejeite os pré-pedidos dos compradores.
+					Acompanhe os pré-pedidos enviados aos fornecedores
 				</p>
 			</div>
 
@@ -116,10 +91,10 @@ export default function PreOrdersClient({ user }: PreOrdersClientProps) {
 						columns={columns}
 						data={filteredOrders}
 						searchKey="ref"
-						searchPlaceholder="Buscar por cliente ou nº..."
+						searchPlaceholder="Buscar por fornecedor ou nº..."
 						onRowClick={openDetail}
 						isLoading={loading}
-						emptyState="Nenhum pré-pedido recebido ainda."
+						emptyState="Nenhum pré-pedido encontrado."
 						toolbar={
 							<Select value={statusFilter} onValueChange={setStatusFilter}>
 								<SelectTrigger className="w-44">
@@ -142,10 +117,6 @@ export default function PreOrdersClient({ user }: PreOrdersClientProps) {
 				open={detailOpen}
 				onOpenChange={setDetailOpen}
 				preOrder={selected}
-				canRespond
-				busy={busy}
-				onApprove={(id) => respond(id, "APPROVE")}
-				onReject={(id, notes) => respond(id, "REJECT", notes)}
 			/>
 		</div>
 	);
