@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { AuthError, requireAuth } from "@/lib/auth-server";
-import { ProductMatcher } from "@/lib/services/product-matcher";
+import { OptimizedProductMatcher } from "@/lib/services/optimized-product-matcher";
 
 const createComparisonSchema = z.object({
 	uploadId: z.string().min(1, "Upload ID é obrigatório"),
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
 		const { uploadId } = validationResult.data;
 
 		// Criar comparação
-		const comparisonId = await ProductMatcher.createComparison(
+		const { comparisonId } = await OptimizedProductMatcher.createComparison(
 			uploadId,
 			user.company.id,
 		);

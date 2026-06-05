@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { AuthError, requireAuth } from "@/lib/auth-server";
-import { ProductMatcher } from "@/lib/services/product-matcher";
+import { OptimizedProductMatcher } from "@/lib/services/optimized-product-matcher";
 
 export async function GET(request: NextRequest) {
 	try {
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
 			);
 		}
 
-		const products = await ProductMatcher.searchProducts(
+		const products = await OptimizedProductMatcher.searchProducts(
 			query.trim(),
 			supplierId || undefined,
 			Math.min(limit, 50), // Max 50 results
