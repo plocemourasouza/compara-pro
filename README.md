@@ -63,7 +63,8 @@ npm run dev                    # http://localhost:3000
 | `npm run dev` | dev server (Turbopack) |
 | `npm run build` | build de produção |
 | `npm start` | serve o build |
-| `npm test` | testes (Vitest) |
+| `npm test` | testes unitários (Vitest) |
+| `npm run test:e2e` | testes E2E (Playwright) |
 | `npm run lint` | Biome (lint + format check) |
 | `npm run seed:demo` | popula dados de demonstração |
 | `npm run verify:cycle` | smoke e2e do fluxo comprador→fornecedor (precisa do dev server) |
@@ -86,4 +87,5 @@ nunca exposta. Advisories de dependência aceitas estão documentadas em [SECURI
 
 ## Status
 
-MVP funcional. Em evolução: testes E2E automatizados (Playwright).
+MVP funcional, com testes unitários (Vitest), E2E de autenticação (Playwright) e verificação ponta a
+ponta por scripts (`npm run verify:cycle`).
