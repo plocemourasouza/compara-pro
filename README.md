@@ -65,6 +65,8 @@ npm run dev                    # http://localhost:3000
 | `npm start` | serve o build |
 | `npm test` | testes (Vitest) |
 | `npm run lint` | Biome (lint + format check) |
+| `npm run seed:demo` | popula dados de demonstração |
+| `npm run verify:cycle` | smoke e2e do fluxo comprador→fornecedor (precisa do dev server) |
 
 ## Estrutura
 

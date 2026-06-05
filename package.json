@@ -11,7 +11,11 @@
 		"format": "biome format --write",
 		"typecheck": "tsc --noEmit",
 		"test": "vitest run",
-		"test:watch": "vitest"
+		"test:watch": "vitest",
+		"seed:demo": "node scripts/seed-demo.cjs",
+		"verify:parecer": "node scripts/verify-parecer.cjs",
+		"verify:cycle": "node scripts/verify-cycle.cjs",
+		"verify:prompt": "node scripts/verify-prompt.cjs"
 	},
 	"dependencies": {
 		"@hookform/resolvers": "^5.4.0",
