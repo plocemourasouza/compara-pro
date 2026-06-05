@@ -19,7 +19,10 @@ async function makeUploadWithProducts(companyId, uploadType, products) {
 	const upload = await prisma.uploadHistory.create({
 		data: {
 			companyId,
-			fileName: uploadType === "SUPPLIER_PRODUCTS" ? "catalogo.xlsx" : "necessidades.xlsx",
+			fileName:
+				uploadType === "SUPPLIER_PRODUCTS"
+					? "catalogo.xlsx"
+					: "necessidades.xlsx",
 			fileSize: 2048,
 			totalRows: products.length,
 			processedRows: products.length,
@@ -108,11 +111,25 @@ async function makeCompanyWithUser({ name, type, cnpj, email }) {
 
 (async () => {
 	try {
+		// Admin de demonstração (idempotente, fora do skip) — usado pelos testes E2E.
+		await prisma.user.upsert({
+			where: { email: "admin@demo.com" },
+			update: {},
+			create: {
+				email: "admin@demo.com",
+				name: "Admin Demo",
+				password: await bcrypt.hash("demo1234", 12),
+				role: "ADMIN",
+			},
+		});
+
 		const existing = await prisma.user.findUnique({
 			where: { email: "comprador@demo.com" },
 		});
 		if (existing) {
-			console.log("SEED_SKIP demo já existe (comprador@demo.com). Nada a fazer.");
+			console.log(
+				"SEED_SKIP demo já existe (comprador@demo.com). Nada a fazer.",
+			);
 			process.exit(0);
 		}
 
