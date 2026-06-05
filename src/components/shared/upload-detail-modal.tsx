@@ -96,125 +96,132 @@ export function UploadDetailModal({
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent className="h-[60vh] w-[40vw] max-w-[40vw] overflow-y-auto sm:max-w-[40vw]">
-				<DialogHeader>
+			<DialogContent className="flex h-[60vh] w-[40vw] max-w-[40vw] flex-col gap-0 overflow-hidden p-0 sm:max-w-[40vw]">
+				<DialogHeader className="border-b px-6 py-4">
 					<DialogTitle>Detalhes do Upload</DialogTitle>
 					<DialogDescription className="sr-only">
 						Informações e estatísticas do arquivo enviado.
 					</DialogDescription>
 				</DialogHeader>
 
-				{loading ? (
-					<div className="flex items-center justify-center p-8">
-						<Clock className="h-8 w-8 animate-spin text-primary" />
-					</div>
-				) : detail ? (
-					<div className="space-y-6">
-						<div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-							<div className="space-y-2">
-								<h4 className="font-semibold">Informações Gerais</h4>
-								<dl className="space-y-1 text-sm">
-									<Info label="Arquivo" value={detail.fileName} />
-									<Info
-										label="Tipo"
-										value={getUploadTypeLabel(detail.uploadType)}
-									/>
-									<Info
-										label="Tamanho"
-										value={formatFileSize(detail.fileSize)}
-									/>
-									<Info label="Status" value={getStatusLabel(detail.status)} />
-									<Info
-										label="Upload"
-										value={formatters.datetime(detail.uploadedAt)}
-									/>
-									{detail.processedAt && (
-										<Info
-											label="Processado"
-											value={formatters.datetime(detail.processedAt)}
-										/>
-									)}
-								</dl>
-							</div>
-							<div className="space-y-2">
-								<h4 className="font-semibold">Estatísticas</h4>
-								<dl className="space-y-1 text-sm">
-									<Info label="Total de linhas" value={detail.totalRows} />
-									<Info label="Processadas" value={detail.processedRows} />
-									<Info label="Com erro" value={detail.errorRows} />
-									<Info label="Taxa de sucesso" value={`${successRate}%`} />
-								</dl>
-							</div>
+				<div className="flex-1 overflow-y-auto px-6 py-4">
+					{loading ? (
+						<div className="flex items-center justify-center p-8">
+							<Clock className="h-8 w-8 animate-spin text-primary" />
 						</div>
-
-						{detail.products && detail.products.length > 0 && (
-							<div>
-								<h4 className="mb-2 font-semibold">Produtos (primeiros 10)</h4>
-								<div className="overflow-hidden rounded-lg border">
-									<table className="w-full text-sm">
-										<thead className="bg-muted">
-											<tr>
-												<th className="px-3 py-2 text-left">SKU</th>
-												<th className="px-3 py-2 text-left">Nome</th>
-												<th className="px-3 py-2 text-left">Preço</th>
-												<th className="px-3 py-2 text-left">Categoria</th>
-											</tr>
-										</thead>
-										<tbody>
-											{detail.products.slice(0, 10).map((product) => (
-												<tr key={product.id} className="border-t">
-													<td className="px-3 py-2">
-														{product.sku || product.code || "-"}
-													</td>
-													<td className="px-3 py-2">{product.name}</td>
-													<td className="px-3 py-2">
-														{product.price
-															? formatters.currency(product.price)
-															: "-"}
-													</td>
-													<td className="px-3 py-2">
-														{product.category || "-"}
-													</td>
-												</tr>
-											))}
-										</tbody>
-									</table>
+					) : detail ? (
+						<div className="space-y-6">
+							<div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+								<div className="space-y-2">
+									<h4 className="font-semibold">Informações Gerais</h4>
+									<dl className="space-y-1 text-sm">
+										<Info label="Arquivo" value={detail.fileName} />
+										<Info
+											label="Tipo"
+											value={getUploadTypeLabel(detail.uploadType)}
+										/>
+										<Info
+											label="Tamanho"
+											value={formatFileSize(detail.fileSize)}
+										/>
+										<Info
+											label="Status"
+											value={getStatusLabel(detail.status)}
+										/>
+										<Info
+											label="Upload"
+											value={formatters.datetime(detail.uploadedAt)}
+										/>
+										{detail.processedAt && (
+											<Info
+												label="Processado"
+												value={formatters.datetime(detail.processedAt)}
+											/>
+										)}
+									</dl>
 								</div>
-								{detail.products.length > 10 && (
-									<p className="mt-2 text-sm text-muted-foreground">
-										E mais {detail.products.length - 10} produtos...
-									</p>
-								)}
-							</div>
-						)}
-
-						{detail.errors && detail.errors.length > 0 && (
-							<div>
-								<h4 className="mb-2 font-semibold">Erros Encontrados</h4>
-								<div className="max-h-40 overflow-y-auto overflow-hidden rounded-lg border">
-									<table className="w-full text-sm">
-										<thead className="bg-destructive/10">
-											<tr>
-												<th className="px-3 py-2 text-left">Linha</th>
-												<th className="px-3 py-2 text-left">Erro</th>
-											</tr>
-										</thead>
-										<tbody>
-											{detail.errors.map((err) => (
-												<tr key={err.row} className="border-t">
-													<td className="px-3 py-2">{err.row}</td>
-													<td className="px-3 py-2">{err.error}</td>
-												</tr>
-											))}
-										</tbody>
-									</table>
+								<div className="space-y-2">
+									<h4 className="font-semibold">Estatísticas</h4>
+									<dl className="space-y-1 text-sm">
+										<Info label="Total de linhas" value={detail.totalRows} />
+										<Info label="Processadas" value={detail.processedRows} />
+										<Info label="Com erro" value={detail.errorRows} />
+										<Info label="Taxa de sucesso" value={`${successRate}%`} />
+									</dl>
 								</div>
 							</div>
-						)}
-					</div>
-				) : null}
 
-				<DialogFooter>
+							{detail.products && detail.products.length > 0 && (
+								<div>
+									<h4 className="mb-2 font-semibold">
+										Produtos (primeiros 10)
+									</h4>
+									<div className="overflow-hidden rounded-lg border">
+										<table className="w-full text-sm">
+											<thead className="bg-muted">
+												<tr>
+													<th className="px-3 py-2 text-left">SKU</th>
+													<th className="px-3 py-2 text-left">Nome</th>
+													<th className="px-3 py-2 text-left">Preço</th>
+													<th className="px-3 py-2 text-left">Categoria</th>
+												</tr>
+											</thead>
+											<tbody>
+												{detail.products.slice(0, 10).map((product) => (
+													<tr key={product.id} className="border-t">
+														<td className="px-3 py-2">
+															{product.sku || product.code || "-"}
+														</td>
+														<td className="px-3 py-2">{product.name}</td>
+														<td className="px-3 py-2">
+															{product.price
+																? formatters.currency(product.price)
+																: "-"}
+														</td>
+														<td className="px-3 py-2">
+															{product.category || "-"}
+														</td>
+													</tr>
+												))}
+											</tbody>
+										</table>
+									</div>
+									{detail.products.length > 10 && (
+										<p className="mt-2 text-sm text-muted-foreground">
+											E mais {detail.products.length - 10} produtos...
+										</p>
+									)}
+								</div>
+							)}
+
+							{detail.errors && detail.errors.length > 0 && (
+								<div>
+									<h4 className="mb-2 font-semibold">Erros Encontrados</h4>
+									<div className="max-h-40 overflow-y-auto overflow-hidden rounded-lg border">
+										<table className="w-full text-sm">
+											<thead className="bg-destructive/10">
+												<tr>
+													<th className="px-3 py-2 text-left">Linha</th>
+													<th className="px-3 py-2 text-left">Erro</th>
+												</tr>
+											</thead>
+											<tbody>
+												{detail.errors.map((err) => (
+													<tr key={err.row} className="border-t">
+														<td className="px-3 py-2">{err.row}</td>
+														<td className="px-3 py-2">{err.error}</td>
+													</tr>
+												))}
+											</tbody>
+										</table>
+									</div>
+								</div>
+							)}
+						</div>
+					) : null}
+				</div>
+
+				<DialogFooter className="border-t px-6 py-4">
 					<DialogClose asChild>
 						<Button variant="outline">Fechar</Button>
 					</DialogClose>

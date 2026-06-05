@@ -67,58 +67,60 @@ export function EntityDetailModal<T>({
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent className="h-[60vh] w-[40vw] max-w-[40vw] overflow-y-auto sm:max-w-[40vw]">
-				<DialogHeader>
+			<DialogContent className="flex h-[60vh] w-[40vw] max-w-[40vw] flex-col gap-0 overflow-hidden p-0 sm:max-w-[40vw]">
+				<DialogHeader className="border-b px-6 py-4">
 					<DialogTitle>{title}</DialogTitle>
 					<DialogDescription className={description ? undefined : "sr-only"}>
 						{description ?? "Detalhes do registro selecionado."}
 					</DialogDescription>
 				</DialogHeader>
 
-				{record && (
-					<div className="space-y-6">
-						{sections.map((section, sectionIndex) => {
-							const visibleFields = section.fields.filter((field) => {
-								if (field.hideWhenEmpty === false) return true;
-								return !isEmpty(field.value(record));
-							});
-							if (visibleFields.length === 0) return null;
-							return (
-								<div
-									key={section.title ?? `section-${sectionIndex}`}
-									className="space-y-3"
-								>
-									{section.title && (
-										<h3 className="flex items-center gap-2 text-base font-semibold">
-											{section.icon}
-											{section.title}
-										</h3>
-									)}
-									<div className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
-										{visibleFields.map((field) => (
-											<div
-												key={field.label}
-												className={field.full ? "sm:col-span-2" : undefined}
-											>
-												<dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-													{field.label}
-												</dt>
-												<dd className="mt-0.5 text-sm">
-													{field.value(record)}
-												</dd>
-											</div>
-										))}
+				<div className="flex-1 overflow-y-auto px-6 py-4">
+					{record && (
+						<div className="space-y-6">
+							{sections.map((section, sectionIndex) => {
+								const visibleFields = section.fields.filter((field) => {
+									if (field.hideWhenEmpty === false) return true;
+									return !isEmpty(field.value(record));
+								});
+								if (visibleFields.length === 0) return null;
+								return (
+									<div
+										key={section.title ?? `section-${sectionIndex}`}
+										className="space-y-3"
+									>
+										{section.title && (
+											<h3 className="flex items-center gap-2 text-base font-semibold">
+												{section.icon}
+												{section.title}
+											</h3>
+										)}
+										<div className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
+											{visibleFields.map((field) => (
+												<div
+													key={field.label}
+													className={field.full ? "sm:col-span-2" : undefined}
+												>
+													<dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+														{field.label}
+													</dt>
+													<dd className="mt-0.5 text-sm">
+														{field.value(record)}
+													</dd>
+												</div>
+											))}
+										</div>
+										{section.title &&
+											sectionIndex < sections.length - 1 &&
+											visibleFields.length > 0 && <Separator />}
 									</div>
-									{section.title &&
-										sectionIndex < sections.length - 1 &&
-										visibleFields.length > 0 && <Separator />}
-								</div>
-							);
-						})}
-					</div>
-				)}
+								);
+							})}
+						</div>
+					)}
+				</div>
 
-				<DialogFooter>
+				<DialogFooter className="border-t px-6 py-4">
 					<DialogClose asChild>
 						<Button variant="outline">Fechar</Button>
 					</DialogClose>

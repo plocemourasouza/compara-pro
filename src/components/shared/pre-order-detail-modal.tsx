@@ -64,8 +64,8 @@ export function PreOrderDetailModal({
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent className="h-[60vh] w-[40vw] max-w-[40vw] overflow-y-auto sm:max-w-[40vw]">
-				<DialogHeader>
+			<DialogContent className="flex h-[60vh] w-[40vw] max-w-[40vw] flex-col gap-0 overflow-hidden p-0 sm:max-w-[40vw]">
+				<DialogHeader className="border-b px-6 py-4">
 					<DialogTitle>
 						Pré-pedido {preOrder ? `#${preOrder.id.slice(-8)}` : ""}
 					</DialogTitle>
@@ -74,112 +74,116 @@ export function PreOrderDetailModal({
 					</DialogDescription>
 				</DialogHeader>
 
-				{preOrder && (
-					<div className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
-						<Field label="Cliente" value={preOrder.client.name} />
-						<Field label="Fornecedor" value={preOrder.supplier.name} />
-						<Field
-							label="Status"
-							value={
-								<Badge className={PRE_ORDER_STATUS[preOrder.status].className}>
-									{PRE_ORDER_STATUS[preOrder.status].label}
-								</Badge>
-							}
-						/>
-						<Field label="Itens" value={`${preOrder.itemCount} item(ns)`} />
-						<Field
-							label="Quantidade"
-							value={`${preOrder.totalQuantity} unidade(s)`}
-						/>
-						<Field
-							label="Valor total"
-							value={
-								preOrder.totalAmount
-									? formatters.currency(preOrder.totalAmount)
-									: "-"
-							}
-						/>
-						<Field
-							label="Criado em"
-							value={formatters.datetime(preOrder.createdAt)}
-						/>
-						{preOrder.respondedAt && (
+				<div className="flex-1 overflow-y-auto px-6 py-4">
+					{preOrder && (
+						<div className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
+							<Field label="Cliente" value={preOrder.client.name} />
+							<Field label="Fornecedor" value={preOrder.supplier.name} />
 							<Field
-								label="Respondido em"
-								value={formatters.datetime(preOrder.respondedAt)}
+								label="Status"
+								value={
+									<Badge
+										className={PRE_ORDER_STATUS[preOrder.status].className}
+									>
+										{PRE_ORDER_STATUS[preOrder.status].label}
+									</Badge>
+								}
 							/>
-						)}
-						{preOrder.notes && (
-							<div className="sm:col-span-2">
-								<p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-									Observações
-								</p>
-								<p className="mt-0.5 text-sm">{preOrder.notes}</p>
-							</div>
-						)}
-					</div>
-				)}
+							<Field label="Itens" value={`${preOrder.itemCount} item(ns)`} />
+							<Field
+								label="Quantidade"
+								value={`${preOrder.totalQuantity} unidade(s)`}
+							/>
+							<Field
+								label="Valor total"
+								value={
+									preOrder.totalAmount
+										? formatters.currency(preOrder.totalAmount)
+										: "-"
+								}
+							/>
+							<Field
+								label="Criado em"
+								value={formatters.datetime(preOrder.createdAt)}
+							/>
+							{preOrder.respondedAt && (
+								<Field
+									label="Respondido em"
+									value={formatters.datetime(preOrder.respondedAt)}
+								/>
+							)}
+							{preOrder.notes && (
+								<div className="sm:col-span-2">
+									<p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+										Observações
+									</p>
+									<p className="mt-0.5 text-sm">{preOrder.notes}</p>
+								</div>
+							)}
+						</div>
+					)}
 
-				{preOrder && (
-					<div>
-						<h4 className="mb-2 text-sm font-semibold">Itens</h4>
-						{itemsLoading ? (
-							<div className="flex items-center justify-center py-6">
-								<Clock className="h-6 w-6 animate-spin text-primary" />
-							</div>
-						) : items.length > 0 ? (
-							<div className="overflow-hidden rounded-lg border">
-								<table className="w-full text-sm">
-									<thead className="bg-muted">
-										<tr>
-											<th className="px-3 py-2 text-left">Produto</th>
-											<th className="px-3 py-2 text-right">Qtd</th>
-											<th className="px-3 py-2 text-right">Preço</th>
-											<th className="px-3 py-2 text-right">Subtotal</th>
-										</tr>
-									</thead>
-									<tbody>
-										{items.map((item) => (
-											<tr key={item.id} className="border-t">
-												<td className="px-3 py-2">
-													<div>{item.name}</div>
-													{(item.sku || item.code) && (
-														<div className="text-xs text-muted-foreground">
-															{item.sku || item.code}
-														</div>
-													)}
-												</td>
-												<td className="px-3 py-2 text-right">
-													{item.quantity}
-												</td>
-												<td className="px-3 py-2 text-right">
-													{formatters.currency(item.price)}
-												</td>
-												<td className="px-3 py-2 text-right">
-													{formatters.currency(item.totalPrice)}
-												</td>
+					{preOrder && (
+						<div>
+							<h4 className="mb-2 text-sm font-semibold">Itens</h4>
+							{itemsLoading ? (
+								<div className="flex items-center justify-center py-6">
+									<Clock className="h-6 w-6 animate-spin text-primary" />
+								</div>
+							) : items.length > 0 ? (
+								<div className="overflow-hidden rounded-lg border">
+									<table className="w-full text-sm">
+										<thead className="bg-muted">
+											<tr>
+												<th className="px-3 py-2 text-left">Produto</th>
+												<th className="px-3 py-2 text-right">Qtd</th>
+												<th className="px-3 py-2 text-right">Preço</th>
+												<th className="px-3 py-2 text-right">Subtotal</th>
 											</tr>
-										))}
-									</tbody>
-								</table>
-							</div>
-						) : (
-							<p className="text-sm text-muted-foreground">
-								Sem itens para exibir.
-							</p>
-						)}
-					</div>
-				)}
+										</thead>
+										<tbody>
+											{items.map((item) => (
+												<tr key={item.id} className="border-t">
+													<td className="px-3 py-2">
+														<div>{item.name}</div>
+														{(item.sku || item.code) && (
+															<div className="text-xs text-muted-foreground">
+																{item.sku || item.code}
+															</div>
+														)}
+													</td>
+													<td className="px-3 py-2 text-right">
+														{item.quantity}
+													</td>
+													<td className="px-3 py-2 text-right">
+														{formatters.currency(item.price)}
+													</td>
+													<td className="px-3 py-2 text-right">
+														{formatters.currency(item.totalPrice)}
+													</td>
+												</tr>
+											))}
+										</tbody>
+									</table>
+								</div>
+							) : (
+								<p className="text-sm text-muted-foreground">
+									Sem itens para exibir.
+								</p>
+							)}
+						</div>
+					)}
 
-				{rejecting && (
-					<Textarea
-						placeholder="Motivo da rejeição (obrigatório)..."
-						value={notes}
-						onChange={(e) => setNotes(e.target.value)}
-					/>
-				)}
+					{rejecting && (
+						<Textarea
+							placeholder="Motivo da rejeição (obrigatório)..."
+							value={notes}
+							onChange={(e) => setNotes(e.target.value)}
+						/>
+					)}
+				</div>
 
-				<DialogFooter>
+				<DialogFooter className="border-t px-6 py-4">
 					{rejecting ? (
 						<>
 							<Button
