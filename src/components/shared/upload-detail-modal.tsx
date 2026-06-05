@@ -96,7 +96,7 @@ export function UploadDetailModal({
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent className="max-h-[85vh] max-w-3xl overflow-y-auto">
+			<DialogContent className="h-[80vh] w-[60vw] max-w-[60vw] overflow-y-auto sm:max-w-[60vw]">
 				<DialogHeader>
 					<DialogTitle>Detalhes do Upload</DialogTitle>
 					<DialogDescription className="sr-only">
