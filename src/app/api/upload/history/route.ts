@@ -5,14 +5,7 @@ import { prisma } from "@/lib/db";
 
 export async function GET(request: NextRequest) {
 	try {
-		const user = await requireAuth(["SUPPLIER", "CLIENT"]);
-
-		if (!user.company) {
-			return NextResponse.json(
-				{ error: "Usuário deve estar associado a uma empresa" },
-				{ status: 400 },
-			);
-		}
+		const user = await requireAuth(["ADMIN", "SUPPLIER", "CLIENT"]);
 
 		const { searchParams } = new URL(request.url);
 		const page = parseInt(searchParams.get("page") || "1", 10);
@@ -22,10 +15,23 @@ export async function GET(request: NextRequest) {
 			| "CLIENT_REQUIREMENTS"
 			| null;
 
-		// Build where clause
-		const where: Prisma.UploadHistoryWhereInput = {
-			companyId: user.company.id,
-		};
+		// Admin vê o histórico de todas as empresas (filtro opcional ?companyId);
+		// fornecedor/comprador veem apenas o da própria empresa.
+		const where: Prisma.UploadHistoryWhereInput = {};
+		if (user.role === "ADMIN") {
+			const companyId = searchParams.get("companyId");
+			if (companyId) {
+				where.companyId = companyId;
+			}
+		} else {
+			if (!user.company) {
+				return NextResponse.json(
+					{ error: "Usuário deve estar associado a uma empresa" },
+					{ status: 400 },
+				);
+			}
+			where.companyId = user.company.id;
+		}
 
 		if (uploadType) {
 			where.uploadType = uploadType;
