@@ -13,6 +13,7 @@ import {
 	User as UserIcon,
 } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import AiConfigCard from "@/components/admin/ai-config-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -34,6 +35,12 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
+import {
+	changePasswordAction,
+	savePreferencesAction,
+	updateProfileAction,
+} from "@/lib/actions/profile";
+import type { UserPreferences } from "@/lib/validations/preferences";
 
 interface User {
 	id: string;
@@ -49,51 +56,79 @@ interface User {
 
 interface SettingsClientProps {
 	user: User;
+	initialPreferences: UserPreferences;
 }
 
-export function SettingsClient({ user }: SettingsClientProps) {
+export function SettingsClient({
+	user,
+	initialPreferences,
+}: SettingsClientProps) {
 	const [isLoading, setIsLoading] = useState(false);
 	const [showCurrentPassword, setShowCurrentPassword] = useState(false);
 	const [showNewPassword, setShowNewPassword] = useState(false);
 	const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
 	// Estados para configurações
-	const [emailNotifications, setEmailNotifications] = useState(true);
-	const [pushNotifications, setPushNotifications] = useState(true);
-	const [priceAlerts, setPriceAlerts] = useState(true);
-	const [language, setLanguage] = useState("pt-BR");
-	const [theme, setTheme] = useState("system");
+	const [emailNotifications, setEmailNotifications] = useState(
+		initialPreferences.emailNotifications,
+	);
+	const [pushNotifications, setPushNotifications] = useState(
+		initialPreferences.pushNotifications,
+	);
+	const [priceAlerts, setPriceAlerts] = useState(
+		initialPreferences.priceAlerts,
+	);
+	const [language, setLanguage] = useState<string>(initialPreferences.language);
+	const [theme, setTheme] = useState<string>(initialPreferences.theme);
 
-	const handleSaveProfile = async (e: React.FormEvent) => {
+	const handleSaveProfile = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
+		const fd = new FormData(e.currentTarget);
 		setIsLoading(true);
-
-		// Simular salvamento
-		await new Promise((resolve) => setTimeout(resolve, 1000));
-
+		const result = await updateProfileAction({
+			name: String(fd.get("name") ?? ""),
+			email: String(fd.get("email") ?? ""),
+		});
 		setIsLoading(false);
-		// TODO: Implementar Server Action para atualizar perfil
+		if (result.success) toast.success("Perfil atualizado");
+		else toast.error(result.error);
 	};
 
-	const handleChangePassword = async (e: React.FormEvent) => {
+	const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
+		const form = e.currentTarget;
+		const fd = new FormData(form);
+		const newPassword = String(fd.get("newPassword") ?? "");
+		if (newPassword !== String(fd.get("confirmPassword") ?? "")) {
+			toast.error("A confirmação não corresponde à nova senha");
+			return;
+		}
 		setIsLoading(true);
-
-		// Simular mudança de senha
-		await new Promise((resolve) => setTimeout(resolve, 1000));
-
+		const result = await changePasswordAction({
+			currentPassword: String(fd.get("currentPassword") ?? ""),
+			newPassword,
+		});
 		setIsLoading(false);
-		// TODO: Implementar Server Action para alterar senha
+		if (result.success) {
+			toast.success("Senha alterada");
+			form.reset();
+		} else {
+			toast.error(result.error);
+		}
 	};
 
 	const handleSavePreferences = async () => {
 		setIsLoading(true);
-
-		// Simular salvamento de preferências
-		await new Promise((resolve) => setTimeout(resolve, 1000));
-
+		const result = await savePreferencesAction({
+			emailNotifications,
+			pushNotifications,
+			priceAlerts,
+			language,
+			theme,
+		});
 		setIsLoading(false);
-		// TODO: Implementar Server Action para salvar preferências
+		if (result.success) toast.success("Preferências salvas");
+		else toast.error(result.error);
 	};
 
 	const getRoleBadge = (role: string) => {

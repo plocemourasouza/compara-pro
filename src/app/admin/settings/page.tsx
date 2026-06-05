@@ -1,8 +1,29 @@
-import { requireAuth } from "@/lib/auth-server";
+import { redirect } from "next/navigation";
+import { getCurrentUser } from "@/lib/auth-server";
+import { prisma } from "@/lib/db";
+import {
+	DEFAULT_PREFERENCES,
+	preferencesSchema,
+} from "@/lib/validations/preferences";
 import { SettingsClient } from "./settings-client";
 
 export default async function SettingsPage() {
-	const user = await requireAuth();
+	const user = await getCurrentUser();
 
-	return <SettingsClient user={user} />;
+	if (!user) {
+		redirect("/auth/login");
+	}
+
+	if (user.role !== "ADMIN") {
+		redirect(user.role === "SUPPLIER" ? "/supplier" : "/client");
+	}
+
+	const row = await prisma.user.findUnique({
+		where: { id: user.id },
+		select: { preferences: true },
+	});
+	const parsed = preferencesSchema.safeParse(row?.preferences);
+	const initialPreferences = parsed.success ? parsed.data : DEFAULT_PREFERENCES;
+
+	return <SettingsClient user={user} initialPreferences={initialPreferences} />;
 }
