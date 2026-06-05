@@ -56,8 +56,8 @@ export default function HistoryClient({ user: _user }: HistoryClientProps) {
 	const [uploads, setUploads] = useState<Upload[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [searchTerm, setSearchTerm] = useState("");
-	const [statusFilter, setStatusFilter] = useState("");
-	const [typeFilter, setTypeFilter] = useState("");
+	const [statusFilter, setStatusFilter] = useState("ALL");
+	const [typeFilter, setTypeFilter] = useState("ALL");
 	const [selectedUpload, setSelectedUpload] = useState<Upload | null>(null);
 	const [detailDialog, setDetailDialog] = useState(false);
 
@@ -170,8 +170,10 @@ export default function HistoryClient({ user: _user }: HistoryClientProps) {
 		const matchesSearch = upload.fileName
 			.toLowerCase()
 			.includes(searchTerm.toLowerCase());
-		const matchesStatus = !statusFilter || upload.status === statusFilter;
-		const matchesType = !typeFilter || upload.uploadType === typeFilter;
+		const matchesStatus =
+			statusFilter === "ALL" || upload.status === statusFilter;
+		const matchesType =
+			typeFilter === "ALL" || upload.uploadType === typeFilter;
 
 		return matchesSearch && matchesStatus && matchesType;
 	});
@@ -222,7 +224,7 @@ export default function HistoryClient({ user: _user }: HistoryClientProps) {
 									<SelectValue placeholder="Todos os status" />
 								</SelectTrigger>
 								<SelectContent>
-									<SelectItem value="">Todos os status</SelectItem>
+									<SelectItem value="ALL">Todos os status</SelectItem>
 									<SelectItem value="COMPLETED">Concluído</SelectItem>
 									<SelectItem value="PROCESSING">Processando</SelectItem>
 									<SelectItem value="FAILED">Falhou</SelectItem>
@@ -236,7 +238,7 @@ export default function HistoryClient({ user: _user }: HistoryClientProps) {
 									<SelectValue placeholder="Todos os tipos" />
 								</SelectTrigger>
 								<SelectContent>
-									<SelectItem value="">Todos os tipos</SelectItem>
+									<SelectItem value="ALL">Todos os tipos</SelectItem>
 									<SelectItem value="SUPPLIER_PRODUCTS">
 										Produtos do Fornecedor
 									</SelectItem>
@@ -251,8 +253,8 @@ export default function HistoryClient({ user: _user }: HistoryClientProps) {
 								variant="outline"
 								onClick={() => {
 									setSearchTerm("");
-									setStatusFilter("");
-									setTypeFilter("");
+									setStatusFilter("ALL");
+									setTypeFilter("ALL");
 								}}
 								className="w-full"
 							>

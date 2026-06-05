@@ -78,8 +78,8 @@ export default function ProductsClient({ user: _user }: ProductsClientProps) {
 	const [companies, setCompanies] = useState<Company[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [searchTerm, setSearchTerm] = useState("");
-	const [selectedCategory, setSelectedCategory] = useState("");
-	const [selectedCompany, setSelectedCompany] = useState("");
+	const [selectedCategory, setSelectedCategory] = useState("ALL");
+	const [selectedCompany, setSelectedCompany] = useState("ALL");
 	const [createDialog, setCreateDialog] = useState(false);
 	const [editDialog, setEditDialog] = useState(false);
 	const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -204,9 +204,9 @@ export default function ProductsClient({ user: _user }: ProductsClientProps) {
 			product.code?.toLowerCase().includes(searchTerm.toLowerCase());
 
 		const matchesCategory =
-			!selectedCategory || product.category === selectedCategory;
+			selectedCategory === "ALL" || product.category === selectedCategory;
 		const matchesCompany =
-			!selectedCompany || product.company?.id === selectedCompany;
+			selectedCompany === "ALL" || product.company?.id === selectedCompany;
 
 		return matchesSearch && matchesCategory && matchesCompany;
 	});
@@ -390,7 +390,7 @@ export default function ProductsClient({ user: _user }: ProductsClientProps) {
 									<SelectValue placeholder="Todas as categorias" />
 								</SelectTrigger>
 								<SelectContent>
-									<SelectItem value="">Todas as categorias</SelectItem>
+									<SelectItem value="ALL">Todas as categorias</SelectItem>
 									{Array.from(
 										new Set(
 											products
@@ -415,7 +415,7 @@ export default function ProductsClient({ user: _user }: ProductsClientProps) {
 									<SelectValue placeholder="Todas as empresas" />
 								</SelectTrigger>
 								<SelectContent>
-									<SelectItem value="">Todas as empresas</SelectItem>
+									<SelectItem value="ALL">Todas as empresas</SelectItem>
 									{companies.map((company) => (
 										<SelectItem key={company.id} value={company.id}>
 											{company.name}
@@ -429,8 +429,8 @@ export default function ProductsClient({ user: _user }: ProductsClientProps) {
 								variant="outline"
 								onClick={() => {
 									setSearchTerm("");
-									setSelectedCategory("");
-									setSelectedCompany("");
+									setSelectedCategory("ALL");
+									setSelectedCompany("ALL");
 								}}
 								className="w-full"
 							>
