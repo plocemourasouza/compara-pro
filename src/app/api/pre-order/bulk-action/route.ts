@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
+import { sendNotificationEmail } from "@/lib/email/mailer";
 
 const bulkActionSchema = z.object({
 	preOrderIds: z.array(z.string()).min(1),
@@ -86,7 +87,12 @@ export async function POST(request: NextRequest) {
 			// Buscar usuários da empresa cliente
 			const clientUsers = await prisma.user.findMany({
 				where: { companyId: clientId },
+				select: { id: true, email: true },
 			});
+
+			const plural = clientPreOrders.length > 1;
+			const title = `Pré-pedido${plural ? "s" : ""} ${action === "APPROVE" ? "aprovado" : "rejeitado"}${plural ? "s" : ""}`;
+			const message = `${clientPreOrders.length} pré-pedido${plural ? "s foram" : " foi"} ${action === "APPROVE" ? "aprovado" : "rejeitado"} por ${user.company?.name}`;
 
 			for (const clientUser of clientUsers) {
 				await prisma.notification.create({
@@ -96,8 +102,8 @@ export async function POST(request: NextRequest) {
 							action === "APPROVE"
 								? "PRE_ORDER_APPROVED"
 								: "PRE_ORDER_REJECTED",
-						title: `Pré-pedido${clientPreOrders.length > 1 ? "s" : ""} ${action === "APPROVE" ? "aprovado" : "rejeitado"}${clientPreOrders.length > 1 ? "s" : ""}`,
-						message: `${clientPreOrders.length} pré-pedido${clientPreOrders.length > 1 ? "s foram" : " foi"} ${action === "APPROVE" ? "aprovado" : "rejeitado"} por ${user.company?.name}`,
+						title,
+						message,
 						metadata: {
 							preOrderIds: clientPreOrders.map((p) => p.id),
 							action,
@@ -107,6 +113,13 @@ export async function POST(request: NextRequest) {
 					},
 				});
 			}
+
+			// Best-effort email (no-op when email is disabled)
+			await sendNotificationEmail({
+				to: clientUsers.map((u) => u.email),
+				subject: title,
+				message,
+			});
 		}
 
 		return NextResponse.json({

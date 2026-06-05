@@ -20,7 +20,7 @@ que o fornecedor aprova ou rejeita.
 - **Fluxo do fornecedor** — lista de pré-pedidos recebidos, aprovar/rejeitar (com motivo).
 - **Área administrativa** — usuários, empresas, produtos, histórico de uploads, relatórios (métricas
   reais + export CSV), configurações (perfil/senha/preferências + IA).
-- **Notificações** in-app.
+- **Notificações** in-app e por **e-mail** (Resend, opcional — habilita com `RESEND_API_KEY`).
 
 ## Stack
 
@@ -84,5 +84,5 @@ nunca exposta. Advisories de dependência aceitas estão documentadas em [SECURI
 
 ## Status
 
-MVP funcional. Em evolução: testes automatizados de rota/E2E, consolidação do motor de matching,
-unificação do modelo de produto e notificações por e-mail.
+MVP funcional. Em evolução: testes automatizados de rota/E2E e unificação do modelo de produto
+(catálogo ↔ matching).

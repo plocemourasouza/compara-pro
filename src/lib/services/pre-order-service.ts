@@ -1,5 +1,6 @@
 import type { NotificationType } from "@/generated/prisma";
 import { prisma } from "@/lib/db";
+import { sendNotificationEmail } from "@/lib/email/mailer";
 import type {
 	CreatePreOrderBatchData,
 	CreatePreOrderData,
@@ -412,7 +413,7 @@ export class PreOrderService {
 			// Get users from company
 			const users = await prisma.user.findMany({
 				where: { companyId },
-				select: { id: true },
+				select: { id: true, email: true },
 			});
 
 			// Create notifications for all users in company
@@ -425,6 +426,19 @@ export class PreOrderService {
 					metadata: data ? JSON.stringify(data) : undefined,
 				})),
 			});
+
+			// Best-effort email for pre-order events (no-op when email is disabled)
+			if (
+				type === "PRE_ORDER_CREATED" ||
+				type === "PRE_ORDER_APPROVED" ||
+				type === "PRE_ORDER_REJECTED"
+			) {
+				await sendNotificationEmail({
+					to: users.map((u) => u.email),
+					subject: title,
+					message,
+				});
+			}
 		} catch (error) {
 			console.error("Create notification error:", error);
 			// Don't throw error to avoid breaking main flow
