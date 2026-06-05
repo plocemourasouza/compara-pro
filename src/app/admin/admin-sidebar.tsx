@@ -103,7 +103,7 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
 					<BarChart3 className="h-8 w-8 text-primary" />
 					<div className="ml-3">
 						<div className="text-lg font-semibold text-foreground">
-							PriceCompare
+							Compara Pró
 						</div>
 						<div className="text-xs text-muted-foreground">Painel Admin</div>
 					</div>

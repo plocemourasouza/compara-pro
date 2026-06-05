@@ -22,7 +22,7 @@ export default function Home() {
 						<div className="flex items-center space-x-2">
 							<BarChart3 className="h-8 w-8 text-primary" />
 							<span className="text-xl font-bold text-foreground">
-								PriceCompare
+								Compara Pró
 							</span>
 						</div>
 						<div className="flex items-center space-x-4">
@@ -257,7 +257,7 @@ export default function Home() {
 						<div>
 							<div className="flex items-center space-x-2 mb-4">
 								<BarChart3 className="h-6 w-6 text-primary" />
-								<span className="text-lg font-bold">PriceCompare</span>
+								<span className="text-lg font-bold">Compara Pró</span>
 							</div>
 							<p className="text-background/60">
 								A plataforma B2B que revoluciona suas compras
@@ -334,7 +334,7 @@ export default function Home() {
 						</div>
 					</div>
 					<div className="border-t border-background/20 mt-8 pt-8 text-center text-background/60">
-						<p>&copy; 2024 PriceCompare. Todos os direitos reservados.</p>
+						<p>&copy; 2024 Compara Pró. Todos os direitos reservados.</p>
 					</div>
 				</div>
 			</footer>

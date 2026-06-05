@@ -56,7 +56,7 @@ export default function RegisterPage() {
 					<Link href="/" className="inline-flex items-center space-x-2">
 						<BarChart3 className="h-8 w-8 text-primary" />
 						<span className="text-2xl font-bold text-foreground">
-							PriceCompare
+							Compara Pró
 						</span>
 					</Link>
 					<p className="mt-2 text-sm text-muted-foreground">

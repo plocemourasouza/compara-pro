@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-	title: "PriceCompare - Comparação de Preços",
+	title: "Compara Pró - Comparação de Preços",
 	description:
 		"Plataforma de comparação de preços entre fornecedores e clientes",
 };
