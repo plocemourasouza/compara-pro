@@ -9,8 +9,8 @@ export default async function PreOrdersPage() {
 		redirect("/auth/login");
 	}
 
-	if (user.role === "ADMIN") {
-		redirect("/dashboard");
+	if (user.role !== "ADMIN") {
+		redirect(user.role === "SUPPLIER" ? "/supplier" : "/client");
 	}
 
 	return <PreOrdersClient user={user} />;

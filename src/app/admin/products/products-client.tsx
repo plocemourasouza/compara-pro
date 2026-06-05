@@ -187,7 +187,7 @@ export default function ProductsClient({ user: _user }: ProductsClientProps) {
 			description: product.description || "",
 			category: product.category || "",
 			unit: product.unit || "",
-			companyId: product.company.id,
+			companyId: product.company?.id ?? "",
 		});
 		setEditDialog(true);
 	};
@@ -206,7 +206,7 @@ export default function ProductsClient({ user: _user }: ProductsClientProps) {
 		const matchesCategory =
 			!selectedCategory || product.category === selectedCategory;
 		const matchesCompany =
-			!selectedCompany || product.company.id === selectedCompany;
+			!selectedCompany || product.company?.id === selectedCompany;
 
 		return matchesSearch && matchesCategory && matchesCompany;
 	});

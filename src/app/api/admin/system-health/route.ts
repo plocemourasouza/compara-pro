@@ -1,18 +1,12 @@
 import * as os from "node:os";
-import { type NextRequest, NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth-server";
+import { NextResponse } from "next/server";
+import { AuthError, requireAuth } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
 
-export async function GET(_request: NextRequest) {
+export async function GET() {
 	try {
-		// Require an authenticated ADMIN — this endpoint exposes system/runtime info.
-		const user = await getCurrentUser();
-		if (user?.role !== "ADMIN") {
-			return NextResponse.json(
-				{ success: false, error: "Acesso negado" },
-				{ status: 403 },
-			);
-		}
+		// Admin-only — this endpoint exposes system/runtime info.
+		await requireAuth(["ADMIN"]);
 
 		// Verificar conectividade do banco de dados
 		let databaseHealth: "healthy" | "warning" | "critical" = "healthy";
@@ -219,6 +213,12 @@ export async function GET(_request: NextRequest) {
 			systemHealth: healthData,
 		});
 	} catch (error) {
+		if (error instanceof AuthError) {
+			return NextResponse.json(
+				{ error: error.message },
+				{ status: error.status },
+			);
+		}
 		console.error("System health check error:", error);
 		return NextResponse.json(
 			{

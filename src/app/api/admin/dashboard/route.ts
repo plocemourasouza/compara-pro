@@ -1,17 +1,10 @@
-import { type NextRequest, NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth-server";
+import { NextResponse } from "next/server";
+import { AuthError, requireAuth } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
 
-export async function GET(_request: NextRequest) {
+export async function GET() {
 	try {
-		const user = await getCurrentUser();
-
-		if (user?.role !== "ADMIN") {
-			return NextResponse.json(
-				{ error: "Acesso negado. Apenas administradores podem acessar." },
-				{ status: 403 },
-			);
-		}
+		await requireAuth(["ADMIN"]);
 
 		// Buscar métricas de usuários
 		const [totalUsers, activeUsers, usersByRole] = await Promise.all([
@@ -120,51 +113,39 @@ export async function GET(_request: NextRequest) {
 			totalValue: Number(preOrderStats._sum?.totalAmount) || 0,
 		};
 
-		// Buscar top 3 produtos em pré-pedidos por valor acumulado
+		// Top 3 produtos em pré-pedidos por valor acumulado
 		const topProductsInPreOrders = await prisma.preOrderItem.groupBy({
 			by: ["matchId"],
 			_sum: { totalPrice: true },
-			orderBy: {
-				_sum: {
-					totalPrice: "desc",
-				},
-			},
+			orderBy: { _sum: { totalPrice: "desc" } },
 			take: 3,
 		});
 
-		// Buscar detalhes dos produtos
-		const topProductsDetails = await Promise.all(
-			topProductsInPreOrders.map(async (item) => {
-				if (!item.matchId) {
-					return {
-						matchId: null,
-						productName: "Produto não encontrado",
-						totalValue: Number(item._sum.totalPrice) || 0,
-						supplierCount: 0,
-					};
-				}
-
-				const match = await prisma.comparisonMatch.findUnique({
-					where: { id: item.matchId },
-					include: {
-						clientProduct: true,
-						supplierMatches: {
-							include: {
-								supplierProduct: true,
-								supplierCompany: true,
-							},
-						},
+		// Detalhes dos produtos — batch load (evita N+1)
+		const matchIds = topProductsInPreOrders
+			.map((item) => item.matchId)
+			.filter((id): id is string => id !== null);
+		const matches = matchIds.length
+			? await prisma.comparisonMatch.findMany({
+					where: { id: { in: matchIds } },
+					select: {
+						id: true,
+						clientProduct: { select: { name: true } },
+						_count: { select: { supplierMatches: true } },
 					},
-				});
+				})
+			: [];
+		const matchById = new Map(matches.map((m) => [m.id, m]));
 
-				return {
-					matchId: item.matchId,
-					productName: match?.clientProduct.name || "Produto não encontrado",
-					totalValue: Number(item._sum.totalPrice) || 0,
-					supplierCount: match?.supplierMatches.length || 0,
-				};
-			}),
-		);
+		const topProductsDetails = topProductsInPreOrders.map((item) => {
+			const match = item.matchId ? matchById.get(item.matchId) : undefined;
+			return {
+				matchId: item.matchId,
+				productName: match?.clientProduct.name || "Produto não encontrado",
+				totalValue: Number(item._sum.totalPrice) || 0,
+				supplierCount: match?._count.supplierMatches || 0,
+			};
+		});
 
 		const metrics = {
 			users: usersMetrics,
@@ -180,6 +161,12 @@ export async function GET(_request: NextRequest) {
 			timestamp: new Date().toISOString(),
 		});
 	} catch (error) {
+		if (error instanceof AuthError) {
+			return NextResponse.json(
+				{ error: error.message },
+				{ status: error.status },
+			);
+		}
 		console.error("Admin dashboard metrics error:", error);
 		return NextResponse.json(
 			{ error: "Erro interno do servidor" },

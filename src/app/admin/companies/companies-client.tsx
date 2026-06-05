@@ -199,7 +199,7 @@ export default function CompaniesClient({ user: _user }: CompaniesClientProps) {
 
 			if (response.ok) {
 				const data = await response.json();
-				setCompanies(data.companies);
+				setCompanies(data.companies ?? []);
 			} else {
 				toast.error("Erro ao carregar empresas");
 			}
