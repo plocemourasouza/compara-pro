@@ -154,8 +154,11 @@ export function CompanyForm({
 	const lastCnpj = useRef("");
 	const lastCep = useRef("");
 
+	// Aplica o valor quando definido (inclui string vazia), para que uma nova
+	// consulta de CNPJ/CEP que retorne "" limpe o valor anterior em vez de
+	// manter dado stale. Só `undefined` (campo ausente na resposta) é ignorado.
 	const setValue = (field: keyof CreateCompanyData, value?: string) => {
-		if (value) {
+		if (value !== undefined) {
 			form.setValue(field, value, { shouldValidate: true, shouldDirty: true });
 		}
 	};
