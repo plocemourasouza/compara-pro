@@ -139,15 +139,16 @@ function FormMessage({ className, ...props }: React.ComponentProps<"p">) {
 	const { error, formMessageId } = useFormField();
 	const body = error ? String(error?.message ?? "") : props.children;
 
-	if (!body) {
-		return null;
-	}
-
+	// Sempre renderiza (mesmo vazio) reservando a altura de uma linha, para que a
+	// mensagem de validação apareça sem deslocar os demais campos do formulário.
 	return (
 		<p
 			data-slot="form-message"
 			id={formMessageId}
-			className={cn("text-destructive text-sm", className)}
+			className={cn(
+				"min-h-5 text-sm leading-5 text-destructive",
+				className,
+			)}
 			{...props}
 		>
 			{body}
