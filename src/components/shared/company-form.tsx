@@ -347,7 +347,7 @@ export function CompanyForm({
 								control={form.control}
 								name="name"
 								render={({ field }) => (
-									<FormItem className="sm:col-span-4">
+									<FormItem className="sm:col-span-3 sm:col-start-1">
 										<FormLabel>Nome Fantasia *</FormLabel>
 										<FormControl>
 											<Input
@@ -393,7 +393,7 @@ export function CompanyForm({
 								control={form.control}
 								name="phone"
 								render={({ field }) => (
-									<FormItem className="sm:col-span-2">
+									<FormItem className="sm:col-span-3">
 										<FormLabel>Telefone da Empresa</FormLabel>
 										<FormControl>
 											<Input
@@ -412,7 +412,7 @@ export function CompanyForm({
 								control={form.control}
 								name="type"
 								render={({ field }) => (
-									<FormItem className="sm:col-span-2">
+									<FormItem className="sm:col-span-3">
 										<FormLabel>Tipo *</FormLabel>
 										<Select value={field.value} onValueChange={field.onChange}>
 											<FormControl>
@@ -433,7 +433,7 @@ export function CompanyForm({
 								control={form.control}
 								name="taxRegime"
 								render={({ field }) => (
-									<FormItem className="sm:col-span-2">
+									<FormItem className="sm:col-span-3">
 										<FormLabel>Enquadramento Tributário *</FormLabel>
 										<Select value={field.value} onValueChange={field.onChange}>
 											<FormControl>
