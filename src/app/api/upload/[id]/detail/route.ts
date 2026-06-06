@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
+import type { Prisma } from "@/generated/prisma";
 import { getCurrentUser } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
 
@@ -14,11 +15,14 @@ export async function GET(
 			return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
 		}
 
-		const upload = await prisma.uploadHistory.findUnique({
-			where: {
-				id: resolvedParams.id,
-				companyId: user.company?.id,
-			},
+		// Admin vê qualquer upload; demais só os da própria empresa.
+		const where: Prisma.UploadHistoryWhereInput = { id: resolvedParams.id };
+		if (user.role !== "ADMIN") {
+			where.companyId = user.company?.id;
+		}
+
+		const upload = await prisma.uploadHistory.findFirst({
+			where,
 			include: {
 				products: {
 					take: 50, // Limite para não sobrecarregar

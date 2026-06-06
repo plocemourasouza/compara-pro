@@ -51,12 +51,14 @@ export function UploadDetailModal({
 }: UploadDetailModalProps) {
 	const [detail, setDetail] = useState<UploadDetail | null>(null);
 	const [loading, setLoading] = useState(false);
+	const [loadError, setLoadError] = useState(false);
 	const [reprocessing, setReprocessing] = useState(false);
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: fetch when modal opens for an id
 	useEffect(() => {
 		if (!open || !uploadId) {
 			setDetail(null);
+			setLoadError(false);
 			return;
 		}
 		fetchDetail(uploadId);
@@ -64,14 +66,24 @@ export function UploadDetailModal({
 
 	const fetchDetail = async (id: string) => {
 		setLoading(true);
+		setLoadError(false);
 		try {
 			const response = await fetch(`/api/upload/${id}/detail`);
-			if (!response.ok) throw new Error("Erro ao carregar detalhes");
+			if (!response.ok) {
+				const message =
+					response.status === 404
+						? "Registro não encontrado (a lista pode estar desatualizada)."
+						: "Não foi possível carregar os detalhes.";
+				setLoadError(true);
+				toast.error(message);
+				return;
+			}
 			const data = await response.json();
 			setDetail(data.upload);
 		} catch (error) {
 			console.error("Erro ao carregar detalhes:", error);
-			toast.error("Erro ao carregar detalhes do upload");
+			setLoadError(true);
+			toast.error("Não foi possível carregar os detalhes.");
 		} finally {
 			setLoading(false);
 		}
@@ -120,6 +132,11 @@ export function UploadDetailModal({
 					{loading ? (
 						<div className="flex items-center justify-center p-8">
 							<Clock className="h-8 w-8 animate-spin text-primary" />
+						</div>
+					) : loadError ? (
+						<div className="py-12 text-center text-sm text-muted-foreground">
+							Não foi possível carregar os detalhes deste upload. A lista pode
+							estar desatualizada — atualize a página e tente novamente.
 						</div>
 					) : detail ? (
 						<div className="space-y-7">
