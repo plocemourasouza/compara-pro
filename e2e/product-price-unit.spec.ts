@@ -22,8 +22,10 @@ test("editar produto mostra preço em moeda e unidade em maiúsculo", async ({
 	await dialog.getByRole("button", { name: /editar/i }).click();
 	await page.waitForURL(/\/admin\/products\/.+\/editar/, { timeout: 15_000 });
 
-	// Preço como moeda BR (ex.: "0,50").
-	await expect(page.getByLabel("Preço")).toHaveValue(/^\d{1,3}(\.\d{3})*,\d{2}$/);
+	// Preço como moeda BR (ex.: "0,45") — centavos com vírgula, milhar com ponto.
+	await expect(page.getByLabel("Preço")).toHaveValue(
+		/^\d{1,3}(\.\d{3})*,\d{2}$/,
+	);
 	// Unidade: combobox com o código em maiúsculo (seed "un" -> "UN — UNIDADE").
 	await expect(
 		page.getByRole("combobox").filter({ hasText: /\s—\s/ }),

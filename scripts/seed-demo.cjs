@@ -43,7 +43,7 @@ async function makeUploadWithProducts(companyId, uploadType, products) {
 			name: p.name,
 			price: p.price ?? null,
 			quantity: p.quantity ?? null,
-			unit: "un",
+			unit: "UN",
 		})),
 	});
 	return upload;
@@ -73,7 +73,7 @@ async function makeCatalog(companyId, items) {
 			code: p.code ?? null,
 			price: p.price ?? null,
 			quantity: p.quantity ?? null,
-			unit: "un",
+			unit: "UN",
 			isActive: true,
 			lastUploadId: upload.id,
 		})),
@@ -87,7 +87,7 @@ async function makeCatalog(companyId, items) {
 			name: p.name,
 			price: p.price ?? null,
 			quantity: p.quantity ?? null,
-			unit: "un",
+			unit: "UN",
 		})),
 	});
 	return upload;
