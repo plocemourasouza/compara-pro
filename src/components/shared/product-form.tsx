@@ -190,7 +190,7 @@ export function ProductForm({
 								control={form.control}
 								name="name"
 								render={({ field }) => (
-									<FormItem className="sm:col-span-6">
+									<FormItem className="sm:col-span-4">
 										<FormLabel>Nome do Produto *</FormLabel>
 										<FormControl>
 											<Input placeholder="Nome do produto" {...field} />
@@ -221,7 +221,7 @@ export function ProductForm({
 								control={form.control}
 								name="unit"
 								render={({ field }) => (
-									<FormItem className="sm:col-span-2">
+									<FormItem className="sm:col-span-3">
 										<FormLabel>Unidade</FormLabel>
 										<FormControl>
 											<Input placeholder="Unidade (kg, l, etc)" {...field} />
@@ -234,7 +234,7 @@ export function ProductForm({
 								control={form.control}
 								name="category"
 								render={({ field }) => (
-									<FormItem className="sm:col-span-2">
+									<FormItem className="sm:col-span-3">
 										<FormLabel>Categoria</FormLabel>
 										<FormControl>
 											<Input placeholder="Categoria do produto" {...field} />
@@ -265,7 +265,7 @@ export function ProductForm({
 									control={form.control}
 									name="companyId"
 									render={({ field }) => (
-										<FormItem className="sm:col-span-6">
+										<FormItem className="sm:col-span-3">
 											<FormLabel>Empresa *</FormLabel>
 											<Select
 												value={field.value}
