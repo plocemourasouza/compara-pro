@@ -186,6 +186,7 @@ export function CompanyForm({
 			setValue("email", data.email);
 			if (data.phone) setValue("phone", masks.phone(data.phone));
 			if (data.taxRegime) setValue("taxRegime", data.taxRegime);
+			setValue("responsibleName", data.responsibleName);
 			const a = data.address ?? {};
 			if (a.zipCode) setValue("zipCode", masks.cep(a.zipCode));
 			if (a.street) fillAddressFromStreet(a.street);

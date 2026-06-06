@@ -26,6 +26,8 @@ test.describe("lookup empresa (CNPJ + CEP)", () => {
 		const data = await res.json();
 		expect(data.legalName).toContain("BANCO DO BRASIL");
 		expect(data.address?.state).toBe("DF");
+		expect(typeof data.responsibleName).toBe("string");
+		expect(data.responsibleName.length).toBeGreaterThan(0);
 	});
 
 	test("formulário preenche endereço ao digitar o CEP", async ({ page }) => {

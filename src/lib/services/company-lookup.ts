@@ -17,6 +17,8 @@ export interface CnpjLookupResult {
 	email: string;
 	phone: string; // dígitos (área + número); o cliente aplica a máscara
 	taxRegime?: TaxRegimeHint;
+	/** Nome do sócio administrador (CNPJÁ não expõe e-mail/telefone do sócio). */
+	responsibleName: string;
 	address: {
 		zipCode: string;
 		street: string;
@@ -45,6 +47,20 @@ export class LookupError extends Error {
 
 function onlyDigits(value: string): string {
 	return value.replace(/\D/g, "");
+}
+
+/** Escolhe o sócio administrador (prioridade: Administrador > Presidente > Diretor > 1º). */
+// biome-ignore lint/suspicious/noExplicitAny: lista de sócios da resposta externa
+function pickAdminName(members: any[] | undefined): string {
+	if (!Array.isArray(members) || members.length === 0) return "";
+	const byRole = (re: RegExp) =>
+		members.find((m) => re.test(m?.role?.text ?? ""));
+	const admin =
+		byRole(/administrador/i) ||
+		byRole(/presidente/i) ||
+		byRole(/diretor/i) ||
+		members[0];
+	return admin?.person?.name ?? "";
 }
 
 export async function lookupCnpj(raw: string): Promise<CnpjLookupResult> {
@@ -88,6 +104,7 @@ export async function lookupCnpj(raw: string): Promise<CnpjLookupResult> {
 		email: d.emails?.[0]?.address || "",
 		phone,
 		taxRegime,
+		responsibleName: pickAdminName(d.company?.members),
 		address: {
 			zipCode: a.zip || "",
 			street: a.street || "",
@@ -150,7 +167,7 @@ export async function lookupCep(raw: string): Promise<CepLookupResult> {
 	// BrasilAPI corre vários provedores e às vezes vem sem logradouro/bairro;
 	// completa com o ViaCEP quando faltar (CEP geral de cidade fica sem rua mesmo).
 	let result = primary;
-	if (!result || !result.street || !result.neighborhood) {
+	if (!result?.street || !result?.neighborhood) {
 		const fallback = await fetchViaCep(cep);
 		if (fallback) {
 			result = {
