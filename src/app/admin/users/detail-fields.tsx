@@ -15,6 +15,7 @@ export const userDetailSections: DetailSection<UserData>[] = [
 		fields: [
 			{ label: "Nome", value: (u) => u.name },
 			{ label: "Email", value: (u) => u.email },
+			{ label: "Telefone", value: (u) => u.phone || "-" },
 			{
 				label: "Papel",
 				value: (u) => (
@@ -26,12 +27,19 @@ export const userDetailSections: DetailSection<UserData>[] = [
 			{ label: "Empresa", value: (u) => u.company?.name ?? "-" },
 			{
 				label: "Status",
-				value: (u) =>
-					u.deletedAt ? (
-						<Badge variant="destructive">Inativo</Badge>
-					) : (
-						<Badge variant="secondary">Ativo</Badge>
-					),
+				value: (u) => {
+					if (u.deletedAt) {
+						return <Badge variant="destructive">Inativo</Badge>;
+					}
+					if (u.pending) {
+						return (
+							<Badge className="border-transparent bg-amber-500/10 text-amber-600">
+								Pendente
+							</Badge>
+						);
+					}
+					return <Badge variant="secondary">Ativo</Badge>;
+				},
 			},
 			{
 				label: "Criado em",

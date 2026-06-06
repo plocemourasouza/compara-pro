@@ -1,15 +1,21 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import type { Prisma, Role } from "@/generated/prisma";
-import { hashPassword } from "@/lib/auth";
+import {
+	activationExpiry,
+	buildActivationLink,
+	generateActivationCode,
+	hashActivationCode,
+} from "@/lib/auth-activation";
 import { getCurrentUser } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
+import { sendNotificationEmail } from "@/lib/email/mailer";
 
 const createUserSchema = z
 	.object({
 		name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
 		email: z.string().email("Email inválido"),
-		password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
+		phone: z.string().min(1, "Telefone é obrigatório"),
 		role: z.enum(["ADMIN", "SUPPLIER", "CLIENT"]),
 		companyId: z.string().optional(),
 		companyName: z.string().optional(),
@@ -73,7 +79,7 @@ export async function GET(request: NextRequest) {
 			where.deletedAt = { not: null };
 		}
 
-		const [users, total] = await Promise.all([
+		const [usersRaw, total] = await Promise.all([
 			prisma.user.findMany({
 				where,
 				skip,
@@ -83,10 +89,12 @@ export async function GET(request: NextRequest) {
 					id: true,
 					name: true,
 					email: true,
+					phone: true,
 					role: true,
 					createdAt: true,
 					updatedAt: true,
 					deletedAt: true,
+					password: true,
 					company: {
 						select: {
 							id: true,
@@ -98,6 +106,12 @@ export async function GET(request: NextRequest) {
 			}),
 			prisma.user.count({ where }),
 		]);
+
+		// pending = sem senha (primeiro acesso ainda não concluído). Nunca devolve o hash.
+		const users = usersRaw.map(({ password, ...u }) => ({
+			...u,
+			pending: !password,
+		}));
 
 		return NextResponse.json({
 			users,
@@ -117,7 +131,7 @@ export async function GET(request: NextRequest) {
 	}
 }
 
-// POST /api/users - Criar novo usuário
+// POST /api/users - Criar novo usuário (sem senha; ativação por código no 1º acesso)
 export async function POST(request: NextRequest) {
 	try {
 		const user = await getCurrentUser();
@@ -141,7 +155,7 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
-		const { name, email, password, role, companyId, companyName } =
+		const { name, email, phone, role, companyId, companyName } =
 			validationResult.data;
 
 		// Verificar se email já existe
@@ -176,22 +190,26 @@ export async function POST(request: NextRequest) {
 			finalCompanyId = company.id;
 		}
 
-		// Hash da senha
-		const hashedPassword = await hashPassword(password);
+		// Gera código de primeiro acesso (usuário criado SEM senha).
+		const code = generateActivationCode();
+		const activationCodeHash = await hashActivationCode(code);
 
-		// Criar usuário
 		const newUser = await prisma.user.create({
 			data: {
 				name,
 				email,
-				password: hashedPassword,
+				phone,
+				password: null,
 				role,
 				companyId: finalCompanyId || null,
+				activationCodeHash,
+				activationExpiresAt: activationExpiry(),
 			},
 			select: {
 				id: true,
 				name: true,
 				email: true,
+				phone: true,
 				role: true,
 				createdAt: true,
 				company: {
@@ -204,10 +222,28 @@ export async function POST(request: NextRequest) {
 			},
 		});
 
+		const link = buildActivationLink();
+
+		// E-mail best-effort (no-op sem RESEND_API_KEY).
+		await sendNotificationEmail({
+			to: [email],
+			subject: "Ative sua conta no Compara Pró",
+			message: `Seu código de primeiro acesso é ${code}. Acesse ${link} para confirmar o código e definir sua senha. O código expira em 7 dias.`,
+		});
+
+		// Log sem PII (não registra e-mail nem código).
+		console.info(
+			JSON.stringify({
+				action: "user.activation_generated",
+				userId: newUser.id,
+			}),
+		);
+
 		return NextResponse.json(
 			{
 				message: "Usuário criado com sucesso",
 				user: newUser,
+				activation: { code, link },
 			},
 			{ status: 201 },
 		);

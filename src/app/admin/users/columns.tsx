@@ -1,7 +1,7 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
-import { RotateCcw, Trash2 } from "lucide-react";
+import { Mail, RotateCcw, Trash2 } from "lucide-react";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -20,10 +20,12 @@ export interface UserData {
 	id: string;
 	name: string;
 	email: string;
+	phone?: string | null;
 	role: "ADMIN" | "SUPPLIER" | "CLIENT";
 	createdAt: string;
 	updatedAt: string;
 	deletedAt: string | null;
+	pending: boolean;
 	company: { id: string; name: string; type: string } | null;
 }
 
@@ -67,12 +69,14 @@ export function formatDateTime(dateString: string): string {
 interface ColumnActions {
 	onDeactivate: (id: string) => void;
 	onReactivate: (id: string) => void;
+	onResend: (id: string) => void;
 	actionLoading: boolean;
 }
 
 export function getUsersColumns({
 	onDeactivate,
 	onReactivate,
+	onResend,
 	actionLoading,
 }: ColumnActions): ColumnDef<UserData>[] {
 	return [
@@ -116,12 +120,19 @@ export function getUsersColumns({
 			id: "status",
 			header: "Status",
 			enableSorting: false,
-			cell: ({ row }) =>
-				row.original.deletedAt ? (
-					<Badge variant="destructive">Inativo</Badge>
-				) : (
-					<Badge variant="secondary">Ativo</Badge>
-				),
+			cell: ({ row }) => {
+				if (row.original.deletedAt) {
+					return <Badge variant="destructive">Inativo</Badge>;
+				}
+				if (row.original.pending) {
+					return (
+						<Badge className="border-transparent bg-amber-500/10 text-amber-600">
+							Pendente
+						</Badge>
+					);
+				}
+				return <Badge variant="secondary">Ativo</Badge>;
+			},
 		},
 		{
 			accessorKey: "createdAt",
@@ -136,10 +147,22 @@ export function getUsersColumns({
 			cell: ({ row }) => (
 				// biome-ignore lint/a11y/noStaticElementInteractions: click-isolation wrapper so action buttons don't open the detail modal
 				<div
-					className="flex justify-end"
+					className="flex justify-end gap-2"
 					onClick={(e) => e.stopPropagation()}
 					onKeyDown={(e) => e.stopPropagation()}
 				>
+					{!row.original.deletedAt && row.original.pending && (
+						<Button
+							variant="outline"
+							size="sm"
+							aria-label="Reenviar código"
+							title="Reenviar código de primeiro acesso"
+							disabled={actionLoading}
+							onClick={() => onResend(row.original.id)}
+						>
+							<Mail className="h-4 w-4" />
+						</Button>
+					)}
 					{row.original.deletedAt ? (
 						<AlertDialog>
 							<AlertDialogTrigger asChild>

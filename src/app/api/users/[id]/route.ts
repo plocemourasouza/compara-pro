@@ -1,6 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { hashPassword } from "@/lib/auth";
 import { AuthError, requireAuth } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
 
@@ -9,10 +8,7 @@ type RouteParams = { params: Promise<{ id: string }> };
 const updateUserSchema = z.object({
 	name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres").optional(),
 	email: z.string().email("Email inválido").optional(),
-	password: z
-		.string()
-		.min(6, "Senha deve ter pelo menos 6 caracteres")
-		.optional(),
+	phone: z.string().optional(),
 	role: z.enum(["ADMIN", "SUPPLIER", "CLIENT"]).optional(),
 	companyId: z.string().nullable().optional(),
 });
@@ -21,6 +17,7 @@ const userSelect = {
 	id: true,
 	name: true,
 	email: true,
+	phone: true,
 	role: true,
 	createdAt: true,
 	updatedAt: true,
@@ -49,7 +46,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
 		await requireAuth(["ADMIN"]);
 		const targetUser = await prisma.user.findUnique({
 			where: { id },
-			select: userSelect,
+			select: { ...userSelect, password: true },
 		});
 		if (!targetUser) {
 			return NextResponse.json(
@@ -57,7 +54,8 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
 				{ status: 404 },
 			);
 		}
-		return NextResponse.json({ user: targetUser });
+		const { password, ...rest } = targetUser;
+		return NextResponse.json({ user: { ...rest, pending: !password } });
 	} catch (error) {
 		return handleError(error, "Get user error:");
 	}
@@ -86,10 +84,10 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 			);
 		}
 
-		const { password, ...rest } = parsed.data;
-		if (rest.email && rest.email !== existing.email) {
+		const data = parsed.data;
+		if (data.email && data.email !== existing.email) {
 			const emailExists = await prisma.user.findUnique({
-				where: { email: rest.email },
+				where: { email: data.email },
 			});
 			if (emailExists) {
 				return NextResponse.json(
@@ -101,10 +99,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
 		const updated = await prisma.user.update({
 			where: { id },
-			data: {
-				...rest,
-				...(password ? { password: await hashPassword(password) } : {}),
-			},
+			data,
 			select: userSelect,
 		});
 		return NextResponse.json({

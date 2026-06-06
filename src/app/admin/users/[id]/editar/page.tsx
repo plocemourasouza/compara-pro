@@ -22,7 +22,7 @@ export default async function EditUserPage({
 
 	const target = await prisma.user.findUnique({
 		where: { id },
-		select: { name: true, email: true, role: true },
+		select: { name: true, email: true, phone: true, role: true },
 	});
 
 	if (!target) {
@@ -32,8 +32,8 @@ export default async function EditUserPage({
 	const defaultValues: Partial<UserFormValues> = {
 		name: target.name,
 		email: target.email,
+		phone: target.phone ?? "",
 		role: target.role as UserFormValues["role"],
-		password: "",
 	};
 
 	return <UserForm mode="edit" userId={id} defaultValues={defaultValues} />;

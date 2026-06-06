@@ -132,6 +132,30 @@ export default function UsersClient({ user: _user }: UsersClientProps) {
 		}
 	};
 
+	const handleResend = async (userId: string) => {
+		setActionLoading(true);
+		try {
+			const response = await fetch(`/api/users/${userId}/resend-activation`, {
+				method: "POST",
+			});
+			const data = await response.json();
+			if (!response.ok) {
+				throw new Error(data.error || "Erro ao reenviar código");
+			}
+			toast.success("Código reenviado", {
+				description: data.activation?.code
+					? `Novo código: ${data.activation.code} — envie ao usuário.`
+					: undefined,
+				duration: 20000,
+			});
+			await fetchUsers();
+		} catch (error) {
+			toast.error(error instanceof Error ? error.message : "Erro de conexão");
+		} finally {
+			setActionLoading(false);
+		}
+	};
+
 	const updateFilters = (newFilters: Partial<UserFilters>) => {
 		setFilters((prev) => ({ ...prev, ...newFilters }));
 		setPage(1);
@@ -148,6 +172,7 @@ export default function UsersClient({ user: _user }: UsersClientProps) {
 			getUsersColumns({
 				onDeactivate: handleDeactivate,
 				onReactivate: handleReactivate,
+				onResend: handleResend,
 				actionLoading,
 			}),
 		[actionLoading],

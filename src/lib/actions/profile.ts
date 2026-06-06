@@ -65,6 +65,9 @@ export async function changePasswordAction(
 		select: { password: true },
 	});
 	if (!dbUser) return { success: false, error: "Usuário não encontrado" };
+	if (!dbUser.password) {
+		return { success: false, error: "Conta sem senha definida" };
+	}
 
 	const ok = await verifyPassword(parsed.data.currentPassword, dbUser.password);
 	if (!ok) return { success: false, error: "Senha atual incorreta" };

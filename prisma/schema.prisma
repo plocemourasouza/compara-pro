@@ -14,18 +14,21 @@ datasource db {
 }
 
 model User {
-  id            String         @id @default(cuid())
-  email         String         @unique
-  password      String
-  name          String
-  role          Role // ADMIN, SUPPLIER, CLIENT
-  companyId     String?
-  company       Company?       @relation(fields: [companyId], references: [id])
-  notifications Notification[]
-  preferences   Json? // notificações, idioma, tema
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  deletedAt     DateTime?
+  id                  String         @id @default(cuid())
+  email               String         @unique
+  password            String? // null = conta pendente de ativação (primeiro acesso)
+  name                String
+  phone               String?
+  role                Role // ADMIN, SUPPLIER, CLIENT
+  companyId           String?
+  company             Company?       @relation(fields: [companyId], references: [id])
+  notifications       Notification[]
+  preferences         Json? // notificações, idioma, tema
+  activationCodeHash  String? // código de primeiro acesso (hasheado)
+  activationExpiresAt DateTime?
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+  deletedAt           DateTime?
 
   @@map("users")
 }

@@ -87,7 +87,17 @@ function LoginFormContent() {
 							</Button>
 						</form>
 
-						<div className="mt-6 text-center text-sm">
+						<div className="mt-4 text-center text-sm">
+							<span className="text-muted-foreground">Primeiro acesso? </span>
+							<Link
+								href="/auth/primeiro-acesso"
+								className="font-medium text-primary hover:text-primary"
+							>
+								Ative sua conta
+							</Link>
+						</div>
+
+						<div className="mt-2 text-center text-sm">
 							<span className="text-muted-foreground">Não tem uma conta? </span>
 							<Link
 								href="/auth/register"

@@ -30,6 +30,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { masks } from "@/lib/utils/masks";
 import {
 	createUserFormSchema,
 	type UserFormValues,
@@ -39,7 +40,7 @@ import {
 const EMPTY_DEFAULTS: UserFormValues = {
 	name: "",
 	email: "",
-	password: "",
+	phone: "",
 	role: "CLIENT",
 	companyName: "",
 };
@@ -69,13 +70,13 @@ export function UserForm({ mode, userId, defaultValues }: UserFormProps) {
 			? {
 					name: values.name,
 					email: values.email,
+					phone: values.phone,
 					role: values.role,
-					...(values.password ? { password: values.password } : {}),
 				}
 			: {
 					name: values.name,
 					email: values.email,
-					password: values.password,
+					phone: values.phone,
 					role: values.role,
 					...(values.role !== "ADMIN" && values.companyName
 						? { companyName: values.companyName }
@@ -90,11 +91,18 @@ export function UserForm({ mode, userId, defaultValues }: UserFormProps) {
 			});
 
 			if (response.ok) {
-				toast.success(
-					isEdit
-						? "Usuário atualizado com sucesso!"
-						: "Usuário criado com sucesso!",
-				);
+				if (isEdit) {
+					toast.success("Usuário atualizado com sucesso!");
+				} else {
+					const created = await response.json();
+					const code = created.activation?.code;
+					toast.success("Usuário criado com sucesso!", {
+						description: code
+							? `Código de primeiro acesso: ${code} — envie ao usuário (link: ${created.activation.link}).`
+							: undefined,
+						duration: 20000,
+					});
+				}
 				router.push("/admin/users");
 				router.refresh();
 				return;
@@ -144,7 +152,8 @@ export function UserForm({ mode, userId, defaultValues }: UserFormProps) {
 						<CardHeader>
 							<CardTitle className="text-lg">Dados do Usuário</CardTitle>
 							<CardDescription>
-								Credenciais de acesso e nível de permissão.
+								Dados de contato e nível de permissão. A senha é definida pelo
+								próprio usuário no primeiro acesso.
 							</CardDescription>
 						</CardHeader>
 						<CardContent className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -180,21 +189,17 @@ export function UserForm({ mode, userId, defaultValues }: UserFormProps) {
 							/>
 							<FormField
 								control={form.control}
-								name="password"
+								name="phone"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>
-											{isEdit ? "Nova Senha (opcional)" : "Senha *"}
-										</FormLabel>
+										<FormLabel>Telefone *</FormLabel>
 										<FormControl>
 											<Input
-												type="password"
-												placeholder={
-													isEdit
-														? "Deixe vazio para manter a atual"
-														: "Mínimo 6 caracteres"
-												}
+												placeholder="(11) 99999-9999"
 												{...field}
+												onChange={(e) =>
+													field.onChange(masks.phone(e.target.value))
+												}
 											/>
 										</FormControl>
 										<FormMessage />

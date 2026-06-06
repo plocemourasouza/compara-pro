@@ -1,14 +1,20 @@
 import { z } from "zod";
+import { validations } from "@/lib/utils/masks";
 
 export const userRoles = ["ADMIN", "SUPPLIER", "CLIENT"] as const;
 export type UserRole = (typeof userRoles)[number];
+
+const phoneField = z
+	.string()
+	.min(1, "Telefone é obrigatório")
+	.refine((v) => validations.phone(v), "Telefone inválido");
 
 // Schema do formulário de criação (espelha o contrato de POST /api/users).
 export const createUserFormSchema = z
 	.object({
 		name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
 		email: z.string().email("Email inválido"),
-		password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
+		phone: phoneField,
 		role: z.enum(userRoles),
 		companyName: z.string().optional().or(z.literal("")),
 	})
@@ -21,19 +27,15 @@ export const createUserFormSchema = z
 export const updateUserFormSchema = z.object({
 	name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
 	email: z.string().email("Email inválido"),
+	phone: phoneField,
 	role: z.enum(userRoles),
-	password: z
-		.union([
-			z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
-			z.literal(""),
-		])
-		.optional(),
+	companyName: z.string().optional().or(z.literal("")),
 });
 
 export interface UserFormValues {
 	name: string;
 	email: string;
-	password: string;
+	phone: string;
 	role: UserRole;
 	companyName: string;
 }
