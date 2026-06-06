@@ -1,8 +1,17 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, Building2, MapPin, Save, User } from "lucide-react";
+import {
+	ArrowLeft,
+	Building2,
+	Loader2,
+	Lock,
+	MapPin,
+	Save,
+	User,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -109,6 +118,19 @@ const EMPTY_DEFAULTS: CreateCompanyData = {
 	addressReference: "",
 };
 
+/** Separa o tipo de logradouro do início da rua (ex.: "Avenida Paulista"). */
+function splitStreet(street: string): { addressType?: string; street: string } {
+	const parts = street.trim().split(/\s+/);
+	const first = parts[0];
+	const match = addressTypes.find(
+		(t) => t.toLowerCase() === first?.toLowerCase(),
+	);
+	if (match && parts.length > 1) {
+		return { addressType: match, street: parts.slice(1).join(" ") };
+	}
+	return { street };
+}
+
 interface CompanyFormProps {
 	mode: "create" | "edit";
 	companyId?: string;
@@ -121,10 +143,88 @@ export function CompanyForm({
 	defaultValues,
 }: CompanyFormProps) {
 	const router = useRouter();
+	const locked = mode === "edit";
 	const form = useForm<CreateCompanyData>({
 		resolver: zodResolver(createCompanySchema),
 		defaultValues: { ...EMPTY_DEFAULTS, ...defaultValues },
 	});
+
+	const [cnpjLoading, setCnpjLoading] = useState(false);
+	const [cnpjMessage, setCnpjMessage] = useState<string | null>(null);
+	const [cepLoading, setCepLoading] = useState(false);
+	const [cepMessage, setCepMessage] = useState<string | null>(null);
+	const lastCnpj = useRef("");
+	const lastCep = useRef("");
+
+	const setValue = (field: keyof CreateCompanyData, value?: string) => {
+		if (value) {
+			form.setValue(field, value, { shouldValidate: true, shouldDirty: true });
+		}
+	};
+
+	const fillAddressFromStreet = (rawStreet: string) => {
+		const { addressType, street } = splitStreet(rawStreet);
+		if (addressType) setValue("addressType", addressType);
+		setValue("street", street);
+	};
+
+	const runCnpjLookup = async (masked: string) => {
+		const digits = masked.replace(/\D/g, "");
+		if (locked || digits.length !== 14 || digits === lastCnpj.current) return;
+		lastCnpj.current = digits;
+		setCnpjLoading(true);
+		setCnpjMessage(null);
+		try {
+			const res = await fetch(`/api/lookup/cnpj/${digits}`);
+			const data = await res.json();
+			if (!res.ok) {
+				setCnpjMessage(data.error || "Não foi possível buscar o CNPJ.");
+				return;
+			}
+			setValue("name", data.name);
+			setValue("legalName", data.legalName);
+			setValue("email", data.email);
+			if (data.phone) setValue("phone", masks.phone(data.phone));
+			if (data.taxRegime) setValue("taxRegime", data.taxRegime);
+			const a = data.address ?? {};
+			if (a.zipCode) setValue("zipCode", masks.cep(a.zipCode));
+			if (a.street) fillAddressFromStreet(a.street);
+			setValue("number", a.number);
+			setValue("neighborhood", a.neighborhood);
+			setValue("city", a.city);
+			setValue("state", a.state);
+			setCnpjMessage("Dados preenchidos a partir do CNPJ.");
+		} catch {
+			setCnpjMessage("Não foi possível buscar o CNPJ.");
+		} finally {
+			setCnpjLoading(false);
+		}
+	};
+
+	const runCepLookup = async (masked: string) => {
+		const digits = masked.replace(/\D/g, "");
+		if (digits.length !== 8 || digits === lastCep.current) return;
+		lastCep.current = digits;
+		setCepLoading(true);
+		setCepMessage(null);
+		try {
+			const res = await fetch(`/api/lookup/cep/${digits}`);
+			const data = await res.json();
+			if (!res.ok) {
+				setCepMessage(data.error || "Não foi possível buscar o CEP.");
+				return;
+			}
+			if (data.street) fillAddressFromStreet(data.street);
+			setValue("neighborhood", data.neighborhood);
+			setValue("city", data.city);
+			setValue("state", data.state);
+			setCepMessage("Endereço preenchido a partir do CEP.");
+		} catch {
+			setCepMessage("Não foi possível buscar o CEP.");
+		} finally {
+			setCepLoading(false);
+		}
+	};
 
 	const onSubmit = async (values: CreateCompanyData) => {
 		const url =
@@ -182,7 +282,7 @@ export function CompanyForm({
 					<p className="text-muted-foreground">
 						{mode === "edit"
 							? "Atualize os dados da empresa"
-							: "Preencha os dados para cadastrar uma empresa"}
+							: "Informe o CNPJ para preencher automaticamente os dados"}
 					</p>
 				</div>
 			</div>
@@ -196,15 +296,62 @@ export function CompanyForm({
 								Dados da Empresa
 							</CardTitle>
 							<CardDescription>
-								Identificação fiscal e contato da empresa.
+								{locked
+									? "O CNPJ não pode ser alterado."
+									: "Informe o CNPJ para buscar os dados automaticamente."}
 							</CardDescription>
 						</CardHeader>
 						<CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-6">
 							<FormField
 								control={form.control}
+								name="cnpj"
+								render={({ field }) => (
+									<FormItem className="sm:col-span-2">
+										<FormLabel className="flex items-center gap-1">
+											CNPJ *
+											{locked && <Lock className="h-3 w-3 text-primary" />}
+										</FormLabel>
+										<FormControl>
+											{locked ? (
+												<Input
+													{...field}
+													readOnly
+													aria-readonly
+													className="border-primary/60 bg-primary/5 font-semibold text-foreground"
+												/>
+											) : (
+												<Input
+													placeholder="00.000.000/0000-00"
+													inputMode="numeric"
+													{...field}
+													onChange={(e) => {
+														const m = masks.cnpj(e.target.value);
+														field.onChange(m);
+														runCnpjLookup(m);
+													}}
+												/>
+											)}
+										</FormControl>
+										{!locked && cnpjLoading && (
+											<p className="flex items-center gap-1 text-xs text-muted-foreground">
+												<Loader2 className="h-3 w-3 animate-spin" />
+												Buscando dados do CNPJ...
+											</p>
+										)}
+										{!locked && !cnpjLoading && cnpjMessage && (
+											<p className="text-xs text-muted-foreground">
+												{cnpjMessage}
+											</p>
+										)}
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+							<FormField
+								control={form.control}
 								name="name"
 								render={({ field }) => (
-									<FormItem className="sm:col-span-3">
+									<FormItem className="sm:col-span-4">
 										<FormLabel>Nome Fantasia *</FormLabel>
 										<FormControl>
 											<Input
@@ -231,16 +378,33 @@ export function CompanyForm({
 							/>
 							<FormField
 								control={form.control}
-								name="cnpj"
+								name="email"
 								render={({ field }) => (
-									<FormItem className="sm:col-span-2">
-										<FormLabel>CNPJ *</FormLabel>
+									<FormItem className="sm:col-span-3">
+										<FormLabel>E-mail da Empresa</FormLabel>
 										<FormControl>
 											<Input
-												placeholder="00.000.000/0000-00"
+												type="email"
+												placeholder="empresa@exemplo.com"
+												{...field}
+											/>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+							<FormField
+								control={form.control}
+								name="phone"
+								render={({ field }) => (
+									<FormItem className="sm:col-span-2">
+										<FormLabel>Telefone da Empresa</FormLabel>
+										<FormControl>
+											<Input
+												placeholder="(11) 99999-9999"
 												{...field}
 												onChange={(e) =>
-													field.onChange(masks.cnpj(e.target.value))
+													field.onChange(masks.phone(e.target.value))
 												}
 											/>
 										</FormControl>
@@ -289,42 +453,6 @@ export function CompanyForm({
 												))}
 											</SelectContent>
 										</Select>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-							<FormField
-								control={form.control}
-								name="email"
-								render={({ field }) => (
-									<FormItem className="sm:col-span-3">
-										<FormLabel>E-mail da Empresa</FormLabel>
-										<FormControl>
-											<Input
-												type="email"
-												placeholder="empresa@exemplo.com"
-												{...field}
-											/>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-							<FormField
-								control={form.control}
-								name="phone"
-								render={({ field }) => (
-									<FormItem className="sm:col-span-3">
-										<FormLabel>Telefone da Empresa</FormLabel>
-										<FormControl>
-											<Input
-												placeholder="(11) 99999-9999"
-												{...field}
-												onChange={(e) =>
-													field.onChange(masks.phone(e.target.value))
-												}
-											/>
-										</FormControl>
 										<FormMessage />
 									</FormItem>
 								)}
@@ -401,9 +529,60 @@ export function CompanyForm({
 								<MapPin className="h-5 w-5" />
 								Dados de Localização
 							</CardTitle>
-							<CardDescription>Endereço completo da empresa.</CardDescription>
+							<CardDescription>
+								Informe o CEP para preencher o endereço automaticamente.
+							</CardDescription>
 						</CardHeader>
 						<CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-6">
+							<FormField
+								control={form.control}
+								name="zipCode"
+								render={({ field }) => (
+									<FormItem className="sm:col-span-2">
+										<FormLabel>CEP *</FormLabel>
+										<FormControl>
+											<Input
+												placeholder="00000-000"
+												inputMode="numeric"
+												{...field}
+												onChange={(e) => {
+													const m = masks.cep(e.target.value);
+													field.onChange(m);
+													runCepLookup(m);
+												}}
+											/>
+										</FormControl>
+										{cepLoading && (
+											<p className="flex items-center gap-1 text-xs text-muted-foreground">
+												<Loader2 className="h-3 w-3 animate-spin" />
+												Buscando endereço...
+											</p>
+										)}
+										{!cepLoading && cepMessage && (
+											<p className="text-xs text-muted-foreground">
+												{cepMessage}
+											</p>
+										)}
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+							<FormField
+								control={form.control}
+								name="street"
+								render={({ field }) => (
+									<FormItem className="sm:col-span-4">
+										<FormLabel>Logradouro *</FormLabel>
+										<FormControl>
+											<Input
+												placeholder="Nome da rua, avenida, etc."
+												{...field}
+											/>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
 							<FormField
 								control={form.control}
 								name="addressType"
@@ -424,22 +603,6 @@ export function CompanyForm({
 												))}
 											</SelectContent>
 										</Select>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-							<FormField
-								control={form.control}
-								name="street"
-								render={({ field }) => (
-									<FormItem className="sm:col-span-4">
-										<FormLabel>Logradouro *</FormLabel>
-										<FormControl>
-											<Input
-												placeholder="Nome da rua, avenida, etc."
-												{...field}
-											/>
-										</FormControl>
 										<FormMessage />
 									</FormItem>
 								)}
@@ -503,25 +666,6 @@ export function CompanyForm({
 												))}
 											</SelectContent>
 										</Select>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-							<FormField
-								control={form.control}
-								name="zipCode"
-								render={({ field }) => (
-									<FormItem className="sm:col-span-2">
-										<FormLabel>CEP *</FormLabel>
-										<FormControl>
-											<Input
-												placeholder="00000-000"
-												{...field}
-												onChange={(e) =>
-													field.onChange(masks.cep(e.target.value))
-												}
-											/>
-										</FormControl>
 										<FormMessage />
 									</FormItem>
 								)}
