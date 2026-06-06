@@ -150,9 +150,7 @@ export function CompanyForm({
 	});
 
 	const [cnpjLoading, setCnpjLoading] = useState(false);
-	const [cnpjMessage, setCnpjMessage] = useState<string | null>(null);
 	const [cepLoading, setCepLoading] = useState(false);
-	const [cepMessage, setCepMessage] = useState<string | null>(null);
 	const lastCnpj = useRef("");
 	const lastCep = useRef("");
 
@@ -173,12 +171,11 @@ export function CompanyForm({
 		if (locked || digits.length !== 14 || digits === lastCnpj.current) return;
 		lastCnpj.current = digits;
 		setCnpjLoading(true);
-		setCnpjMessage(null);
 		try {
 			const res = await fetch(`/api/lookup/cnpj/${digits}`);
 			const data = await res.json();
 			if (!res.ok) {
-				setCnpjMessage(data.error || "Não foi possível buscar o CNPJ.");
+				toast.error(data.error || "Não foi possível buscar o CNPJ.");
 				return;
 			}
 			setValue("name", data.name);
@@ -194,9 +191,9 @@ export function CompanyForm({
 			setValue("neighborhood", a.neighborhood);
 			setValue("city", a.city);
 			setValue("state", a.state);
-			setCnpjMessage("Dados preenchidos a partir do CNPJ.");
+			toast.success("Dados preenchidos a partir do CNPJ.");
 		} catch {
-			setCnpjMessage("Não foi possível buscar o CNPJ.");
+			toast.error("Não foi possível buscar o CNPJ.");
 		} finally {
 			setCnpjLoading(false);
 		}
@@ -207,25 +204,24 @@ export function CompanyForm({
 		if (digits.length !== 8 || digits === lastCep.current) return;
 		lastCep.current = digits;
 		setCepLoading(true);
-		setCepMessage(null);
 		try {
 			const res = await fetch(`/api/lookup/cep/${digits}`);
 			const data = await res.json();
 			if (!res.ok) {
-				setCepMessage(data.error || "Não foi possível buscar o CEP.");
+				toast.error(data.error || "Não foi possível buscar o CEP.");
 				return;
 			}
 			if (data.street) fillAddressFromStreet(data.street);
 			setValue("neighborhood", data.neighborhood);
 			setValue("city", data.city);
 			setValue("state", data.state);
-			setCepMessage(
+			toast.success(
 				data.street
 					? "Endereço preenchido a partir do CEP."
 					: "CEP encontrado, mas sem logradouro. Preencha a rua e o número.",
 			);
 		} catch {
-			setCepMessage("Não foi possível buscar o CEP.");
+			toast.error("Não foi possível buscar o CEP.");
 		} finally {
 			setCepLoading(false);
 		}
@@ -316,38 +312,33 @@ export function CompanyForm({
 											CNPJ *
 											{locked && <Lock className="h-3 w-3 text-primary" />}
 										</FormLabel>
-										<FormControl>
-											{locked ? (
-												<Input
-													{...field}
-													readOnly
-													aria-readonly
-													className="border-primary/60 bg-primary/5 font-semibold text-foreground"
-												/>
-											) : (
-												<Input
-													placeholder="00.000.000/0000-00"
-													inputMode="numeric"
-													{...field}
-													onChange={(e) => {
-														const m = masks.cnpj(e.target.value);
-														field.onChange(m);
-														runCnpjLookup(m);
-													}}
-												/>
+										<div className="relative">
+											<FormControl>
+												{locked ? (
+													<Input
+														{...field}
+														readOnly
+														aria-readonly
+														className="border-primary/60 bg-primary/5 font-semibold text-foreground"
+													/>
+												) : (
+													<Input
+														placeholder="00.000.000/0000-00"
+														inputMode="numeric"
+														className={cnpjLoading ? "pr-9" : undefined}
+														{...field}
+														onChange={(e) => {
+															const m = masks.cnpj(e.target.value);
+															field.onChange(m);
+															runCnpjLookup(m);
+														}}
+													/>
+												)}
+											</FormControl>
+											{!locked && cnpjLoading && (
+												<Loader2 className="pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" />
 											)}
-										</FormControl>
-										{!locked && cnpjLoading && (
-											<p className="flex items-center gap-1 text-xs text-muted-foreground">
-												<Loader2 className="h-3 w-3 animate-spin" />
-												Buscando dados do CNPJ...
-											</p>
-										)}
-										{!locked && !cnpjLoading && cnpjMessage && (
-											<p className="text-xs text-muted-foreground">
-												{cnpjMessage}
-											</p>
-										)}
+										</div>
 										<FormMessage />
 									</FormItem>
 								)}
@@ -545,29 +536,24 @@ export function CompanyForm({
 								render={({ field }) => (
 									<FormItem className="sm:col-span-2">
 										<FormLabel>CEP *</FormLabel>
-										<FormControl>
-											<Input
-												placeholder="00000-000"
-												inputMode="numeric"
-												{...field}
-												onChange={(e) => {
-													const m = masks.cep(e.target.value);
-													field.onChange(m);
-													runCepLookup(m);
-												}}
-											/>
-										</FormControl>
-										{cepLoading && (
-											<p className="flex items-center gap-1 text-xs text-muted-foreground">
-												<Loader2 className="h-3 w-3 animate-spin" />
-												Buscando endereço...
-											</p>
-										)}
-										{!cepLoading && cepMessage && (
-											<p className="text-xs text-muted-foreground">
-												{cepMessage}
-											</p>
-										)}
+										<div className="relative">
+											<FormControl>
+												<Input
+													placeholder="00000-000"
+													inputMode="numeric"
+													className={cepLoading ? "pr-9" : undefined}
+													{...field}
+													onChange={(e) => {
+														const m = masks.cep(e.target.value);
+														field.onChange(m);
+														runCepLookup(m);
+													}}
+												/>
+											</FormControl>
+											{cepLoading && (
+												<Loader2 className="pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" />
+											)}
+										</div>
 										<FormMessage />
 									</FormItem>
 								)}
