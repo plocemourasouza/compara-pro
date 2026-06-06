@@ -228,7 +228,7 @@ export function UserForm({ mode, userId, defaultValues }: UserFormProps) {
 									control={form.control}
 									name="companyName"
 									render={({ field }) => (
-										<FormItem className="md:col-span-2">
+										<FormItem>
 											<FormLabel>Nome da Empresa *</FormLabel>
 											<FormControl>
 												<Input placeholder="Nome da empresa" {...field} />
