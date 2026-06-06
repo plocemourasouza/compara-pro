@@ -126,6 +126,7 @@ export default function HistoryClient({ user: _user }: HistoryClientProps) {
 										<SelectItem value="COMPLETED">Concluído</SelectItem>
 										<SelectItem value="PROCESSING">Processando</SelectItem>
 										<SelectItem value="FAILED">Falhou</SelectItem>
+										<SelectItem value="CANCELLED">Cancelado</SelectItem>
 									</SelectContent>
 								</Select>
 								<Select value={typeFilter} onValueChange={setTypeFilter}>

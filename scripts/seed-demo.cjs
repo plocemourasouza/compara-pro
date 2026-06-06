@@ -109,6 +109,33 @@ async function makeCompanyWithUser({ name, type, cnpj, email }) {
 	return company;
 }
 
+// Registro de histórico "modelo" (sem produtos) — só para representar a tabela.
+async function makeHistory(companyId, opts) {
+	const total = opts.totalRows ?? 0;
+	const errors = opts.errorRows ?? 0;
+	const processed =
+		opts.processedRows ?? (opts.status === "COMPLETED" ? total - errors : 0);
+	return prisma.uploadHistory.create({
+		data: {
+			companyId,
+			fileName: opts.fileName,
+			fileSize: opts.fileSize ?? 4096,
+			totalRows: total,
+			processedRows: processed,
+			errorRows: errors,
+			uploadType: opts.uploadType,
+			status: opts.status,
+			isActive: false,
+			priceChangeIndicator: opts.priceChangeIndicator ?? null,
+			uploadedAt: opts.uploadedAt ?? new Date(),
+			processedAt:
+				opts.status === "PROCESSING" ? null : (opts.processedAt ?? new Date()),
+		},
+	});
+}
+
+const daysAgo = (n) => new Date(Date.now() - n * 86_400_000);
+
 (async () => {
 	try {
 		// Admin de demonstração (idempotente, fora do skip) — usado pelos testes E2E.
@@ -190,8 +217,103 @@ async function makeCompanyWithUser({ name, type, cnpj, email }) {
 			},
 		});
 
+		// Histórico de demonstração: vários status/tipos/indicadores p/ a tabela.
+		const histories = [
+			{
+				companyId: alfa.id,
+				fileName: "catalogo-2026-01.xlsx",
+				fileSize: 51200,
+				uploadType: "SUPPLIER_PRODUCTS",
+				status: "COMPLETED",
+				totalRows: 320,
+				errorRows: 0,
+				priceChangeIndicator: "UP",
+				uploadedAt: daysAgo(30),
+				processedAt: daysAgo(30),
+			},
+			{
+				companyId: alfa.id,
+				fileName: "catalogo-2026-02.xlsx",
+				fileSize: 49800,
+				uploadType: "SUPPLIER_PRODUCTS",
+				status: "COMPLETED",
+				totalRows: 318,
+				errorRows: 4,
+				priceChangeIndicator: "DOWN",
+				uploadedAt: daysAgo(15),
+				processedAt: daysAgo(15),
+			},
+			{
+				companyId: alfa.id,
+				fileName: "catalogo-parcial.csv",
+				fileSize: 18200,
+				uploadType: "SUPPLIER_PRODUCTS",
+				status: "FAILED",
+				totalRows: 120,
+				errorRows: 120,
+				uploadedAt: daysAgo(7),
+			},
+			{
+				companyId: alfa.id,
+				fileName: "catalogo-2026-03.xlsx",
+				fileSize: 52600,
+				uploadType: "SUPPLIER_PRODUCTS",
+				status: "PROCESSING",
+				totalRows: 0,
+				uploadedAt: daysAgo(0),
+			},
+			{
+				companyId: beta.id,
+				fileName: "tabela-precos-q1.xlsx",
+				fileSize: 33400,
+				uploadType: "SUPPLIER_PRODUCTS",
+				status: "COMPLETED",
+				totalRows: 210,
+				errorRows: 0,
+				priceChangeIndicator: "SAME",
+				uploadedAt: daysAgo(20),
+				processedAt: daysAgo(20),
+			},
+			{
+				companyId: beta.id,
+				fileName: "tabela-precos-rascunho.csv",
+				fileSize: 9100,
+				uploadType: "SUPPLIER_PRODUCTS",
+				status: "CANCELLED",
+				totalRows: 60,
+				processedRows: 12,
+				errorRows: 0,
+				uploadedAt: daysAgo(10),
+				processedAt: daysAgo(10),
+			},
+			{
+				companyId: buyer.id,
+				fileName: "necessidades-jan.xlsx",
+				fileSize: 12800,
+				uploadType: "CLIENT_REQUIREMENTS",
+				status: "COMPLETED",
+				totalRows: 80,
+				errorRows: 0,
+				uploadedAt: daysAgo(25),
+				processedAt: daysAgo(25),
+			},
+			{
+				companyId: buyer.id,
+				fileName: "necessidades-fev.xlsx",
+				fileSize: 11200,
+				uploadType: "CLIENT_REQUIREMENTS",
+				status: "FAILED",
+				totalRows: 45,
+				errorRows: 9,
+				uploadedAt: daysAgo(5),
+			},
+		];
+		for (const h of histories) {
+			await makeHistory(h.companyId, h);
+		}
+
 		console.log(
-			"SEED_OK fornecedores=2 comprador=1 pre-pedido=1 (senha demo1234)",
+			`SEED_OK fornecedores=2 comprador=1 pre-pedido=1 historico=${histories.length} (senha demo1234)`,
 		);
 	} catch (e) {
 		console.log("SEED_ERR " + String(e.message).split("\n")[0]);

@@ -40,6 +40,8 @@ export function getStatusLabel(status: string): string {
 			return "Processando";
 		case "FAILED":
 			return "Falhou";
+		case "CANCELLED":
+			return "Cancelado";
 		default:
 			return status;
 	}
