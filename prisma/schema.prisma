@@ -67,6 +67,8 @@ model Company {
   supplierPreOrders  PreOrder[]       @relation("SupplierPreOrders")
   carteiraClientes   SupplierClient[] @relation("SupplierCarteira")
   vinculosFornecedor SupplierClient[] @relation("ClientCarteira")
+  linkReqsAsSupplier SupplierLinkRequest[] @relation("LinkReqSupplier")
+  linkReqsAsClient   SupplierLinkRequest[] @relation("LinkReqClient")
   createdAt          DateTime         @default(now())
   updatedAt          DateTime         @updatedAt
   deletedAt          DateTime?
@@ -86,6 +88,28 @@ model SupplierClient {
   @@unique([supplierCompanyId, clientCompanyId])
   @@index([supplierCompanyId])
   @@map("supplier_clients")
+}
+
+enum LinkRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// Solicitação do cliente para entrar na carteira de um fornecedor (aprovação do fornecedor).
+model SupplierLinkRequest {
+  id                String            @id @default(cuid())
+  supplierCompanyId String
+  supplier          Company           @relation("LinkReqSupplier", fields: [supplierCompanyId], references: [id])
+  clientCompanyId   String
+  client            Company           @relation("LinkReqClient", fields: [clientCompanyId], references: [id])
+  status            LinkRequestStatus @default(PENDING)
+  createdAt         DateTime          @default(now())
+  respondedAt       DateTime?
+
+  @@index([supplierCompanyId, status])
+  @@index([clientCompanyId, status])
+  @@map("supplier_link_requests")
 }
 
 model Product {

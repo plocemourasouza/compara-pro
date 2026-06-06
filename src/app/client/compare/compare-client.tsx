@@ -11,6 +11,7 @@ import {
 	TrendingUp,
 	XCircle,
 } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import ParecerPanel from "@/components/compare/parecer-panel";
@@ -504,6 +505,22 @@ export default function CompareClient({ user: _user }: CompareClientProps) {
 							</CardContent>
 						</Card>
 					</div>
+
+					{comparison.matchedProducts === 0 && (
+						<Alert>
+							<AlertCircle className="h-4 w-4" />
+							<AlertDescription>
+								Nenhum item casou com a sua carteira de fornecedores.{" "}
+								<Link
+									href="/client/suppliers"
+									className="font-medium underline"
+								>
+									Adicione fornecedores
+								</Link>{" "}
+								para comparar preços.
+							</AlertDescription>
+						</Alert>
+					)}
 
 					{/* AI parecer */}
 					<ParecerPanel comparisonId={comparison.id} />

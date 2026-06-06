@@ -197,12 +197,12 @@ const daysAgo = (n) => new Date(Date.now() - n * 86_400_000);
 			{ sku: "XYZ-99", name: "Item Inexistente", quantity: 10 },
 		]);
 
-		// Carteira: o comprador está na carteira dos dois fornecedores.
-		await prisma.supplierClient.createMany({
-			data: [
-				{ supplierCompanyId: alfa.id, clientCompanyId: buyer.id },
-				{ supplierCompanyId: beta.id, clientCompanyId: buyer.id },
-			],
+		// Carteira: comprador vinculado à alfa; solicitação pendente p/ beta (demo).
+		await prisma.supplierClient.create({
+			data: { supplierCompanyId: alfa.id, clientCompanyId: buyer.id },
+		});
+		await prisma.supplierLinkRequest.create({
+			data: { supplierCompanyId: beta.id, clientCompanyId: buyer.id },
 		});
 
 		const alfaProducts = await prisma.product.findMany({
@@ -321,7 +321,7 @@ const daysAgo = (n) => new Date(Date.now() - n * 86_400_000);
 		}
 
 		console.log(
-			`SEED_OK fornecedores=2 comprador=1 carteira=2 pre-pedido=1 historico=${histories.length} (senha demo1234)`,
+			`SEED_OK fornecedores=2 comprador=1 carteira=1 solicitacao=1 pre-pedido=1 historico=${histories.length} (senha demo1234)`,
 		);
 	} catch (e) {
 		console.log(`SEED_ERR ${String(e.message).split("\n")[0]}`);

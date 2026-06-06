@@ -119,12 +119,10 @@ export class OptimizedProductMatcher {
 				);
 			metrics.performanceBreakdown.dbQueryTime += performance.now() - dbStart;
 
-			// 2. Get active supplier products with caching
+			// 2. Get active supplier products — only from the client's carteira
 			const cacheStart = performance.now();
 			const supplierProducts =
-				await OptimizedProductMatcher.getActiveSupplierProductsCached(
-					requestId,
-				);
+				await OptimizedProductMatcher.getCarteiraSupplierProducts(clientId);
 			metrics.performanceBreakdown.cacheTime += performance.now() - cacheStart;
 
 			// 3. Perform optimized matching
@@ -270,22 +268,24 @@ export class OptimizedProductMatcher {
 	}
 
 	/**
-	 * Get active supplier products with aggressive caching
+	 * Produtos ativos apenas dos fornecedores na carteira do cliente.
+	 * Matching restrito à carteira: cliente sem fornecedores vinculados → [].
 	 */
-	@cached(
-		cache.products,
-		() => PriceCompareCache.keys.supplierProducts(true),
-		15 * 60 * 1000, // 15 minutes cache
-	)
-	private static async getActiveSupplierProductsCached(requestId?: string) {
+	private static async getCarteiraSupplierProducts(clientId: string) {
 		try {
-			// Supplier catalog (products) is the single source for matching.
+			const links = await prisma.supplierClient.findMany({
+				where: { clientCompanyId: clientId },
+				select: { supplierCompanyId: true },
+			});
+			const supplierIds = links.map((l) => l.supplierCompanyId);
+			if (supplierIds.length === 0) return [];
+
 			const products = await prisma.product.findMany({
 				where: {
 					isActive: true,
 					deletedAt: null,
 					price: { gt: 0 },
-					company: { type: "SUPPLIER" },
+					companyId: { in: supplierIds },
 					OR: [
 						{ sku: { not: null } },
 						{ code: { not: null } },
@@ -321,11 +321,10 @@ export class OptimizedProductMatcher {
 				uploadId: product.lastUploadId ?? "",
 			}));
 		} catch (error) {
-			console.error("Error fetching supplier products:", error);
+			console.error("Error fetching carteira supplier products:", error);
 			throw ErrorFactory.database.recordNotFound(
 				"SupplierProducts",
-				"active",
-				requestId,
+				"carteira",
 			);
 		}
 	}

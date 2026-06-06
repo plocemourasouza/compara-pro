@@ -14,6 +14,7 @@ const prisma = new PrismaClient({
 
 (async () => {
 	try {
+		await prisma.supplierLinkRequest.deleteMany();
 		await prisma.supplierClient.deleteMany();
 		await prisma.supplierMatch.deleteMany();
 		await prisma.preOrderItem.deleteMany();

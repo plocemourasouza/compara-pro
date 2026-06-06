@@ -1,499 +1,216 @@
 "use client";
 
 import {
-	AlertTriangle,
+	BarChart3,
 	Building2,
-	CheckCircle,
-	Clock,
-	Cpu,
-	Database,
-	DollarSign,
-	HardDrive,
-	RefreshCw,
-	Server,
+	FileUp,
+	PiggyBank,
 	ShoppingCart,
-	TrendingUp,
-	Upload,
-	Users,
-	XCircle,
 } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-type User = {
-	id: string;
-	name: string;
-	email: string;
-	role: string;
-	company: {
-		id: string;
-		name: string;
-		type: string;
-	} | null;
-};
-
-interface AdminDashboardProps {
-	user: User;
-}
+import { Button } from "@/components/ui/button";
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
+import { formatters } from "@/lib/utils/masks";
 
 interface DashboardMetrics {
-	users: {
-		total: number;
-		active: number;
-		inactive: number;
-		byRole: {
-			admin: number;
-			supplier: number;
-			client: number;
-		};
-	};
-	companies: {
-		total: number;
-		suppliers: number;
-		clients: number;
-	};
-	uploads: {
-		total: number;
-		today: number;
-		thisWeek: number;
-		thisMonth: number;
-		byStatus: {
-			success: number;
-			processing: number;
-			failed: number;
-		};
-	};
+	demands: number;
+	comparisons: number;
 	preOrders: {
-		total: number;
 		pending: number;
 		approved: number;
 		rejected: number;
 		totalValue: number;
 	};
-	systemHealth: {
-		status: "healthy" | "warning" | "critical";
-		uptime: string;
-		memory: {
-			used: number;
-			total: number;
-			percentage: number;
-		};
-		disk: {
-			used: number;
-			total: number;
-			percentage: number;
-		};
-		database: {
-			connections: number;
-			status: "healthy" | "warning" | "critical";
-		};
-	};
+	estimatedSavings: number;
+	suppliers: number;
+	recentPreOrders: Array<{
+		id: string;
+		supplierName: string;
+		status: string;
+		totalAmount: number;
+		createdAt: string;
+	}>;
 }
 
-export default function AdminDashboard({ user: _user }: AdminDashboardProps) {
+const PRE_ORDER_STATUS: Record<
+	string,
+	{ label: string; variant: "default" | "secondary" | "destructive" }
+> = {
+	ACTIVE: { label: "Pendente", variant: "secondary" },
+	FINALIZED: { label: "Aprovado", variant: "default" },
+	REJECTED: { label: "Rejeitado", variant: "destructive" },
+	EXPIRED: { label: "Expirado", variant: "secondary" },
+};
+
+export default function ClientDashboard({ user }: { user: { name: string } }) {
 	const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
 	const [loading, setLoading] = useState(true);
-	const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
 
-	// biome-ignore lint/correctness/useExhaustiveDependencies: mount-only fetch + interval
 	useEffect(() => {
-		fetchMetrics();
-		// Auto-refresh every 30 seconds
-		const interval = setInterval(fetchMetrics, 30000);
-		return () => clearInterval(interval);
+		fetch("/api/client/dashboard")
+			.then((r) => (r.ok ? r.json() : Promise.reject(r)))
+			.then((d) => setMetrics(d.metrics))
+			.catch(() => setMetrics(null))
+			.finally(() => setLoading(false));
 	}, []);
 
-	const fetchMetrics = async () => {
-		try {
-			const response = await fetch("/api/admin/dashboard");
-			if (response.ok) {
-				const data = await response.json();
-				setMetrics(data.metrics);
-				setLastUpdate(new Date());
-			}
-		} catch (error) {
-			console.error("Fetch metrics error:", error);
-		} finally {
-			setLoading(false);
-		}
-	};
-
-	const _getSystemHealthColor = (status: string) => {
-		switch (status) {
-			case "healthy":
-				return "text-success";
-			case "warning":
-				return "text-yellow-600";
-			case "critical":
-				return "text-destructive";
-			default:
-				return "text-muted-foreground";
-		}
-	};
-
-	const getSystemHealthBadge = (status: string) => {
-		switch (status) {
-			case "healthy":
-				return "bg-success/10 text-success";
-			case "warning":
-				return "bg-yellow-100 text-yellow-800";
-			case "critical":
-				return "bg-destructive/10 text-destructive";
-			default:
-				return "bg-muted text-muted-foreground";
-		}
-	};
-
-	const formatCurrency = (value: number) => {
-		return new Intl.NumberFormat("pt-BR", {
-			style: "currency",
-			currency: "BRL",
-		}).format(value);
-	};
-
-	const formatBytes = (bytes: number) => {
-		const sizes = ["Bytes", "KB", "MB", "GB", "TB"];
-		if (bytes === 0) return "0 Bytes";
-		const i = Math.floor(Math.log(bytes) / Math.log(1024));
-		return `${Math.round((bytes / 1024 ** i) * 100) / 100} ${sizes[i]}`;
-	};
-
-	if (loading) {
-		return (
-			<div className="flex items-center justify-center p-8">
-				<div className="text-center">
-					<RefreshCw className="h-8 w-8 animate-spin mx-auto mb-2 text-primary" />
-					<p>Carregando métricas...</p>
-				</div>
-			</div>
-		);
-	}
-
-	if (!metrics) {
-		return (
-			<div className="text-center p-8">
-				<AlertTriangle className="h-8 w-8 mx-auto mb-2 text-destructive" />
-				<p>Erro ao carregar métricas do sistema</p>
-			</div>
-		);
-	}
+	const cards = [
+		{
+			label: "Demandas enviadas",
+			value: metrics ? `${metrics.demands}` : "—",
+			hint: metrics ? `${metrics.comparisons} comparações` : "",
+			icon: FileUp,
+			href: "/client/upload",
+		},
+		{
+			label: "Pré-pedidos pendentes",
+			value: metrics ? `${metrics.preOrders.pending}` : "—",
+			hint: metrics
+				? `${metrics.preOrders.approved} aprovados · ${metrics.preOrders.rejected} rejeitados`
+				: "",
+			icon: ShoppingCart,
+			href: "/client/pre-orders",
+		},
+		{
+			label: "Fornecedores",
+			value: metrics ? `${metrics.suppliers}` : "—",
+			hint: "Minha carteira",
+			icon: Building2,
+			href: "/client/suppliers",
+		},
+		{
+			label: "Economia estimada",
+			value: metrics ? formatters.currency(metrics.estimatedSavings) : "—",
+			hint: "Nas comparações",
+			icon: PiggyBank,
+			href: "/client/compare",
+		},
+	];
 
 	return (
 		<div className="space-y-6">
-			<div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+			<div className="flex items-center justify-between">
 				<div>
-					<h1 className="text-2xl font-bold tracking-tight">
-						Dashboard Administrativo
+					<h1 className="font-bold text-2xl tracking-tight">
+						Olá, {user.name}
 					</h1>
 					<p className="text-muted-foreground">
-						Visão geral do sistema e métricas executivas
+						Suas demandas, comparações e pré-pedidos.
 					</p>
 				</div>
-				<div className="text-right text-sm text-muted-foreground">
-					<p>Última atualização: {lastUpdate.toLocaleTimeString("pt-BR")}</p>
-					<Badge className={getSystemHealthBadge(metrics.systemHealth.status)}>
-						{metrics.systemHealth.status === "healthy" && "Sistema Saudável"}
-						{metrics.systemHealth.status === "warning" && "Atenção"}
-						{metrics.systemHealth.status === "critical" && "Crítico"}
-					</Badge>
-				</div>
+				<Button asChild>
+					<Link href="/client/upload">
+						<FileUp className="mr-2 h-4 w-4" />
+						Enviar lista
+					</Link>
+				</Button>
 			</div>
 
-			{/* Métricas de Usuários */}
-			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-				<Card>
-					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-						<CardTitle className="text-sm font-medium">
-							Total de Usuários
-						</CardTitle>
-						<Users className="h-4 w-4 text-muted-foreground" />
-					</CardHeader>
-					<CardContent>
-						<div className="text-2xl font-bold">{metrics.users.total}</div>
-						<div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-							<span className="flex items-center gap-1">
-								<CheckCircle className="h-3 w-3 text-success" />
-								{metrics.users.active} ativos
-							</span>
-							<span className="flex items-center gap-1">
-								<XCircle className="h-3 w-3 text-destructive" />
-								{metrics.users.inactive} inativos
-							</span>
-						</div>
-					</CardContent>
-				</Card>
-
-				<Card>
-					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-						<CardTitle className="text-sm font-medium">Empresas</CardTitle>
-						<Building2 className="h-4 w-4 text-muted-foreground" />
-					</CardHeader>
-					<CardContent>
-						<div className="text-2xl font-bold">{metrics.companies.total}</div>
-						<div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-							<span>{metrics.companies.suppliers} fornecedores</span>
-							<span>{metrics.companies.clients} clientes</span>
-						</div>
-					</CardContent>
-				</Card>
-
-				<Card>
-					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-						<CardTitle className="text-sm font-medium">Uploads Hoje</CardTitle>
-						<Upload className="h-4 w-4 text-muted-foreground" />
-					</CardHeader>
-					<CardContent>
-						<div className="text-2xl font-bold">{metrics.uploads.today}</div>
-						<p className="text-xs text-muted-foreground">
-							{metrics.uploads.thisMonth} este mês
-						</p>
-					</CardContent>
-				</Card>
-
-				<Card>
-					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-						<CardTitle className="text-sm font-medium">Pré-pedidos</CardTitle>
-						<ShoppingCart className="h-4 w-4 text-muted-foreground" />
-					</CardHeader>
-					<CardContent>
-						<div className="text-2xl font-bold">{metrics.preOrders.total}</div>
-						<p className="text-xs text-muted-foreground">
-							{formatCurrency(metrics.preOrders.totalValue)} em valor
-						</p>
-					</CardContent>
-				</Card>
+			<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+				{cards.map((c) => (
+					<Link key={c.label} href={c.href}>
+						<Card className="transition-colors hover:border-primary/50">
+							<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+								<CardTitle className="font-medium text-muted-foreground text-sm">
+									{c.label}
+								</CardTitle>
+								<c.icon className="h-4 w-4 text-muted-foreground" />
+							</CardHeader>
+							<CardContent>
+								<div className="font-bold text-2xl">
+									{loading ? "…" : c.value}
+								</div>
+								{c.hint && (
+									<p className="text-muted-foreground text-xs">{c.hint}</p>
+								)}
+							</CardContent>
+						</Card>
+					</Link>
+				))}
 			</div>
 
-			{/* Distribuição por Papel */}
-			<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-				<Card>
+			<div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+				<Card className="lg:col-span-2">
 					<CardHeader>
-						<CardTitle>Usuários por Papel</CardTitle>
+						<CardTitle className="text-lg">Pré-pedidos recentes</CardTitle>
+						<CardDescription>Últimos pedidos enviados.</CardDescription>
 					</CardHeader>
 					<CardContent>
-						<div className="space-y-4">
-							<div className="flex items-center justify-between">
-								<div className="flex items-center gap-2">
-									<div className="w-3 h-3 bg-chart-4 rounded-full" />
-									<span>Administradores</span>
-								</div>
-								<span className="font-semibold">
-									{metrics.users.byRole.admin}
-								</span>
-							</div>
-							<div className="flex items-center justify-between">
-								<div className="flex items-center gap-2">
-									<div className="w-3 h-3 bg-primary rounded-full" />
-									<span>Fornecedores</span>
-								</div>
-								<span className="font-semibold">
-									{metrics.users.byRole.supplier}
-								</span>
-							</div>
-							<div className="flex items-center justify-between">
-								<div className="flex items-center gap-2">
-									<div className="w-3 h-3 bg-success rounded-full" />
-									<span>Clientes</span>
-								</div>
-								<span className="font-semibold">
-									{metrics.users.byRole.client}
-								</span>
-							</div>
-						</div>
+						{loading ? (
+							<p className="text-muted-foreground text-sm">Carregando…</p>
+						) : !metrics || metrics.recentPreOrders.length === 0 ? (
+							<p className="text-muted-foreground text-sm">
+								Nenhum pré-pedido ainda.
+							</p>
+						) : (
+							<ul className="divide-y">
+								{metrics.recentPreOrders.map((p) => {
+									const s = PRE_ORDER_STATUS[p.status] ?? {
+										label: p.status,
+										variant: "secondary" as const,
+									};
+									return (
+										<li
+											key={p.id}
+											className="flex items-center justify-between py-3"
+										>
+											<div>
+												<p className="font-medium text-sm">{p.supplierName}</p>
+												<p className="text-muted-foreground text-xs">
+													{formatters.date(p.createdAt)}
+												</p>
+											</div>
+											<div className="flex items-center gap-3">
+												<span className="font-medium text-sm">
+													{formatters.currency(p.totalAmount)}
+												</span>
+												<Badge variant={s.variant}>{s.label}</Badge>
+											</div>
+										</li>
+									);
+								})}
+							</ul>
+						)}
 					</CardContent>
 				</Card>
 
 				<Card>
 					<CardHeader>
-						<CardTitle>Status dos Uploads</CardTitle>
+						<CardTitle className="text-lg">Comparar preços</CardTitle>
+						<CardDescription>
+							Case sua demanda com os fornecedores da carteira.
+						</CardDescription>
 					</CardHeader>
-					<CardContent>
-						<div className="space-y-4">
-							<div className="flex items-center justify-between">
-								<div className="flex items-center gap-2">
-									<CheckCircle className="h-4 w-4 text-success" />
-									<span>Sucessos</span>
-								</div>
-								<span className="font-semibold">
-									{metrics.uploads.byStatus.success}
-								</span>
-							</div>
-							<div className="flex items-center justify-between">
-								<div className="flex items-center gap-2">
-									<Clock className="h-4 w-4 text-yellow-600" />
-									<span>Processando</span>
-								</div>
-								<span className="font-semibold">
-									{metrics.uploads.byStatus.processing}
-								</span>
-							</div>
-							<div className="flex items-center justify-between">
-								<div className="flex items-center gap-2">
-									<XCircle className="h-4 w-4 text-destructive" />
-									<span>Falhas</span>
-								</div>
-								<span className="font-semibold">
-									{metrics.uploads.byStatus.failed}
-								</span>
-							</div>
+					<CardContent className="space-y-3">
+						<p className="text-muted-foreground text-sm">
+							Envie uma lista de demanda e compare os melhores preços dos seus
+							fornecedores.
+						</p>
+						<div className="flex flex-col gap-2">
+							<Button asChild variant="outline" className="w-full">
+								<Link href="/client/compare">
+									<BarChart3 className="mr-2 h-4 w-4" />
+									Comparar preços
+								</Link>
+							</Button>
+							<Button asChild variant="ghost" className="w-full">
+								<Link href="/client/suppliers">
+									<Building2 className="mr-2 h-4 w-4" />
+									Meus fornecedores
+								</Link>
+							</Button>
 						</div>
 					</CardContent>
 				</Card>
 			</div>
-
-			{/* Status do Sistema */}
-			<Card>
-				<CardHeader>
-					<CardTitle className="flex items-center gap-2">
-						<Server className="h-5 w-5" />
-						Saúde do Sistema
-					</CardTitle>
-				</CardHeader>
-				<CardContent>
-					<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-						<div className="space-y-2">
-							<div className="flex items-center gap-2">
-								<Cpu className="h-4 w-4 text-muted-foreground" />
-								<span className="font-medium">Memória</span>
-							</div>
-							<div className="space-y-1">
-								<div className="flex justify-between text-sm">
-									<span>Uso</span>
-									<span>
-										{metrics.systemHealth.memory.percentage.toFixed(1)}%
-									</span>
-								</div>
-								<div className="w-full bg-secondary rounded-full h-2">
-									<div
-										className={`h-2 rounded-full ${
-											metrics.systemHealth.memory.percentage > 80
-												? "bg-destructive"
-												: metrics.systemHealth.memory.percentage > 60
-													? "bg-yellow-500"
-													: "bg-success"
-										}`}
-										style={{
-											width: `${metrics.systemHealth.memory.percentage}%`,
-										}}
-									/>
-								</div>
-								<p className="text-xs text-muted-foreground">
-									{formatBytes(metrics.systemHealth.memory.used)} /{" "}
-									{formatBytes(metrics.systemHealth.memory.total)}
-								</p>
-							</div>
-						</div>
-
-						<div className="space-y-2">
-							<div className="flex items-center gap-2">
-								<HardDrive className="h-4 w-4 text-muted-foreground" />
-								<span className="font-medium">Disco</span>
-							</div>
-							<div className="space-y-1">
-								<div className="flex justify-between text-sm">
-									<span>Uso</span>
-									<span>
-										{metrics.systemHealth.disk.percentage.toFixed(1)}%
-									</span>
-								</div>
-								<div className="w-full bg-secondary rounded-full h-2">
-									<div
-										className={`h-2 rounded-full ${
-											metrics.systemHealth.disk.percentage > 90
-												? "bg-destructive"
-												: metrics.systemHealth.disk.percentage > 75
-													? "bg-yellow-500"
-													: "bg-success"
-										}`}
-										style={{
-											width: `${metrics.systemHealth.disk.percentage}%`,
-										}}
-									/>
-								</div>
-								<p className="text-xs text-muted-foreground">
-									{formatBytes(metrics.systemHealth.disk.used)} /{" "}
-									{formatBytes(metrics.systemHealth.disk.total)}
-								</p>
-							</div>
-						</div>
-
-						<div className="space-y-2">
-							<div className="flex items-center gap-2">
-								<Database className="h-4 w-4 text-muted-foreground" />
-								<span className="font-medium">Banco de Dados</span>
-							</div>
-							<div className="space-y-1">
-								<div className="flex items-center gap-2">
-									<Badge
-										className={getSystemHealthBadge(
-											metrics.systemHealth.database.status,
-										)}
-									>
-										{metrics.systemHealth.database.status === "healthy" &&
-											"Saudável"}
-										{metrics.systemHealth.database.status === "warning" &&
-											"Atenção"}
-										{metrics.systemHealth.database.status === "critical" &&
-											"Crítico"}
-									</Badge>
-								</div>
-								<p className="text-xs text-muted-foreground">
-									{metrics.systemHealth.database.connections} conexões ativas
-								</p>
-								<p className="text-xs text-muted-foreground">
-									Uptime: {metrics.systemHealth.uptime}
-								</p>
-							</div>
-						</div>
-					</div>
-				</CardContent>
-			</Card>
-
-			{/* Estatísticas de Pré-pedidos */}
-			<Card>
-				<CardHeader>
-					<CardTitle className="flex items-center gap-2">
-						<TrendingUp className="h-5 w-5" />
-						Estatísticas de Pré-pedidos
-					</CardTitle>
-				</CardHeader>
-				<CardContent>
-					<div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-						<div className="text-center p-4 bg-primary/10 rounded-lg">
-							<Clock className="h-6 w-6 mx-auto mb-2 text-primary" />
-							<div className="text-2xl font-bold text-primary">
-								{metrics.preOrders.pending}
-							</div>
-							<p className="text-sm text-primary">Pendentes</p>
-						</div>
-
-						<div className="text-center p-4 bg-success/10 rounded-lg">
-							<CheckCircle className="h-6 w-6 mx-auto mb-2 text-success" />
-							<div className="text-2xl font-bold text-success">
-								{metrics.preOrders.approved}
-							</div>
-							<p className="text-sm text-success">Aprovados</p>
-						</div>
-
-						<div className="text-center p-4 bg-destructive/10 rounded-lg">
-							<XCircle className="h-6 w-6 mx-auto mb-2 text-destructive" />
-							<div className="text-2xl font-bold text-destructive">
-								{metrics.preOrders.rejected}
-							</div>
-							<p className="text-sm text-destructive">Rejeitados</p>
-						</div>
-
-						<div className="text-center p-4 bg-chart-4/10 rounded-lg">
-							<DollarSign className="h-6 w-6 mx-auto mb-2 text-chart-4" />
-							<div className="text-lg font-bold text-chart-4">
-								{formatCurrency(metrics.preOrders.totalValue)}
-							</div>
-							<p className="text-sm text-chart-4">Valor Total</p>
-						</div>
-					</div>
-				</CardContent>
-			</Card>
 		</div>
 	);
 }

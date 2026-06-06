@@ -2,6 +2,8 @@
 
 import {
 	BarChart3,
+	Bell,
+	Building2,
 	LayoutDashboard as Dashboard,
 	FileText,
 	Home,
@@ -12,6 +14,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -33,42 +36,59 @@ interface ClientSidebarProps {
 	user: User;
 }
 
-const navigation = [
-	{
-		name: "Dashboard",
-		href: "/client",
-		icon: Dashboard,
-	},
-	{
-		name: "Upload de Lista",
-		href: "/client/upload",
-		icon: Upload,
-	},
-	{
-		name: "Comparar Preços",
-		href: "/client/compare",
-		icon: BarChart3,
-	},
+type BadgeKey = "pending" | "unread";
+
+const navigation: Array<{
+	name: string;
+	href: string;
+	icon: typeof Home;
+	badgeKey?: BadgeKey;
+}> = [
+	{ name: "Dashboard", href: "/client", icon: Dashboard },
+	{ name: "Upload de Lista", href: "/client/upload", icon: Upload },
+	{ name: "Comparar Preços", href: "/client/compare", icon: BarChart3 },
+	{ name: "Meus Fornecedores", href: "/client/suppliers", icon: Building2 },
 	{
 		name: "Pré-pedidos",
 		href: "/client/pre-orders",
 		icon: ShoppingCart,
-		badge: "2",
+		badgeKey: "pending",
 	},
+	{ name: "Histórico", href: "/client/history", icon: FileText },
 	{
-		name: "Histórico",
-		href: "/client/history",
-		icon: FileText,
+		name: "Notificações",
+		href: "/client/notifications",
+		icon: Bell,
+		badgeKey: "unread",
 	},
-	{
-		name: "Configurações",
-		href: "/client/settings",
-		icon: Settings,
-	},
+	{ name: "Configurações", href: "/client/settings", icon: Settings },
 ];
 
 export default function ClientSidebar({ user }: ClientSidebarProps) {
 	const pathname = usePathname();
+	const [counts, setCounts] = useState<{ pending: number; unread: number }>({
+		pending: 0,
+		unread: 0,
+	});
+
+	useEffect(() => {
+		let active = true;
+		Promise.all([
+			fetch("/api/client/dashboard")
+				.then((r) => (r.ok ? r.json() : null))
+				.then((d) => d?.metrics?.preOrders?.pending ?? 0)
+				.catch(() => 0),
+			fetch("/api/notifications?unreadOnly=true&limit=1")
+				.then((r) => (r.ok ? r.json() : null))
+				.then((d) => d?.unreadCount ?? 0)
+				.catch(() => 0),
+		]).then(([pending, unread]) => {
+			if (active) setCounts({ pending, unread });
+		});
+		return () => {
+			active = false;
+		};
+	}, []);
 
 	const handleLogout = () => {
 		// biome-ignore lint/suspicious/noDocumentCookie: clears the auth_token cookie on logout
@@ -108,7 +128,12 @@ export default function ClientSidebar({ user }: ClientSidebarProps) {
 						</div>
 
 						{navigation.map((item) => {
-							const isActive = pathname === item.href;
+							const isActive =
+								item.href === "/client"
+									? pathname === "/client"
+									: pathname === item.href ||
+										pathname.startsWith(`${item.href}/`);
+							const badgeCount = item.badgeKey ? counts[item.badgeKey] : 0;
 							return (
 								<Link
 									key={item.name}
@@ -130,9 +155,9 @@ export default function ClientSidebar({ user }: ClientSidebarProps) {
 										aria-hidden="true"
 									/>
 									<span className="flex-1">{item.name}</span>
-									{item.badge && (
+									{badgeCount > 0 && (
 										<Badge variant="secondary" className="ml-2">
-											{item.badge}
+											{badgeCount}
 										</Badge>
 									)}
 								</Link>
