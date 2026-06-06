@@ -58,18 +58,34 @@ model Company {
   zipCode          String? // CEP
   addressReference String? // Referência
 
-  users             User[]
-  products          Product[]
-  uploadHistory     UploadHistory[]
-  clientComparisons Comparison[]    @relation("ClientComparison")
-  supplierMatches   SupplierMatch[] @relation("SupplierMatches")
-  clientPreOrders   PreOrder[]      @relation("ClientPreOrders")
-  supplierPreOrders PreOrder[]      @relation("SupplierPreOrders")
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
-  deletedAt         DateTime?
+  users              User[]
+  products           Product[]
+  uploadHistory      UploadHistory[]
+  clientComparisons  Comparison[]     @relation("ClientComparison")
+  supplierMatches    SupplierMatch[]  @relation("SupplierMatches")
+  clientPreOrders    PreOrder[]       @relation("ClientPreOrders")
+  supplierPreOrders  PreOrder[]       @relation("SupplierPreOrders")
+  carteiraClientes   SupplierClient[] @relation("SupplierCarteira")
+  vinculosFornecedor SupplierClient[] @relation("ClientCarteira")
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  deletedAt          DateTime?
 
   @@map("companies")
+}
+
+// Carteira de clientes do fornecedor (N-N entre empresas).
+model SupplierClient {
+  id                String   @id @default(cuid())
+  supplierCompanyId String
+  supplier          Company  @relation("SupplierCarteira", fields: [supplierCompanyId], references: [id])
+  clientCompanyId   String
+  client            Company  @relation("ClientCarteira", fields: [clientCompanyId], references: [id])
+  createdAt         DateTime @default(now())
+
+  @@unique([supplierCompanyId, clientCompanyId])
+  @@index([supplierCompanyId])
+  @@map("supplier_clients")
 }
 
 model Product {

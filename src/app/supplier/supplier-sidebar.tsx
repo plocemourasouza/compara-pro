@@ -2,6 +2,7 @@
 
 import {
 	BarChart3,
+	Bell,
 	FileText,
 	Home,
 	LogOut,
@@ -9,9 +10,11 @@ import {
 	Settings,
 	ShoppingCart,
 	Upload,
+	Users,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -33,42 +36,59 @@ interface SupplierSidebarProps {
 	user: User;
 }
 
-const navigation = [
-	{
-		name: "Dashboard",
-		href: "/supplier",
-		icon: Home,
-	},
-	{
-		name: "Upload de Produtos",
-		href: "/supplier/upload",
-		icon: Upload,
-	},
-	{
-		name: "Meus Produtos",
-		href: "/supplier/products",
-		icon: Package,
-	},
+type BadgeKey = "pending" | "unread";
+
+const navigation: Array<{
+	name: string;
+	href: string;
+	icon: typeof Home;
+	badgeKey?: BadgeKey;
+}> = [
+	{ name: "Dashboard", href: "/supplier", icon: Home },
+	{ name: "Upload de Produtos", href: "/supplier/upload", icon: Upload },
+	{ name: "Meus Produtos", href: "/supplier/products", icon: Package },
+	{ name: "Clientes", href: "/supplier/clients", icon: Users },
 	{
 		name: "Pré-pedidos",
 		href: "/supplier/pre-orders",
 		icon: ShoppingCart,
-		badge: "3",
+		badgeKey: "pending",
 	},
+	{ name: "Histórico", href: "/supplier/history", icon: FileText },
 	{
-		name: "Histórico",
-		href: "/supplier/history",
-		icon: FileText,
+		name: "Notificações",
+		href: "/supplier/notifications",
+		icon: Bell,
+		badgeKey: "unread",
 	},
-	{
-		name: "Configurações",
-		href: "/supplier/settings",
-		icon: Settings,
-	},
+	{ name: "Configurações", href: "/supplier/settings", icon: Settings },
 ];
 
 export default function SupplierSidebar({ user }: SupplierSidebarProps) {
 	const pathname = usePathname();
+	const [counts, setCounts] = useState<{ pending: number; unread: number }>({
+		pending: 0,
+		unread: 0,
+	});
+
+	useEffect(() => {
+		let active = true;
+		Promise.all([
+			fetch("/api/supplier/dashboard")
+				.then((r) => (r.ok ? r.json() : null))
+				.then((d) => d?.metrics?.preOrders?.pending ?? 0)
+				.catch(() => 0),
+			fetch("/api/notifications?unreadOnly=true&limit=1")
+				.then((r) => (r.ok ? r.json() : null))
+				.then((d) => d?.unreadCount ?? 0)
+				.catch(() => 0),
+		]).then(([pending, unread]) => {
+			if (active) setCounts({ pending, unread });
+		});
+		return () => {
+			active = false;
+		};
+	}, []);
 
 	const handleLogout = () => {
 		// biome-ignore lint/suspicious/noDocumentCookie: clears the auth_token cookie on logout
@@ -110,7 +130,12 @@ export default function SupplierSidebar({ user }: SupplierSidebarProps) {
 						</div>
 
 						{navigation.map((item) => {
-							const isActive = pathname === item.href;
+							const isActive =
+								item.href === "/supplier"
+									? pathname === "/supplier"
+									: pathname === item.href ||
+										pathname.startsWith(`${item.href}/`);
+							const badgeCount = item.badgeKey ? counts[item.badgeKey] : 0;
 							return (
 								<Link
 									key={item.name}
@@ -132,9 +157,9 @@ export default function SupplierSidebar({ user }: SupplierSidebarProps) {
 										aria-hidden="true"
 									/>
 									<span className="flex-1">{item.name}</span>
-									{item.badge && (
+									{badgeCount > 0 && (
 										<Badge variant="secondary" className="ml-2">
-											{item.badge}
+											{badgeCount}
 										</Badge>
 									)}
 								</Link>

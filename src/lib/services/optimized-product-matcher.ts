@@ -750,6 +750,155 @@ export class OptimizedProductMatcher {
 	}
 
 	/**
+	 * Fatia da comparação para UM fornecedor: as indicações do catálogo dele
+	 * contra a demanda do cliente + lacunas competitivas + resumo determinístico.
+	 * Reusa a comparação global (cria se ainda não existir para o upload).
+	 */
+	static async getSupplierIndications(
+		clientUploadId: string,
+		supplierCompanyId: string,
+	) {
+		const upload = await prisma.uploadHistory.findUnique({
+			where: { id: clientUploadId },
+			select: { id: true, companyId: true, uploadType: true },
+		});
+		if (!upload) {
+			throw ErrorFactory.business.comparisonNotFound(clientUploadId);
+		}
+		if (upload.uploadType !== "CLIENT_REQUIREMENTS") {
+			throw ErrorFactory.business.comparisonNotFound(clientUploadId);
+		}
+
+		const existing = await prisma.comparison.findFirst({
+			where: { clientUploadId },
+			select: { id: true },
+			orderBy: { createdAt: "desc" },
+		});
+		const comparisonId = existing
+			? existing.id
+			: (
+					await OptimizedProductMatcher.createComparison(
+						clientUploadId,
+						upload.companyId,
+					)
+				).comparisonId;
+
+		// Query direta (shape garantido) — usa o scalar supplierCompanyId.
+		const full = await prisma.comparison.findUnique({
+			where: { id: comparisonId },
+			select: {
+				totalProducts: true,
+				matches: {
+					select: {
+						matchType: true,
+						confidence: true,
+						clientProduct: {
+							select: { id: true, name: true, sku: true, code: true },
+						},
+						supplierMatches: {
+							select: {
+								price: true,
+								supplierCompanyId: true,
+								supplierProduct: { select: { name: true, sku: true } },
+							},
+						},
+					},
+				},
+			},
+		});
+		if (!full) {
+			throw ErrorFactory.business.comparisonNotFound(comparisonId);
+		}
+
+		// Quantidades da demanda por produto do cliente.
+		const demandRows = await prisma.uploadedProduct.findMany({
+			where: { uploadId: clientUploadId },
+			select: { id: true, quantity: true },
+		});
+		const qtyByProduct = new Map(demandRows.map((r) => [r.id, r.quantity]));
+
+		const items: Array<{
+			clientName: string;
+			sku: string | null;
+			code: string | null;
+			quantity: number | null;
+			supplierName: string;
+			supplierSku: string | null;
+			price: number;
+			matchType: string;
+			confidence: number;
+			bestPrice: number;
+			isBest: boolean;
+		}> = [];
+		const gaps: Array<{
+			clientName: string;
+			sku: string | null;
+			code: string | null;
+			quantity: number | null;
+			bestPriceElsewhere: number | null;
+			otherSuppliers: number;
+		}> = [];
+
+		let offeredValue = 0;
+		let bestPriceItems = 0;
+
+		for (const match of full.matches) {
+			const prices = match.supplierMatches.map((sm) => sm.price);
+			const bestPrice = prices.length ? Math.min(...prices) : 0;
+			const qty = qtyByProduct.get(match.clientProduct.id) ?? null;
+			const mine = match.supplierMatches.find(
+				(sm) => sm.supplierCompanyId === supplierCompanyId,
+			);
+
+			if (mine) {
+				const isBest = bestPrice > 0 && mine.price <= bestPrice;
+				if (isBest) bestPriceItems += 1;
+				offeredValue += mine.price * (qty ?? 1);
+				items.push({
+					clientName: match.clientProduct.name,
+					sku: match.clientProduct.sku,
+					code: match.clientProduct.code,
+					quantity: qty,
+					supplierName: mine.supplierProduct.name,
+					supplierSku: mine.supplierProduct.sku,
+					price: mine.price,
+					matchType: match.matchType,
+					confidence: match.confidence,
+					bestPrice,
+					isBest,
+				});
+			} else if (match.supplierMatches.length > 0) {
+				gaps.push({
+					clientName: match.clientProduct.name,
+					sku: match.clientProduct.sku,
+					code: match.clientProduct.code,
+					quantity: qty,
+					bestPriceElsewhere: bestPrice || null,
+					otherSuppliers: match.supplierMatches.length,
+				});
+			}
+		}
+
+		const totalItems = full.totalProducts;
+		const coveredItems = items.length;
+
+		return {
+			resumo: {
+				totalItems,
+				matchedItems: full.matches.length,
+				coveredItems,
+				coveragePct:
+					totalItems > 0 ? Math.round((coveredItems / totalItems) * 100) : 0,
+				offeredValue,
+				bestPriceItems,
+				gapItems: Math.max(0, totalItems - coveredItems),
+			},
+			items,
+			gaps,
+		};
+	}
+
+	/**
 	 * Optimized product search with caching
 	 */
 	@cached(

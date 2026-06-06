@@ -2,6 +2,7 @@
 
 import { Bell, Palette, Shield, User } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,12 +11,19 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+	changePasswordAction,
+	savePreferencesAction,
+	updateProfileAction,
+} from "@/lib/actions/profile";
 
 type UserType = {
 	id: string;
 	name: string;
 	email: string;
+	phone?: string | null;
 	role: string;
+	preferences?: unknown;
 	company: {
 		id: string;
 		name: string;
@@ -28,43 +36,89 @@ interface SettingsClientProps {
 }
 
 export default function SettingsClient({ user }: SettingsClientProps) {
+	const prefs = (user.preferences ?? {}) as Partial<{
+		emailNotifications: boolean;
+		pushNotifications: boolean;
+		priceAlerts: boolean;
+		language: string;
+		theme: string;
+	}>;
+
 	const [profileData, setProfileData] = useState({
 		name: user.name,
 		email: user.email,
-		phone: "",
+		phone: user.phone ?? "",
 		company: user.company?.name || "",
 	});
 
 	const [notifications, setNotifications] = useState({
-		emailNotifications: true,
-		pushNotifications: false,
-		priceAlerts: true,
+		emailNotifications: prefs.emailNotifications ?? true,
+		pushNotifications: prefs.pushNotifications ?? false,
+		priceAlerts: prefs.priceAlerts ?? true,
 		orderUpdates: true,
 		newOrders: true,
 	});
 
 	const [preferences, setPreferences] = useState({
-		language: "pt-BR",
+		language: prefs.language ?? "pt-BR",
 		timezone: "America/Sao_Paulo",
 		currency: "BRL",
-		theme: "light",
+		theme: prefs.theme === "system" ? "auto" : (prefs.theme ?? "light"),
 	});
+
+	const [passwordData, setPasswordData] = useState({
+		current: "",
+		next: "",
+		confirm: "",
+	});
+
+	const [savingProfile, setSavingProfile] = useState(false);
+	const [savingPassword, setSavingPassword] = useState(false);
+	const [savingPrefs, setSavingPrefs] = useState(false);
 
 	const handleSaveProfile = async (e: React.FormEvent) => {
 		e.preventDefault();
-		// Implementar salvamento do perfil
-		console.log("Salvando perfil:", profileData);
+		setSavingProfile(true);
+		const res = await updateProfileAction({
+			name: profileData.name,
+			email: profileData.email,
+			phone: profileData.phone,
+		});
+		setSavingProfile(false);
+		if (res.success) toast.success("Perfil atualizado.");
+		else toast.error(res.error);
 	};
 
 	const handleChangePassword = async (e: React.FormEvent) => {
 		e.preventDefault();
-		// Implementar mudança de senha
-		console.log("Mudando senha");
+		if (passwordData.next !== passwordData.confirm) {
+			toast.error("A confirmação não confere com a nova senha.");
+			return;
+		}
+		setSavingPassword(true);
+		const res = await changePasswordAction({
+			currentPassword: passwordData.current,
+			newPassword: passwordData.next,
+		});
+		setSavingPassword(false);
+		if (res.success) {
+			toast.success("Senha alterada.");
+			setPasswordData({ current: "", next: "", confirm: "" });
+		} else toast.error(res.error);
 	};
 
 	const handleSavePreferences = async () => {
-		// Implementar salvamento das preferências
-		console.log("Salvando preferências:", preferences);
+		setSavingPrefs(true);
+		const res = await savePreferencesAction({
+			emailNotifications: notifications.emailNotifications,
+			pushNotifications: notifications.pushNotifications,
+			priceAlerts: notifications.priceAlerts,
+			language: preferences.language,
+			theme: preferences.theme === "auto" ? "system" : preferences.theme,
+		});
+		setSavingPrefs(false);
+		if (res.success) toast.success("Preferências salvas.");
+		else toast.error(res.error);
 	};
 
 	const getRoleBadge = (role: string) => {
@@ -168,7 +222,9 @@ export default function SettingsClient({ user }: SettingsClientProps) {
 									<Label>Função:</Label>
 									{getRoleBadge(user.role)}
 								</div>
-								<Button type="submit">Salvar Alterações</Button>
+								<Button type="submit" disabled={savingProfile}>
+									{savingProfile ? "Salvando..." : "Salvar Alterações"}
+								</Button>
 							</form>
 						</CardContent>
 					</Card>
@@ -282,8 +338,8 @@ export default function SettingsClient({ user }: SettingsClientProps) {
 									/>
 								</div>
 							</div>
-							<Button onClick={handleSavePreferences}>
-								Salvar Preferências
+							<Button onClick={handleSavePreferences} disabled={savingPrefs}>
+								{savingPrefs ? "Salvando..." : "Salvar Preferências"}
 							</Button>
 						</CardContent>
 					</Card>
@@ -375,8 +431,8 @@ export default function SettingsClient({ user }: SettingsClientProps) {
 									</select>
 								</div>
 							</div>
-							<Button onClick={handleSavePreferences}>
-								Salvar Preferências
+							<Button onClick={handleSavePreferences} disabled={savingPrefs}>
+								{savingPrefs ? "Salvando..." : "Salvar Preferências"}
 							</Button>
 						</CardContent>
 					</Card>
@@ -396,6 +452,13 @@ export default function SettingsClient({ user }: SettingsClientProps) {
 											id="current-password"
 											type="password"
 											placeholder="Digite sua senha atual"
+											value={passwordData.current}
+											onChange={(e) =>
+												setPasswordData({
+													...passwordData,
+													current: e.target.value,
+												})
+											}
 										/>
 									</div>
 									<div>
@@ -404,6 +467,13 @@ export default function SettingsClient({ user }: SettingsClientProps) {
 											id="new-password"
 											type="password"
 											placeholder="Digite a nova senha"
+											value={passwordData.next}
+											onChange={(e) =>
+												setPasswordData({
+													...passwordData,
+													next: e.target.value,
+												})
+											}
 										/>
 									</div>
 								</div>
@@ -413,9 +483,18 @@ export default function SettingsClient({ user }: SettingsClientProps) {
 										id="confirm-password"
 										type="password"
 										placeholder="Confirme a nova senha"
+										value={passwordData.confirm}
+										onChange={(e) =>
+											setPasswordData({
+												...passwordData,
+												confirm: e.target.value,
+											})
+										}
 									/>
 								</div>
-								<Button type="submit">Alterar Senha</Button>
+								<Button type="submit" disabled={savingPassword}>
+									{savingPassword ? "Alterando..." : "Alterar Senha"}
+								</Button>
 							</form>
 						</CardContent>
 					</Card>

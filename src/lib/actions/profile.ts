@@ -14,6 +14,7 @@ import {
 const profileSchema = z.object({
 	name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
 	email: z.string().email("Email inválido"),
+	phone: z.string().optional(),
 });
 
 const passwordSchema = z.object({
@@ -35,14 +36,19 @@ export async function updateProfileAction(
 		};
 	}
 
-	const { name, email } = parsed.data;
+	const { name, email, phone } = parsed.data;
 	if (email !== user.email) {
 		const exists = await prisma.user.findUnique({ where: { email } });
 		if (exists) return { success: false, error: "Email já está em uso" };
 	}
 
-	await prisma.user.update({ where: { id: user.id }, data: { name, email } });
+	await prisma.user.update({
+		where: { id: user.id },
+		data: { name, email, phone: phone?.trim() ? phone.trim() : null },
+	});
 	revalidatePath("/admin/settings");
+	revalidatePath("/supplier/settings");
+	revalidatePath("/client/settings");
 	return { success: true };
 }
 
