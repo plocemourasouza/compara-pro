@@ -43,10 +43,10 @@ test.describe("lookup empresa (CNPJ + CEP)", () => {
 	});
 
 	test("lookup exige autenticação", async ({ browser }) => {
-		const anon = await browser.newContext();
-		const res = await anon.request.get("/api/lookup/cep/01310100", {
+		const anon = await browser.newContext({
 			baseURL: "http://localhost:3000",
 		});
+		const res = await anon.request.get("/api/lookup/cep/01310100");
 		expect(res.status()).toBe(401);
 		await anon.close();
 	});

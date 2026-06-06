@@ -218,7 +218,11 @@ export function CompanyForm({
 			setValue("neighborhood", data.neighborhood);
 			setValue("city", data.city);
 			setValue("state", data.state);
-			setCepMessage("Endereço preenchido a partir do CEP.");
+			setCepMessage(
+				data.street
+					? "Endereço preenchido a partir do CEP."
+					: "CEP encontrado, mas sem logradouro. Preencha a rua e o número.",
+			);
 		} catch {
 			setCepMessage("Não foi possível buscar o CEP.");
 		} finally {
