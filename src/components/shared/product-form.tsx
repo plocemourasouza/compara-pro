@@ -221,7 +221,9 @@ export function ProductForm({
 								control={form.control}
 								name="unit"
 								render={({ field }) => (
-									<FormItem className="sm:col-span-3">
+									<FormItem
+										className={isAdmin ? "sm:col-span-2" : "sm:col-span-3"}
+									>
 										<FormLabel>Unidade</FormLabel>
 										<FormControl>
 											<Input placeholder="Unidade (kg, l, etc)" {...field} />
@@ -234,27 +236,12 @@ export function ProductForm({
 								control={form.control}
 								name="category"
 								render={({ field }) => (
-									<FormItem className="sm:col-span-3">
+									<FormItem
+										className={isAdmin ? "sm:col-span-2" : "sm:col-span-3"}
+									>
 										<FormLabel>Categoria</FormLabel>
 										<FormControl>
 											<Input placeholder="Categoria do produto" {...field} />
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-							<FormField
-								control={form.control}
-								name="description"
-								render={({ field }) => (
-									<FormItem className="sm:col-span-6">
-										<FormLabel>Descrição</FormLabel>
-										<FormControl>
-											<Textarea
-												placeholder="Descrição do produto"
-												rows={3}
-												{...field}
-											/>
 										</FormControl>
 										<FormMessage />
 									</FormItem>
@@ -265,7 +252,7 @@ export function ProductForm({
 									control={form.control}
 									name="companyId"
 									render={({ field }) => (
-										<FormItem className="sm:col-span-3">
+										<FormItem className="sm:col-span-2">
 											<FormLabel>Empresa *</FormLabel>
 											<Select
 												value={field.value}
@@ -293,6 +280,23 @@ export function ProductForm({
 									)}
 								/>
 							)}
+							<FormField
+								control={form.control}
+								name="description"
+								render={({ field }) => (
+									<FormItem className="sm:col-span-6">
+										<FormLabel>Descrição</FormLabel>
+										<FormControl>
+											<Textarea
+												placeholder="Descrição do produto"
+												rows={3}
+												{...field}
+											/>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
 						</CardContent>
 					</Card>
 
