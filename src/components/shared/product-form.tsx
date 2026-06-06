@@ -5,6 +5,7 @@ import { ArrowLeft, Save } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { UnitCombobox } from "@/components/shared/unit-combobox";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -31,6 +32,7 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
+import { masks } from "@/lib/utils/masks";
 import {
 	type ProductFormValues,
 	productFormSchema,
@@ -75,9 +77,24 @@ export function ProductForm({
 }: ProductFormProps) {
 	const router = useRouter();
 	const isEdit = mode === "edit";
+	const initialValues: ProductFormValues = {
+		...EMPTY_DEFAULTS,
+		...defaultValues,
+		// preço numérico ("0.5") -> máscara de moeda ("0,50")
+		price: defaultValues?.price
+			? masks.currency(
+					String(
+						Math.round(
+							Number(String(defaultValues.price).replace(",", ".")) * 100,
+						),
+					),
+				)
+			: "",
+		unit: defaultValues?.unit ? defaultValues.unit.toUpperCase() : "",
+	};
 	const form = useForm<ProductFormValues>({
 		resolver: zodResolver(productFormSchema),
-		defaultValues: { ...EMPTY_DEFAULTS, ...defaultValues },
+		defaultValues: initialValues,
 	});
 
 	const onSubmit = async (values: ProductFormValues) => {
@@ -87,7 +104,7 @@ export function ProductForm({
 			code: values.code || undefined,
 			sku: values.sku || undefined,
 			name: values.name,
-			price: values.price ? Number.parseFloat(values.price) : undefined,
+			price: masks.parseCurrency(values.price ?? ""),
 			description: values.description || undefined,
 			category: values.category || undefined,
 			unit: values.unit || undefined,
@@ -205,14 +222,22 @@ export function ProductForm({
 								render={({ field }) => (
 									<FormItem className="sm:col-span-2">
 										<FormLabel>Preço</FormLabel>
-										<FormControl>
-											<Input
-												type="number"
-												step="0.01"
-												placeholder="0.00"
-												{...field}
-											/>
-										</FormControl>
+										<div className="relative">
+											<span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm text-muted-foreground">
+												R$
+											</span>
+											<FormControl>
+												<Input
+													inputMode="numeric"
+													placeholder="0,00"
+													className="pl-9"
+													{...field}
+													onChange={(e) =>
+														field.onChange(masks.currency(e.target.value))
+													}
+												/>
+											</FormControl>
+										</div>
 										<FormMessage />
 									</FormItem>
 								)}
@@ -225,9 +250,10 @@ export function ProductForm({
 										className={isAdmin ? "sm:col-span-2" : "sm:col-span-3"}
 									>
 										<FormLabel>Unidade</FormLabel>
-										<FormControl>
-											<Input placeholder="Unidade (kg, l, etc)" {...field} />
-										</FormControl>
+										<UnitCombobox
+											value={field.value ?? ""}
+											onChange={field.onChange}
+										/>
 										<FormMessage />
 									</FormItem>
 								)}

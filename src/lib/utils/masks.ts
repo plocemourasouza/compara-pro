@@ -36,6 +36,23 @@ export const masks = {
 		return value;
 	},
 
+	// Máscara de moeda (BRL) digitada da direita p/ esquerda: "150" -> "1,50".
+	currency: (value: string) => {
+		const digits = value.replace(/\D/g, "");
+		if (!digits) return "";
+		const amount = Number.parseInt(digits, 10) / 100;
+		return amount.toLocaleString("pt-BR", {
+			minimumFractionDigits: 2,
+			maximumFractionDigits: 2,
+		});
+	},
+
+	/** Converte o valor mascarado de moeda ("1.234,56") para número (1234.56). */
+	parseCurrency: (masked: string): number | undefined => {
+		const digits = masked.replace(/\D/g, "");
+		return digits ? Number.parseInt(digits, 10) / 100 : undefined;
+	},
+
 	removeNonDigits: (value: string) => {
 		return value.replace(/\D/g, "");
 	},
