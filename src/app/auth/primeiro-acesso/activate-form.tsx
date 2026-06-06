@@ -139,6 +139,11 @@ function ActivateFormContent() {
 									{state.error}
 								</div>
 							)}
+							{resendState?.error && (
+								<div className="rounded-md border border-destructive bg-destructive/10 p-3 text-sm text-destructive">
+									{resendState.error}
+								</div>
+							)}
 							{resendState?.message && (
 								<div className="rounded-md border border-primary/30 bg-primary/10 p-3 text-sm text-primary">
 									{resendState.message}
