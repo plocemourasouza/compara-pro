@@ -347,7 +347,7 @@ export function CompanyForm({
 								control={form.control}
 								name="responsibleName"
 								render={({ field }) => (
-									<FormItem className="sm:col-span-6">
+									<FormItem className="sm:col-span-2">
 										<FormLabel>Nome do Responsável *</FormLabel>
 										<FormControl>
 											<Input placeholder="Nome completo" {...field} />
@@ -360,7 +360,7 @@ export function CompanyForm({
 								control={form.control}
 								name="responsibleEmail"
 								render={({ field }) => (
-									<FormItem className="sm:col-span-3">
+									<FormItem className="sm:col-span-2">
 										<FormLabel>E-mail do Responsável *</FormLabel>
 										<FormControl>
 											<Input
@@ -377,7 +377,7 @@ export function CompanyForm({
 								control={form.control}
 								name="responsiblePhone"
 								render={({ field }) => (
-									<FormItem className="sm:col-span-3">
+									<FormItem className="sm:col-span-2">
 										<FormLabel>Telefone do Responsável *</FormLabel>
 										<FormControl>
 											<Input
@@ -461,7 +461,7 @@ export function CompanyForm({
 								control={form.control}
 								name="neighborhood"
 								render={({ field }) => (
-									<FormItem className="sm:col-span-4">
+									<FormItem className="sm:col-span-2">
 										<FormLabel>Bairro *</FormLabel>
 										<FormControl>
 											<Input placeholder="Nome do bairro" {...field} />
@@ -530,7 +530,7 @@ export function CompanyForm({
 								control={form.control}
 								name="addressReference"
 								render={({ field }) => (
-									<FormItem className="sm:col-span-6">
+									<FormItem className="sm:col-span-2">
 										<FormLabel>Referência</FormLabel>
 										<FormControl>
 											<Input
