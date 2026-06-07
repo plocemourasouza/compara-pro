@@ -31,7 +31,7 @@ interface User {
 	id: string;
 	name: string;
 	email: string;
-	role: "ADMIN" | "SUPPLIER" | "CLIENT";
+	role: "ADMIN" | "REPRESENTATIVE" | "CLIENT";
 	company: { id: string; name: string; type: string } | null;
 }
 

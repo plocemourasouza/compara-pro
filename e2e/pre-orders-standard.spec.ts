@@ -7,7 +7,7 @@ test.describe("pre-orders — lista → detalhe (itens) → ação", () => {
 		page,
 	}) => {
 		await page.goto("/auth/login");
-		await page.fill('input[name="email"]', "fornecedor.alfa@demo.com");
+		await page.fill('input[name="email"]', "representante@demo.com");
 		await page.fill('input[name="password"]', "demo1234");
 		await page.getByRole("button", { name: /entrar/i }).click();
 		await page.waitForURL("**/supplier", { timeout: 20_000 });
@@ -56,8 +56,8 @@ test.describe("pre-orders — lista → detalhe (itens) → ação", () => {
 		const dialog = page.getByRole("dialog");
 		await expect(dialog).toBeVisible();
 		await expect(dialog.getByText(/Pré-pedido #/)).toBeVisible();
-		await expect(
-			dialog.getByRole("button", { name: /aprovar/i }),
-		).toHaveCount(0);
+		await expect(dialog.getByRole("button", { name: /aprovar/i })).toHaveCount(
+			0,
+		);
 	});
 });

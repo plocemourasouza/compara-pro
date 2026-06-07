@@ -1,18 +1,18 @@
 import { NextResponse } from "next/server";
+import { getRepresentedSupplierIds } from "@/lib/auth-scope";
 import { AuthError, requireAuth } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
 
-/** Garante que o cliente está na carteira do fornecedor logado. */
-async function assertInCarteira(supplierCompanyId: string, clientId: string) {
-	const link = await prisma.supplierClient.findUnique({
+/** Vínculos do cliente com os fornecedores representados (carteira). */
+async function carteiraLinks(supplierIds: string[], clientId: string) {
+	if (supplierIds.length === 0) return [];
+	return prisma.supplierClient.findMany({
 		where: {
-			supplierCompanyId_clientCompanyId: {
-				supplierCompanyId,
-				clientCompanyId: clientId,
-			},
+			supplierCompanyId: { in: supplierIds },
+			clientCompanyId: clientId,
 		},
+		include: { supplier: { select: { id: true, name: true } } },
 	});
-	return link;
 }
 
 export async function GET(
@@ -21,14 +21,11 @@ export async function GET(
 ) {
 	try {
 		const { id } = await params;
-		const user = await requireAuth(["SUPPLIER", "ADMIN"]);
-		const supplierCompanyId = user.company?.id;
-		if (!supplierCompanyId) {
-			return NextResponse.json({ error: "Sem empresa" }, { status: 400 });
-		}
+		const user = await requireAuth(["REPRESENTATIVE", "ADMIN"]);
+		const supplierIds = await getRepresentedSupplierIds(user);
 
-		const link = await assertInCarteira(supplierCompanyId, id);
-		if (!link && user.role !== "ADMIN") {
+		const links = await carteiraLinks(supplierIds, id);
+		if (links.length === 0 && user.role !== "ADMIN") {
 			return NextResponse.json(
 				{ error: "Cliente não está na sua carteira" },
 				{ status: 404 },
@@ -70,7 +67,14 @@ export async function GET(
 			);
 		}
 
-		return NextResponse.json({ client, demands });
+		// Fornecedores representados que carregam este cliente — alimenta o
+		// seletor de fornecedor das indicações.
+		const suppliers = links.map((l) => ({
+			id: l.supplier.id,
+			name: l.supplier.name,
+		}));
+
+		return NextResponse.json({ client, demands, suppliers });
 	} catch (error) {
 		if (error instanceof AuthError) {
 			return NextResponse.json(
@@ -87,27 +91,37 @@ export async function GET(
 }
 
 export async function DELETE(
-	_request: Request,
+	request: Request,
 	{ params }: { params: Promise<{ id: string }> },
 ) {
 	try {
 		const { id } = await params;
-		const user = await requireAuth(["SUPPLIER"]);
-		const supplierCompanyId = user.company?.id;
-		if (!supplierCompanyId) {
-			return NextResponse.json({ error: "Sem empresa" }, { status: 400 });
-		}
+		const user = await requireAuth(["REPRESENTATIVE"]);
+		const supplierIds = await getRepresentedSupplierIds(user);
 
-		const link = await assertInCarteira(supplierCompanyId, id);
-		if (!link) {
+		const links = await carteiraLinks(supplierIds, id);
+		if (links.length === 0) {
 			return NextResponse.json(
 				{ error: "Cliente não está na sua carteira" },
 				{ status: 404 },
 			);
 		}
 
-		// Remove só o vínculo — não apaga a empresa do cliente.
-		await prisma.supplierClient.delete({ where: { id: link.id } });
+		// Remove de um fornecedor específico (?supplierCompanyId=) ou de todos os
+		// fornecedores representados — nunca apaga a empresa do cliente.
+		const only = new URL(request.url).searchParams.get("supplierCompanyId");
+		const toRemove = only
+			? links.filter((l) => l.supplierCompanyId === only)
+			: links;
+		if (toRemove.length === 0) {
+			return NextResponse.json(
+				{ error: "Vínculo não encontrado" },
+				{ status: 404 },
+			);
+		}
+		await prisma.supplierClient.deleteMany({
+			where: { id: { in: toRemove.map((l) => l.id) } },
+		});
 		return NextResponse.json({ success: true });
 	} catch (error) {
 		if (error instanceof AuthError) {

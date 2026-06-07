@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { PageTransition } from "@/components/shared/page-transition";
 import { getCurrentUser } from "@/lib/auth-server";
 import ClientSidebar from "./client-sidebar";
 
@@ -16,7 +17,7 @@ export default async function ClientLayout({
 	}
 
 	if (user.role !== "ADMIN" && user.role !== "CLIENT") {
-		redirect(user.role === "SUPPLIER" ? "/supplier" : "/admin");
+		redirect(user.role === "REPRESENTATIVE" ? "/supplier" : "/admin");
 	}
 
 	return (
@@ -24,7 +25,9 @@ export default async function ClientLayout({
 			<div className="flex">
 				<ClientSidebar user={user} />
 				<main className="flex-1 ml-64">
-					<div className="p-8">{children}</div>
+					<div className="p-8">
+						<PageTransition>{children}</PageTransition>
+					</div>
 				</main>
 			</div>
 		</div>

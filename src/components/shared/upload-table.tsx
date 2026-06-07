@@ -17,6 +17,7 @@ export interface Upload {
 	errorRows: number;
 	uploadedAt: string;
 	processedAt?: string;
+	company?: { id: string; name: string };
 }
 
 export interface UploadDetail extends Upload {
@@ -91,10 +92,12 @@ export function formatFileSize(bytes: number): string {
 
 interface ColumnOptions {
 	showPriceIndicator?: boolean;
+	showCompany?: boolean;
 }
 
 export function getUploadColumns({
 	showPriceIndicator = false,
+	showCompany = false,
 }: ColumnOptions = {}): ColumnDef<Upload>[] {
 	const columns: ColumnDef<Upload>[] = [
 		{
@@ -111,6 +114,25 @@ export function getUploadColumns({
 				</div>
 			),
 		},
+	];
+
+	if (showCompany) {
+		columns.push({
+			id: "company",
+			header: "Fornecedor",
+			enableSorting: false,
+			cell: ({ row }) =>
+				row.original.company ? (
+					<Badge className="bg-primary/10 text-primary">
+						{row.original.company.name}
+					</Badge>
+				) : (
+					"-"
+				),
+		});
+	}
+
+	columns.push(
 		{
 			accessorKey: "uploadType",
 			header: "Tipo",
@@ -146,7 +168,7 @@ export function getUploadColumns({
 				</div>
 			),
 		},
-	];
+	);
 
 	if (showPriceIndicator) {
 		columns.push({

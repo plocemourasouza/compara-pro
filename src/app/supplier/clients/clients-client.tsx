@@ -25,10 +25,10 @@ interface PendingRequest {
 	city: string | null;
 	state: string | null;
 	requestedAt: string;
+	supplierName: string;
 }
 
 interface ClientRow {
-	linkId: string;
 	id: string;
 	name: string;
 	cnpj: string | null;
@@ -37,6 +37,7 @@ interface ClientRow {
 	demandCount: number;
 	lastDemandAt: string | null;
 	addedAt: string;
+	suppliers: { linkId: string; companyId: string; name: string }[];
 }
 
 const columns: ColumnDef<ClientRow>[] = [
@@ -62,6 +63,23 @@ const columns: ColumnDef<ClientRow>[] = [
 			row.original.city
 				? `${row.original.city}${row.original.state ? `/${row.original.state}` : ""}`
 				: "—",
+	},
+	{
+		id: "suppliers",
+		header: "Fornecedor(es)",
+		enableSorting: false,
+		cell: ({ row }) => (
+			<div className="flex flex-wrap gap-1">
+				{row.original.suppliers.map((s) => (
+					<Badge
+						key={s.companyId}
+						className="bg-primary/10 text-primary text-xs"
+					>
+						{s.name}
+					</Badge>
+				))}
+			</div>
+		),
 	},
 	{
 		accessorKey: "demandCount",
@@ -172,7 +190,7 @@ export default function ClientsClient() {
 											{r.cnpj ? formatters.cnpj(r.cnpj) : "Sem CNPJ"}
 											{r.city ? ` · ${r.city}` : ""}
 											{r.state ? `/${r.state}` : ""} ·{" "}
-											{formatters.date(r.requestedAt)}
+											{formatters.date(r.requestedAt)} · → {r.supplierName}
 										</p>
 									</div>
 									<div className="flex shrink-0 gap-2">

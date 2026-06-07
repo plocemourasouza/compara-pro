@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { getRepresentedSupplierIds } from "@/lib/auth-scope";
 import { AuthError, requireAuth } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
 
@@ -8,7 +9,7 @@ type RouteParams = { params: Promise<{ id: string }> };
 export async function GET(_request: NextRequest, { params }: RouteParams) {
 	const { id } = await params;
 	try {
-		const user = await requireAuth(["CLIENT", "SUPPLIER", "ADMIN"]);
+		const user = await requireAuth(["CLIENT", "REPRESENTATIVE", "ADMIN"]);
 
 		const preOrder = await prisma.preOrder.findUnique({
 			where: { id },
@@ -31,13 +32,16 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
 			);
 		}
 
-		// Admin vê qualquer pré-pedido; demais só os da própria empresa.
-		if (
-			user.role !== "ADMIN" &&
-			preOrder.clientId !== user.company?.id &&
-			preOrder.supplierId !== user.company?.id
-		) {
+		// Admin vê qualquer pré-pedido; cliente só os da própria empresa;
+		// representante só os de fornecedores que representa.
+		if (user.role === "CLIENT" && preOrder.clientId !== user.company?.id) {
 			return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
+		}
+		if (user.role === "REPRESENTATIVE") {
+			const ids = await getRepresentedSupplierIds(user);
+			if (!ids.includes(preOrder.supplierId)) {
+				return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
+			}
 		}
 
 		return NextResponse.json({

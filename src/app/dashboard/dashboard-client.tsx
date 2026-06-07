@@ -53,8 +53,8 @@ export default function DashboardClient({ user }: { user: User }) {
 				<Badge variant="outline" className="text-sm">
 					{user.role === "ADMIN"
 						? "Administrador"
-						: user.role === "SUPPLIER"
-							? "Fornecedor"
+						: user.role === "REPRESENTATIVE"
+							? "Representante"
 							: "Cliente"}
 				</Badge>
 			</div>
@@ -62,7 +62,7 @@ export default function DashboardClient({ user }: { user: User }) {
 			{/* Stats Cards */}
 			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 				{/* Redireciona conforme o perfil do usuário */}
-				{user.role === "SUPPLIER" && redirect("/supplier")}
+				{user.role === "REPRESENTATIVE" && redirect("/supplier")}
 				{user.role === "CLIENT" && redirect("/client")}
 
 				{user.role === "ADMIN" && (
@@ -85,13 +85,13 @@ export default function DashboardClient({ user }: { user: User }) {
 							<Card>
 								<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
 									<CardTitle className="text-sm font-medium">
-										Fornecedores
+										Representantes
 									</CardTitle>
 									<Package className="h-4 w-4 text-muted-foreground" />
 								</CardHeader>
 								<CardContent>
 									<p className="text-xs text-muted-foreground">
-										Acesse a área de fornecedores
+										Acesse a área de representantes
 									</p>
 								</CardContent>
 							</Card>

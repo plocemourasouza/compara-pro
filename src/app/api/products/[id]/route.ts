@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { getRepresentedSupplierIds } from "@/lib/auth-scope";
 import { AuthError, requireAuth } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
 import { updateProductSchema } from "@/lib/validations/product";
@@ -36,7 +37,7 @@ function handleError(error: unknown, label: string) {
 export async function GET(_request: NextRequest, { params }: RouteParams) {
 	const { id } = await params;
 	try {
-		const user = await requireAuth(["ADMIN", "SUPPLIER"]);
+		const user = await requireAuth(["ADMIN", "REPRESENTATIVE"]);
 		const product = await prisma.product.findFirst({
 			where: { id, deletedAt: null },
 			select: productSelect,
@@ -47,7 +48,10 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
 				{ status: 404 },
 			);
 		}
-		if (user.role === "SUPPLIER" && product.companyId !== user.company?.id) {
+		if (
+			user.role === "REPRESENTATIVE" &&
+			!(await getRepresentedSupplierIds(user)).includes(product.companyId)
+		) {
 			return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
 		}
 		return NextResponse.json({ product });
@@ -60,7 +64,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
 export async function PUT(request: NextRequest, { params }: RouteParams) {
 	const { id } = await params;
 	try {
-		const user = await requireAuth(["ADMIN", "SUPPLIER"]);
+		const user = await requireAuth(["ADMIN", "REPRESENTATIVE"]);
 
 		const body = await request.json();
 		const parsed = updateProductSchema.safeParse(body);
@@ -81,14 +85,25 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 				{ status: 404 },
 			);
 		}
-		if (user.role === "SUPPLIER" && existing.companyId !== user.company?.id) {
+		const representedIds =
+			user.role === "REPRESENTATIVE"
+				? await getRepresentedSupplierIds(user)
+				: [];
+		if (
+			user.role === "REPRESENTATIVE" &&
+			!representedIds.includes(existing.companyId)
+		) {
 			return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
 		}
 
-		// Supplier always writes to its own company; admin may target a company.
+		// Representative may keep or move the product to another represented
+		// supplier; admin may target any company.
 		const finalCompanyId =
-			user.role === "SUPPLIER"
-				? user.company?.id
+			user.role === "REPRESENTATIVE"
+				? parsed.data.companyId &&
+					representedIds.includes(parsed.data.companyId)
+					? parsed.data.companyId
+					: existing.companyId
 				: (parsed.data.companyId ?? existing.companyId);
 		if (!finalCompanyId) {
 			return NextResponse.json(
@@ -137,7 +152,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 export async function DELETE(_request: NextRequest, { params }: RouteParams) {
 	const { id } = await params;
 	try {
-		const user = await requireAuth(["ADMIN", "SUPPLIER"]);
+		const user = await requireAuth(["ADMIN", "REPRESENTATIVE"]);
 
 		const existing = await prisma.product.findFirst({
 			where: { id, deletedAt: null },
@@ -149,7 +164,10 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
 				{ status: 404 },
 			);
 		}
-		if (user.role === "SUPPLIER" && existing.companyId !== user.company?.id) {
+		if (
+			user.role === "REPRESENTATIVE" &&
+			!(await getRepresentedSupplierIds(user)).includes(existing.companyId)
+		) {
 			return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
 		}
 

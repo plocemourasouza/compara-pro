@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import type { Prisma } from "@/generated/prisma";
+import { getRepresentedSupplierIds } from "@/lib/auth-scope";
 import { getCurrentUser } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
 import { createProductSchema } from "@/lib/validations/product";
@@ -22,8 +23,13 @@ export async function GET(request: NextRequest) {
 		};
 
 		// Filter by company based on user role
-		if (user.role === "SUPPLIER") {
-			whereClause.companyId = user.company?.id;
+		if (user.role === "REPRESENTATIVE") {
+			// Aggregate across all represented suppliers; allow narrowing to one.
+			const ids = await getRepresentedSupplierIds(user);
+			whereClause.companyId =
+				companyId && companyId !== "all" && ids.includes(companyId)
+					? companyId
+					: { in: ids };
 		} else if (user.role === "CLIENT") {
 			// Clients can only see supplier products
 			whereClause.company = {
@@ -99,8 +105,16 @@ export async function POST(request: NextRequest) {
 
 		// Determine company ID based on user role
 		let finalCompanyId: string | undefined = companyId;
-		if (user.role === "SUPPLIER") {
-			finalCompanyId = user.company?.id;
+		if (user.role === "REPRESENTATIVE") {
+			// Must choose one of the suppliers the representative represents.
+			const ids = await getRepresentedSupplierIds(user);
+			if (!companyId || !ids.includes(companyId)) {
+				return NextResponse.json(
+					{ error: "Selecione um fornecedor que você representa" },
+					{ status: 403 },
+				);
+			}
+			finalCompanyId = companyId;
 		} else if (user.role === "CLIENT") {
 			return NextResponse.json(
 				{ error: "Clients cannot create products" },

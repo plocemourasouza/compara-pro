@@ -36,6 +36,8 @@ interface ProductsClientProps {
 export default function ProductsClient({ user }: ProductsClientProps) {
 	const router = useRouter();
 	const isAdmin = user.role === "ADMIN";
+	const isRepresentative = user.role === "REPRESENTATIVE";
+	const showCompany = isAdmin || isRepresentative;
 	const [products, setProducts] = useState<Product[]>([]);
 	const [companies, setCompanies] = useState<
 		Array<{ id: string; name: string; type: string }>
@@ -104,20 +106,29 @@ export default function ProductsClient({ user }: ProductsClientProps) {
 		setDetailOpen(true);
 	};
 
-	// biome-ignore lint/correctness/useExhaustiveDependencies: delete handler is render-stable; only isAdmin affects columns
+	// biome-ignore lint/correctness/useExhaustiveDependencies: delete handler is render-stable; only showCompany affects columns
 	const columns = useMemo(
 		() =>
 			getProductColumns({
 				onDelete: handleDeleteProduct,
-				showCompany: isAdmin,
+				showCompany,
 			}),
-		[isAdmin],
+		[showCompany],
 	);
 
 	const categories = useMemo(
 		() => [...new Set(products.map((p) => p.category).filter(Boolean))],
 		[products],
 	);
+
+	// Admin filters across all companies; representative across the suppliers
+	// that actually have products loaded.
+	const companyOptions = useMemo(() => {
+		if (isAdmin) return companies.map((c) => ({ id: c.id, name: c.name }));
+		const map = new Map<string, string>();
+		for (const p of products) map.set(p.company.id, p.company.name);
+		return [...map].map(([id, name]) => ({ id, name }));
+	}, [isAdmin, companies, products]);
 
 	const filteredProducts = useMemo(
 		() =>
@@ -216,17 +227,23 @@ export default function ProductsClient({ user }: ProductsClientProps) {
 											))}
 									</SelectContent>
 								</Select>
-								{isAdmin && (
+								{showCompany && (
 									<Select
 										value={companyFilter}
 										onValueChange={setCompanyFilter}
 									>
 										<SelectTrigger className="w-44">
-											<SelectValue placeholder="Empresa" />
+											<SelectValue
+												placeholder={isAdmin ? "Empresa" : "Fornecedor"}
+											/>
 										</SelectTrigger>
 										<SelectContent>
-											<SelectItem value="all">Todas as empresas</SelectItem>
-											{companies.map((company) => (
+											<SelectItem value="all">
+												{isAdmin
+													? "Todas as empresas"
+													: "Todos os fornecedores"}
+											</SelectItem>
+											{companyOptions.map((company) => (
 												<SelectItem key={company.id} value={company.id}>
 													{company.name}
 												</SelectItem>

@@ -1,6 +1,7 @@
 import type { NotificationType } from "@/generated/prisma";
 import { prisma } from "@/lib/db";
 import { sendNotificationEmail } from "@/lib/email/mailer";
+import { preOrderScopeWhere } from "@/lib/services/pre-order-scope";
 import type {
 	CreatePreOrderBatchData,
 	CreatePreOrderData,
@@ -23,6 +24,7 @@ export class PreOrderService {
 							supplierMatches: {
 								where: { supplierCompanyId: data.supplierId },
 							},
+							clientProduct: { select: { targetPrice: true } },
 						},
 					},
 				},
@@ -52,6 +54,7 @@ export class PreOrderService {
 				quantity: number;
 				price: number;
 				totalPrice: number;
+				baselinePrice: number | null;
 			}> = [];
 
 			for (const match of validMatches) {
@@ -69,6 +72,7 @@ export class PreOrderService {
 					quantity,
 					price,
 					totalPrice,
+					baselinePrice: match.clientProduct?.targetPrice ?? null,
 				});
 
 				totalAmount += totalPrice;
@@ -90,6 +94,7 @@ export class PreOrderService {
 							quantity: item.quantity,
 							price: item.price,
 							totalPrice: item.totalPrice,
+							baselinePrice: item.baselinePrice,
 						})),
 					},
 				},
@@ -168,6 +173,7 @@ export class PreOrderService {
 						supplierMatches: {
 							where: { supplierCompanyId: group.supplierId },
 						},
+						clientProduct: { select: { targetPrice: true } },
 					},
 				});
 
@@ -178,6 +184,7 @@ export class PreOrderService {
 					quantity: number;
 					price: number;
 					totalPrice: number;
+					baselinePrice: number | null;
 				}> = [];
 
 				for (const match of matches) {
@@ -194,6 +201,7 @@ export class PreOrderService {
 						quantity,
 						price,
 						totalPrice: price * quantity,
+						baselinePrice: match.clientProduct?.targetPrice ?? null,
 					});
 					totalAmount += price * quantity;
 				}
@@ -353,18 +361,13 @@ export class PreOrderService {
 	}
 
 	static async listPreOrders(
-		companyId: string | null,
-		role: "CLIENT" | "SUPPLIER" | "ADMIN",
+		scope: { clientId?: string | null; supplierIds?: string[] },
+		role: "CLIENT" | "REPRESENTATIVE" | "ADMIN",
 		page: number = 1,
 		limit: number = 10,
 	) {
 		try {
-			const where =
-				role === "ADMIN"
-					? {}
-					: role === "CLIENT"
-						? { clientId: companyId ?? "" }
-						: { supplierId: companyId ?? "" };
+			const where = preOrderScopeWhere(scope, role);
 
 			const [preOrders, total] = await Promise.all([
 				prisma.preOrder.findMany({

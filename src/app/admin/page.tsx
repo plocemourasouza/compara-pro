@@ -10,7 +10,7 @@ export default async function AdminDashboardPage() {
 	}
 
 	if (user.role !== "ADMIN") {
-		redirect(user.role === "SUPPLIER" ? "/supplier" : "/client");
+		redirect(user.role === "REPRESENTATIVE" ? "/supplier" : "/client");
 	}
 
 	return <AdminDashboard user={user} />;

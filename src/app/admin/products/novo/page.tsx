@@ -23,7 +23,7 @@ export default async function NewProductPage() {
 	return (
 		<ProductForm
 			mode="create"
-			isAdmin
+			showCompanySelect
 			companies={companies}
 			listHref="/admin/products"
 		/>

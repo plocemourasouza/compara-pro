@@ -8,6 +8,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 
 type User = {
 	id: string;
@@ -23,12 +30,17 @@ type User = {
 
 interface SupplierUploadClientProps {
 	user: User;
+	suppliers: { id: string; name: string }[];
 }
 
 export default function SupplierUploadClient({
 	user: _user,
+	suppliers,
 }: SupplierUploadClientProps) {
 	const router = useRouter();
+	const [supplierCompanyId, setSupplierCompanyId] = useState<string>(
+		suppliers.length === 1 ? (suppliers[0]?.id ?? "") : "",
+	);
 	const [selectedFile, setSelectedFile] = useState<File | null>(null);
 	const [uploading, setUploading] = useState(false);
 	const [uploadProgress, setUploadProgress] = useState(0);
@@ -67,7 +79,7 @@ export default function SupplierUploadClient({
 	};
 
 	const handleUpload = async () => {
-		if (!selectedFile) return;
+		if (!selectedFile || !supplierCompanyId) return;
 
 		setUploading(true);
 		setUploadProgress(0);
@@ -75,7 +87,8 @@ export default function SupplierUploadClient({
 		try {
 			const formData = new FormData();
 			formData.append("file", selectedFile);
-			formData.append("uploadType", "supplier_products");
+			formData.append("uploadType", "SUPPLIER_PRODUCTS");
+			formData.append("supplierCompanyId", supplierCompanyId);
 
 			// Simulate progress
 			const progressInterval = setInterval(() => {
@@ -156,6 +169,32 @@ export default function SupplierUploadClient({
 				</CardHeader>
 				<CardContent className="space-y-4">
 					<div>
+						<Label htmlFor="supplier-select">Fornecedor de origem</Label>
+						<Select
+							value={supplierCompanyId}
+							onValueChange={setSupplierCompanyId}
+							disabled={uploading}
+						>
+							<SelectTrigger id="supplier-select" className="mt-2">
+								<SelectValue placeholder="Selecione o fornecedor desta lista" />
+							</SelectTrigger>
+							<SelectContent>
+								{suppliers.map((s) => (
+									<SelectItem key={s.id} value={s.id}>
+										{s.name}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
+						{suppliers.length === 0 && (
+							<p className="text-sm text-destructive mt-1">
+								Você ainda não representa nenhum fornecedor. Cadastre um em
+								Fornecedores Representados.
+							</p>
+						)}
+					</div>
+
+					<div>
 						<Label htmlFor="file-input">
 							Selecione um arquivo Excel (.xlsx, .xls) ou CSV
 						</Label>
@@ -221,7 +260,7 @@ export default function SupplierUploadClient({
 					<div className="flex gap-3">
 						<Button
 							onClick={handleUpload}
-							disabled={!selectedFile || uploading}
+							disabled={!selectedFile || !supplierCompanyId || uploading}
 							className="flex-1"
 						>
 							{uploading ? "Processando..." : "Fazer Upload"}

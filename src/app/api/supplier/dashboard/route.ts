@@ -1,14 +1,15 @@
 import { NextResponse } from "next/server";
+import { getRepresentedSupplierIds } from "@/lib/auth-scope";
 import { AuthError, requireAuth } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
 
 export async function GET() {
 	try {
-		const user = await requireAuth(["SUPPLIER", "ADMIN"]);
-		const companyId = user.company?.id;
+		const user = await requireAuth(["REPRESENTATIVE", "ADMIN"]);
+		const companyIds = await getRepresentedSupplierIds(user);
 
-		// Admin sem empresa (ou fornecedor sem empresa): métricas vazias.
-		if (!companyId) {
+		// Representante sem fornecedores (ou admin sem empresa): métricas vazias.
+		if (companyIds.length === 0) {
 			return NextResponse.json({
 				success: true,
 				metrics: {
@@ -17,11 +18,13 @@ export async function GET() {
 					preOrders: { pending: 0, approved: 0, rejected: 0, totalValue: 0 },
 					uploads: { total: 0, failed: 0 },
 					clients: 0,
+					suppliers: 0,
 					recentPreOrders: [],
 				},
 			});
 		}
 
+		const companyId = { in: companyIds };
 		const [
 			productsActive,
 			productsTotal,
@@ -64,6 +67,7 @@ export async function GET() {
 					totalAmount: true,
 					createdAt: true,
 					client: { select: { name: true } },
+					supplier: { select: { name: true } },
 				},
 			}),
 		]);
@@ -84,9 +88,11 @@ export async function GET() {
 				},
 				uploads: { total: uploadsTotal, failed: uploadsFailed },
 				clients: clientsCount,
+				suppliers: companyIds.length,
 				recentPreOrders: recent.map((p) => ({
 					id: p.id,
 					clientName: p.client.name,
+					supplierName: p.supplier.name,
 					status: p.status,
 					totalAmount: Number(p.totalAmount) || 0,
 					createdAt: p.createdAt.toISOString(),

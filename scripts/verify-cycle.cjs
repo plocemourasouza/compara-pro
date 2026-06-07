@@ -17,11 +17,16 @@ const sign = (id) =>
 		where: { email: "comprador@demo.com" },
 		select: { id: true, companyId: true },
 	});
+	// O representante (representa Alfa e Beta) é quem aprova os pré-pedidos.
 	const sup = await prisma.user.findUnique({
-		where: { email: "fornecedor.beta@demo.com" },
+		where: { email: "representante@demo.com" },
 		select: { id: true, companyId: true },
 	});
-	const betaId = sup.companyId;
+	const beta = await prisma.company.findFirst({
+		where: { name: "Fornecedor Beta" },
+		select: { id: true },
+	});
+	const betaId = beta.id;
 	const buyerCookie = sign(buyer.id);
 	const supCookie = sign(sup.id);
 	const up = await prisma.uploadHistory.findFirst({

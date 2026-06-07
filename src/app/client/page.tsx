@@ -10,7 +10,7 @@ export default async function ClientDashboardPage() {
 	}
 
 	if (user.role !== "ADMIN" && user.role !== "CLIENT") {
-		redirect(user.role === "SUPPLIER" ? "/supplier" : "/admin");
+		redirect(user.role === "REPRESENTATIVE" ? "/supplier" : "/admin");
 	}
 
 	return <ClientDashboard user={user} />;

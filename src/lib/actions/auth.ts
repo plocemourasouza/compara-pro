@@ -17,7 +17,7 @@ import { loginSchema, registerSchema } from "@/lib/validations/auth";
 function dashboardFor(role: string): string {
 	return role === "ADMIN"
 		? "/admin"
-		: role === "SUPPLIER"
+		: role === "REPRESENTATIVE"
 			? "/supplier"
 			: "/client";
 }
@@ -134,7 +134,7 @@ export async function registerAction(_prevState: unknown, formData: FormData) {
 			company = await prisma.company.create({
 				data: {
 					name: companyName,
-					type: role === "SUPPLIER" ? "SUPPLIER" : "CLIENT",
+					type: role === "REPRESENTATIVE" ? "SUPPLIER" : "CLIENT",
 				},
 			});
 		}
@@ -177,7 +177,7 @@ export async function registerAction(_prevState: unknown, formData: FormData) {
 		const dashboardUrl =
 			user.role === "ADMIN"
 				? "/admin"
-				: user.role === "SUPPLIER"
+				: user.role === "REPRESENTATIVE"
 					? "/supplier"
 					: "/client";
 		return {

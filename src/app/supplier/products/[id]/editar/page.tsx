@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { ProductForm } from "@/components/shared/product-form";
+import { getRepresentedSupplierIds } from "@/lib/auth-scope";
 import { getCurrentUser } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
 import type { ProductFormValues } from "@/lib/validations/product";
@@ -16,11 +17,12 @@ export default async function EditSupplierProductPage({
 		redirect("/auth/login");
 	}
 
-	if (user.role !== "ADMIN" && user.role !== "SUPPLIER") {
+	if (user.role !== "ADMIN" && user.role !== "REPRESENTATIVE") {
 		redirect("/dashboard");
 	}
 
 	const isAdmin = user.role === "ADMIN";
+	const representedIds = isAdmin ? [] : await getRepresentedSupplierIds(user);
 
 	const product = await prisma.product.findFirst({
 		where: { id, deletedAt: null },
@@ -40,8 +42,8 @@ export default async function EditSupplierProductPage({
 		notFound();
 	}
 
-	// Supplier só edita produtos da própria empresa.
-	if (!isAdmin && product.companyId !== user.company?.id) {
+	// Representante só edita produtos de fornecedores que representa.
+	if (!isAdmin && !representedIds.includes(product.companyId)) {
 		notFound();
 	}
 
@@ -51,7 +53,11 @@ export default async function EditSupplierProductPage({
 				select: { id: true, name: true, type: true },
 				orderBy: { name: "asc" },
 			})
-		: [];
+		: await prisma.company.findMany({
+				where: { id: { in: representedIds }, deletedAt: null },
+				select: { id: true, name: true, type: true },
+				orderBy: { name: "asc" },
+			});
 
 	const defaultValues: Partial<ProductFormValues> = {
 		code: product.code ?? "",
@@ -68,7 +74,8 @@ export default async function EditSupplierProductPage({
 		<ProductForm
 			mode="edit"
 			productId={id}
-			isAdmin={isAdmin}
+			showCompanySelect={true}
+			companyLabel={isAdmin ? "Empresa *" : "Fornecedor *"}
 			companies={companies}
 			listHref="/supplier/products"
 			defaultValues={defaultValues}

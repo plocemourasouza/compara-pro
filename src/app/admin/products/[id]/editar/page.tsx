@@ -60,7 +60,7 @@ export default async function EditProductPage({
 		<ProductForm
 			mode="edit"
 			productId={id}
-			isAdmin
+			showCompanySelect
 			companies={companies}
 			listHref="/admin/products"
 			defaultValues={defaultValues}

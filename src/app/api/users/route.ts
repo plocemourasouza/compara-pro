@@ -16,7 +16,7 @@ const createUserSchema = z
 		name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
 		email: z.string().email("Email inválido"),
 		phone: z.string().min(1, "Telefone é obrigatório"),
-		role: z.enum(["ADMIN", "SUPPLIER", "CLIENT"]),
+		role: z.enum(["ADMIN", "REPRESENTATIVE", "CLIENT"]),
 		companyId: z.string().optional(),
 		companyName: z.string().optional(),
 	})
@@ -182,7 +182,7 @@ export async function POST(request: NextRequest) {
 				company = await prisma.company.create({
 					data: {
 						name: companyName,
-						type: role === "SUPPLIER" ? "SUPPLIER" : "CLIENT",
+						type: role === "REPRESENTATIVE" ? "SUPPLIER" : "CLIENT",
 					},
 				});
 			}

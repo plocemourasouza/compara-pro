@@ -1,14 +1,16 @@
 # Compara Pró
 
-Plataforma **B2B de comparação de preços**. Compradores sobem suas listas de necessidades, fornecedores
-sobem suas listas de preços, e o sistema **cruza** os dois automaticamente. Um **agente de IA** avalia o
-cruzamento e emite um **parecer** (melhores oportunidades, economia e recomendação de fornecedor). Na
-mesma tela o comprador ajusta as escolhas por produto e cria **pré-pedidos agrupados** por fornecedor,
-que o fornecedor aprova ou rejeita.
+Plataforma **B2B de comparação de preços**. Compradores sobem suas listas de necessidades, representantes
+comerciais sobem as listas de preços de seus fornecedores, e o sistema **cruza** os dois automaticamente.
+Um **agente de IA** avalia o cruzamento e emite um **parecer** (melhores oportunidades, economia e
+recomendação de fornecedor). Na mesma tela o comprador ajusta as escolhas por produto e cria
+**pré-pedidos agrupados** por fornecedor, que o representante aprova ou rejeita.
 
 ## Funcionalidades
 
-- **RBAC** — três papéis: `ADMIN`, `SUPPLIER` (fornecedor), `CLIENT` (comprador).
+- **RBAC** — três papéis: `ADMIN`, `REPRESENTATIVE` (representante comercial), `CLIENT` (comprador).
+- **Representante → N fornecedores** — cada representante representa vários fornecedores; cada lista de
+  preços é enviada em nome de um fornecedor de origem. Telas em visão agregada com coluna/filtro Fornecedor.
 - **Upload + parsing** de planilhas (XLSX/CSV) de necessidades e de catálogos de preço.
 - **Motor de matching** em 4 níveis: SKU → código → nome exato → nome fuzzy (Fuse.js + Jaccard).
 - **Parecer por IA (híbrido)** — números calculados de forma determinística + narrativa escrita pela IA.
@@ -17,7 +19,8 @@ que o fornecedor aprova ou rejeita.
   Degrada graciosamente para análise determinística quando não há IA configurada.
 - **Override + pré-pedido agrupado** — o comprador troca fornecedor/quantidade por produto e confirma um
   pré-pedido por fornecedor numa ação só (transacional).
-- **Fluxo do fornecedor** — lista de pré-pedidos recebidos, aprovar/rejeitar (com motivo).
+- **Fluxo do representante** — fornecedores representados, lista de pré-pedidos recebidos, aprovar/rejeitar
+  (com motivo).
 - **Área administrativa** — usuários, empresas, produtos, histórico de uploads, relatórios (métricas
   reais + export CSV), configurações (perfil/senha/preferências + IA).
 - **Padrão único de listas** — toda lista usa **data-table** (ordenação/busca/paginação); clicar na
@@ -48,7 +51,13 @@ cp .env.example .env.local
 
 # 3. Banco (Postgres via docker-compose) + schema
 docker compose up -d
+#   Base NOVA:
 npx prisma db push
+#   Base EXISTENTE com o papel antigo SUPPLIER (preserva linhas):
+#   node scripts/rename-role-enum.cjs   # ALTER TYPE Role: SUPPLIER -> REPRESENTATIVE (antes do push)
+#   npx prisma generate && npx prisma db push
+#   (se `db push` não criar a tabela do vínculo: node scripts/create-representative-suppliers-table.cjs)
+#   node scripts/backfill-representatives.cjs   # vincula cada representante ao seu fornecedor atual
 
 # 4. Dados de demonstração (opcional)
 node scripts/seed-demo.cjs     # senha demo1234
@@ -57,8 +66,8 @@ node scripts/seed-demo.cjs     # senha demo1234
 npm run dev                    # http://localhost:3000
 ```
 
-**Logins de demonstração** (após o seed): `comprador@demo.com`,
-`fornecedor.alfa@demo.com`, `fornecedor.beta@demo.com` — senha `demo1234`.
+**Logins de demonstração** (após o seed): `comprador@demo.com` (comprador) e
+`representante@demo.com` (representante — representa os fornecedores Alfa e Beta) — senha `demo1234`.
 
 ## Scripts
 
@@ -71,7 +80,7 @@ npm run dev                    # http://localhost:3000
 | `npm run test:e2e` | testes E2E (Playwright) |
 | `npm run lint` | Biome (lint + format check) |
 | `npm run seed:demo` | popula dados de demonstração |
-| `npm run verify:cycle` | smoke e2e do fluxo comprador→fornecedor (precisa do dev server) |
+| `npm run verify:cycle` | smoke e2e do fluxo comprador→representante (precisa do dev server) |
 
 ## Estrutura
 

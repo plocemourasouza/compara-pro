@@ -46,7 +46,7 @@ interface User {
 	id: string;
 	name: string;
 	email: string;
-	role: "ADMIN" | "SUPPLIER" | "CLIENT";
+	role: "ADMIN" | "REPRESENTATIVE" | "CLIENT";
 	company: {
 		id: string;
 		name: string;
@@ -134,7 +134,7 @@ export function SettingsClient({
 	const getRoleBadge = (role: string) => {
 		const variants = {
 			ADMIN: { variant: "destructive" as const, label: "Administrador" },
-			SUPPLIER: { variant: "default" as const, label: "Fornecedor" },
+			REPRESENTATIVE: { variant: "default" as const, label: "Representante" },
 			CLIENT: { variant: "secondary" as const, label: "Cliente" },
 		};
 

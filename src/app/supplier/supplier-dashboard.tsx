@@ -1,7 +1,9 @@
 "use client";
 
+import { motion } from "framer-motion";
 import {
 	ArrowUpRight,
+	Building2,
 	Package,
 	ShoppingCart,
 	Upload,
@@ -31,9 +33,11 @@ interface DashboardMetrics {
 	};
 	uploads: { total: number; failed: number };
 	clients: number;
+	suppliers: number;
 	recentPreOrders: Array<{
 		id: string;
 		clientName: string;
+		supplierName: string;
 		status: string;
 		totalAmount: number;
 		createdAt: string;
@@ -84,6 +88,13 @@ export default function SupplierDashboard({
 			href: "/supplier/pre-orders",
 		},
 		{
+			label: "Fornecedores",
+			value: metrics ? `${metrics.suppliers}` : "—",
+			hint: "Que você representa",
+			icon: Building2,
+			href: "/supplier/fornecedores",
+		},
+		{
 			label: "Clientes na carteira",
 			value: metrics ? `${metrics.clients}` : "—",
 			hint: "Gerenciar carteira",
@@ -118,28 +129,47 @@ export default function SupplierDashboard({
 				</Button>
 			</div>
 
-			<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+			<motion.div
+				className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
+				initial="hidden"
+				animate="show"
+				variants={{
+					hidden: {},
+					show: { transition: { staggerChildren: 0.06 } },
+				}}
+			>
 				{cards.map((c) => (
-					<Link key={c.label} href={c.href}>
-						<Card className="transition-colors hover:border-primary/50">
-							<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-								<CardTitle className="font-medium text-muted-foreground text-sm">
-									{c.label}
-								</CardTitle>
-								<c.icon className="h-4 w-4 text-muted-foreground" />
-							</CardHeader>
-							<CardContent>
-								<div className="font-bold text-2xl">
-									{loading ? "…" : c.value}
-								</div>
-								{c.hint && (
-									<p className="text-muted-foreground text-xs">{c.hint}</p>
-								)}
-							</CardContent>
-						</Card>
-					</Link>
+					<motion.div
+						key={c.label}
+						variants={{
+							hidden: { opacity: 0, y: 12 },
+							show: { opacity: 1, y: 0 },
+						}}
+						whileHover={{ y: -4 }}
+						whileTap={{ scale: 0.98 }}
+						transition={{ type: "spring", stiffness: 300, damping: 24 }}
+					>
+						<Link href={c.href}>
+							<Card className="transition-colors hover:border-primary/50 hover:shadow-sm">
+								<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+									<CardTitle className="font-medium text-muted-foreground text-sm">
+										{c.label}
+									</CardTitle>
+									<c.icon className="h-4 w-4 text-muted-foreground" />
+								</CardHeader>
+								<CardContent>
+									<div className="font-bold text-2xl">
+										{loading ? "…" : c.value}
+									</div>
+									{c.hint && (
+										<p className="text-muted-foreground text-xs">{c.hint}</p>
+									)}
+								</CardContent>
+							</Card>
+						</Link>
+					</motion.div>
 				))}
-			</div>
+			</motion.div>
 
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
 				<Card className="lg:col-span-2">
@@ -169,7 +199,7 @@ export default function SupplierDashboard({
 											<div>
 												<p className="font-medium text-sm">{p.clientName}</p>
 												<p className="text-muted-foreground text-xs">
-													{formatters.date(p.createdAt)}
+													{p.supplierName} · {formatters.date(p.createdAt)}
 												</p>
 											</div>
 											<div className="flex items-center gap-3">

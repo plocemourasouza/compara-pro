@@ -34,6 +34,7 @@ export default function PreOrdersClient({ user }: PreOrdersClientProps) {
 	const [loading, setLoading] = useState(true);
 	const [busy, setBusy] = useState(false);
 	const [statusFilter, setStatusFilter] = useState("all");
+	const [supplierFilter, setSupplierFilter] = useState("all");
 	const [selected, setSelected] = useState<PreOrder | null>(null);
 	const [detailOpen, setDetailOpen] = useState(false);
 
@@ -90,12 +91,20 @@ export default function PreOrdersClient({ user }: PreOrdersClientProps) {
 
 	const columns = useMemo(() => getPreOrderColumns(), []);
 
+	const supplierOptions = useMemo(() => {
+		const map = new Map<string, string>();
+		for (const o of orders) map.set(o.supplier.id, o.supplier.name);
+		return [...map].map(([id, name]) => ({ id, name }));
+	}, [orders]);
+
 	const filteredOrders = useMemo(
 		() =>
-			statusFilter === "all"
-				? orders
-				: orders.filter((o) => o.status === statusFilter),
-		[orders, statusFilter],
+			orders.filter(
+				(o) =>
+					(statusFilter === "all" || o.status === statusFilter) &&
+					(supplierFilter === "all" || o.supplier.id === supplierFilter),
+			),
+		[orders, statusFilter, supplierFilter],
 	);
 
 	return (
@@ -123,18 +132,38 @@ export default function PreOrdersClient({ user }: PreOrdersClientProps) {
 						isLoading={loading}
 						emptyState="Nenhum pré-pedido recebido ainda."
 						toolbar={
-							<Select value={statusFilter} onValueChange={setStatusFilter}>
-								<SelectTrigger className="w-44">
-									<SelectValue placeholder="Status" />
-								</SelectTrigger>
-								<SelectContent>
-									<SelectItem value="all">Todos os status</SelectItem>
-									<SelectItem value="ACTIVE">Pendente</SelectItem>
-									<SelectItem value="FINALIZED">Aprovado</SelectItem>
-									<SelectItem value="REJECTED">Rejeitado</SelectItem>
-									<SelectItem value="EXPIRED">Expirado</SelectItem>
-								</SelectContent>
-							</Select>
+							<>
+								<Select value={statusFilter} onValueChange={setStatusFilter}>
+									<SelectTrigger className="w-44">
+										<SelectValue placeholder="Status" />
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value="all">Todos os status</SelectItem>
+										<SelectItem value="ACTIVE">Pendente</SelectItem>
+										<SelectItem value="FINALIZED">Aprovado</SelectItem>
+										<SelectItem value="REJECTED">Rejeitado</SelectItem>
+										<SelectItem value="EXPIRED">Expirado</SelectItem>
+									</SelectContent>
+								</Select>
+								{supplierOptions.length > 1 && (
+									<Select
+										value={supplierFilter}
+										onValueChange={setSupplierFilter}
+									>
+										<SelectTrigger className="w-44">
+											<SelectValue placeholder="Fornecedor" />
+										</SelectTrigger>
+										<SelectContent>
+											<SelectItem value="all">Todos os fornecedores</SelectItem>
+											{supplierOptions.map((s) => (
+												<SelectItem key={s.id} value={s.id}>
+													{s.name}
+												</SelectItem>
+											))}
+										</SelectContent>
+									</Select>
+								)}
+							</>
 						}
 					/>
 				</CardContent>

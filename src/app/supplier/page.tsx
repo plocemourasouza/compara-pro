@@ -5,7 +5,7 @@ import SupplierDashboard from "./supplier-dashboard";
 export default async function SupplierDashboardPage() {
 	const user = await requireAuth();
 
-	if (user.role !== "SUPPLIER" && user.role !== "ADMIN") {
+	if (user.role !== "REPRESENTATIVE" && user.role !== "ADMIN") {
 		redirect("/dashboard");
 	}
 

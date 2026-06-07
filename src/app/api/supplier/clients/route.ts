@@ -6,10 +6,12 @@ import {
 	generateActivationCode,
 	hashActivationCode,
 } from "@/lib/auth-activation";
+import { getRepresentedSupplierIds } from "@/lib/auth-scope";
 import { AuthError, requireAuth } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
 
 const addClientSchema = z.object({
+	supplierCompanyId: z.string().min(1, "Selecione o fornecedor"),
 	companyName: z.string().min(2, "Informe o nome da empresa"),
 	cnpj: z
 		.string()
@@ -25,14 +27,14 @@ const addClientSchema = z.object({
 
 export async function GET() {
 	try {
-		const user = await requireAuth(["SUPPLIER", "ADMIN"]);
-		const supplierCompanyId = user.company?.id;
-		if (!supplierCompanyId) {
+		const user = await requireAuth(["REPRESENTATIVE", "ADMIN"]);
+		const supplierIds = await getRepresentedSupplierIds(user);
+		if (supplierIds.length === 0) {
 			return NextResponse.json({ clients: [] });
 		}
 
 		const links = await prisma.supplierClient.findMany({
-			where: { supplierCompanyId },
+			where: { supplierCompanyId: { in: supplierIds } },
 			orderBy: { createdAt: "desc" },
 			include: {
 				client: {
@@ -44,10 +46,11 @@ export async function GET() {
 						state: true,
 					},
 				},
+				supplier: { select: { id: true, name: true } },
 			},
 		});
 
-		const clientIds = links.map((l) => l.clientCompanyId);
+		const clientIds = [...new Set(links.map((l) => l.clientCompanyId))];
 		const demands = clientIds.length
 			? await prisma.uploadHistory.groupBy({
 					by: ["companyId"],
@@ -61,11 +64,25 @@ export async function GET() {
 			: [];
 		const byCompany = new Map(demands.map((d) => [d.companyId, d]));
 
-		return NextResponse.json({
-			clients: links.map((l) => {
+		// Aggregate by client: one row per client, with the represented suppliers
+		// that carry it as badges (a client may be in several carteiras).
+		type ClientRow = {
+			id: string;
+			name: string;
+			cnpj: string | null;
+			city: string | null;
+			state: string | null;
+			demandCount: number;
+			lastDemandAt: Date | null;
+			addedAt: Date;
+			suppliers: { linkId: string; companyId: string; name: string }[];
+		};
+		const map = new Map<string, ClientRow>();
+		for (const l of links) {
+			let row = map.get(l.client.id);
+			if (!row) {
 				const d = byCompany.get(l.clientCompanyId);
-				return {
-					linkId: l.id,
+				row = {
 					id: l.client.id,
 					name: l.client.name,
 					cnpj: l.client.cnpj,
@@ -74,9 +91,18 @@ export async function GET() {
 					demandCount: d?._count._all ?? 0,
 					lastDemandAt: d?._max.uploadedAt ?? null,
 					addedAt: l.createdAt,
+					suppliers: [],
 				};
-			}),
-		});
+				map.set(l.client.id, row);
+			}
+			row.suppliers.push({
+				linkId: l.id,
+				companyId: l.supplier.id,
+				name: l.supplier.name,
+			});
+		}
+
+		return NextResponse.json({ clients: [...map.values()] });
 	} catch (error) {
 		if (error instanceof AuthError) {
 			return NextResponse.json(
@@ -94,14 +120,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
 	try {
-		const user = await requireAuth(["SUPPLIER"]);
-		const supplierCompanyId = user.company?.id;
-		if (!supplierCompanyId) {
-			return NextResponse.json(
-				{ error: "Fornecedor sem empresa associada" },
-				{ status: 400 },
-			);
-		}
+		const user = await requireAuth(["REPRESENTATIVE"]);
 
 		const parsed = addClientSchema.safeParse(await request.json());
 		if (!parsed.success) {
@@ -111,6 +130,17 @@ export async function POST(request: Request) {
 			);
 		}
 		const data = parsed.data;
+
+		// O cliente entra na carteira de um fornecedor específico que o
+		// representante representa.
+		const supplierIds = await getRepresentedSupplierIds(user);
+		if (!supplierIds.includes(data.supplierCompanyId)) {
+			return NextResponse.json(
+				{ error: "Selecione um fornecedor que você representa" },
+				{ status: 403 },
+			);
+		}
+		const supplierCompanyId = data.supplierCompanyId;
 		const cnpj = data.cnpj && data.cnpj.length === 14 ? data.cnpj : null;
 
 		// Acha empresa CLIENT existente (por CNPJ, senão por nome) ou cria.

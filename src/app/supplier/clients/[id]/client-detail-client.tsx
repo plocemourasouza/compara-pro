@@ -17,6 +17,13 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import { formatters } from "@/lib/utils/masks";
 
 interface ClientInfo {
@@ -43,6 +50,10 @@ export default function ClientDetailClient({ clientId }: { clientId: string }) {
 	const router = useRouter();
 	const [client, setClient] = useState<ClientInfo | null>(null);
 	const [demands, setDemands] = useState<Demand[]>([]);
+	const [suppliers, setSuppliers] = useState<{ id: string; name: string }[]>(
+		[],
+	);
+	const [supplierId, setSupplierId] = useState<string>("");
 	const [loading, setLoading] = useState(true);
 	const [removing, setRemoving] = useState(false);
 
@@ -52,15 +63,27 @@ export default function ClientDetailClient({ clientId }: { clientId: string }) {
 			.then((d) => {
 				setClient(d.client);
 				setDemands(d.demands);
+				setSuppliers(d.suppliers ?? []);
+				setSupplierId(d.suppliers?.[0]?.id ?? "");
 			})
 			.catch(() => toast.error("Não foi possível carregar o cliente."))
 			.finally(() => setLoading(false));
 	}, [clientId]);
 
 	const remove = async () => {
-		if (!confirm("Remover este cliente da sua carteira?")) return;
+		const multi = suppliers.length > 1;
+		if (
+			!confirm(
+				multi
+					? "Remover este cliente da carteira do fornecedor selecionado?"
+					: "Remover este cliente da sua carteira?",
+			)
+		)
+			return;
 		setRemoving(true);
-		const res = await fetch(`/api/supplier/clients/${clientId}`, {
+		// Com vários fornecedores, remove só do selecionado; senão, de todos.
+		const qs = multi && supplierId ? `?supplierCompanyId=${supplierId}` : "";
+		const res = await fetch(`/api/supplier/clients/${clientId}${qs}`, {
 			method: "DELETE",
 		});
 		setRemoving(false);
@@ -111,8 +134,25 @@ export default function ClientDetailClient({ clientId }: { clientId: string }) {
 				<CardHeader>
 					<CardTitle className="text-lg">Listas de demanda</CardTitle>
 					<CardDescription>
-						Demandas enviadas pelo cliente. Veja as indicações do seu catálogo.
+						Demandas enviadas pelo cliente. Veja as indicações do catálogo do
+						fornecedor selecionado.
 					</CardDescription>
+					{suppliers.length > 1 && (
+						<div className="pt-2">
+							<Select value={supplierId} onValueChange={setSupplierId}>
+								<SelectTrigger className="w-64">
+									<SelectValue placeholder="Fornecedor" />
+								</SelectTrigger>
+								<SelectContent>
+									{suppliers.map((s) => (
+										<SelectItem key={s.id} value={s.id}>
+											{s.name}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+						</div>
+					)}
 				</CardHeader>
 				<CardContent>
 					{demands.length === 0 ? (
@@ -142,7 +182,9 @@ export default function ClientDetailClient({ clientId }: { clientId: string }) {
 											disabled={d.status !== "COMPLETED"}
 											onClick={() =>
 												router.push(
-													`/supplier/clients/${clientId}/indicacoes/${d.id}`,
+													`/supplier/clients/${clientId}/indicacoes/${d.id}${
+														supplierId ? `?supplierCompanyId=${supplierId}` : ""
+													}`,
 												)
 											}
 										>

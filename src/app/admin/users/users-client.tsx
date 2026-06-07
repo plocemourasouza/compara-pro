@@ -247,7 +247,7 @@ export default function UsersClient({ user: _user }: UsersClientProps) {
 								<SelectContent>
 									<SelectItem value="all">Todos</SelectItem>
 									<SelectItem value="ADMIN">Administrador</SelectItem>
-									<SelectItem value="SUPPLIER">Fornecedor</SelectItem>
+									<SelectItem value="REPRESENTATIVE">Representante</SelectItem>
 									<SelectItem value="CLIENT">Cliente</SelectItem>
 								</SelectContent>
 							</Select>

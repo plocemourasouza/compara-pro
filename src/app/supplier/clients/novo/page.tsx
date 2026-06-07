@@ -1,13 +1,22 @@
 import { redirect } from "next/navigation";
+import { getRepresentedSupplierIds } from "@/lib/auth-scope";
 import { requireAuth } from "@/lib/auth-server";
+import { prisma } from "@/lib/db";
 import AddClientForm from "./add-client-form";
 
 export default async function NewSupplierClientPage() {
 	const user = await requireAuth();
 
-	if (user.role !== "SUPPLIER") {
+	if (user.role !== "REPRESENTATIVE") {
 		redirect("/supplier");
 	}
 
-	return <AddClientForm />;
+	const ids = await getRepresentedSupplierIds(user);
+	const suppliers = await prisma.company.findMany({
+		where: { id: { in: ids }, deletedAt: null },
+		select: { id: true, name: true },
+		orderBy: { name: "asc" },
+	});
+
+	return <AddClientForm suppliers={suppliers} />;
 }

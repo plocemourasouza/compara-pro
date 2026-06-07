@@ -20,6 +20,7 @@ export async function getCurrentUser() {
 				name: true,
 				email: true,
 				phone: true,
+				avatarUrl: true,
 				role: true,
 				preferences: true,
 				company: {

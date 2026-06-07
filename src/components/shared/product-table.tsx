@@ -3,6 +3,7 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { Trash2 } from "lucide-react";
 import type { DetailSection } from "@/components/shared/entity-detail-modal";
+import { HintTooltip } from "@/components/shared/hint-tooltip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatters } from "@/lib/utils/masks";
@@ -114,14 +115,20 @@ export function getProductColumns({
 					onClick={(e) => e.stopPropagation()}
 					onKeyDown={(e) => e.stopPropagation()}
 				>
-					<Button
-						variant="outline"
-						size="sm"
-						onClick={() => onDelete(row.original.id)}
-						aria-label="Excluir produto"
+					<HintTooltip
+						label="Excluir produto"
+						description="Remove o produto do catálogo. Itens já usados em pré-pedidos não podem ser excluídos."
+						side="left"
 					>
-						<Trash2 className="h-4 w-4" />
-					</Button>
+						<Button
+							variant="outline"
+							size="sm"
+							onClick={() => onDelete(row.original.id)}
+							aria-label="Excluir produto"
+						>
+							<Trash2 className="h-4 w-4" />
+						</Button>
+					</HintTooltip>
 				</div>
 			),
 		},

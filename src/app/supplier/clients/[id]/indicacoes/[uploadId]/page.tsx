@@ -9,7 +9,7 @@ export default async function SupplierIndicationsPage({
 }) {
 	const user = await requireAuth();
 
-	if (user.role !== "SUPPLIER" && user.role !== "ADMIN") {
+	if (user.role !== "REPRESENTATIVE" && user.role !== "ADMIN") {
 		redirect("/dashboard");
 	}
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "framer-motion";
 import {
 	BarChart3,
 	Building2,
@@ -14,7 +15,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -23,6 +24,7 @@ type User = {
 	name: string;
 	email: string;
 	role: string;
+	avatarUrl?: string | null;
 	company: {
 		id: string;
 		name: string;
@@ -132,22 +134,33 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
 									key={item.name}
 									href={item.href}
 									className={cn(
+										"group relative flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
 										isActive
-											? "bg-primary/10 text-primary"
+											? "text-primary"
 											: "text-muted-foreground hover:bg-muted hover:text-foreground",
-										"group flex items-center px-3 py-2 text-sm font-medium rounded-md",
 									)}
 								>
+									{isActive && (
+										<motion.span
+											layoutId="admin-nav-active"
+											className="absolute inset-0 rounded-md bg-primary/10"
+											transition={{
+												type: "spring",
+												stiffness: 380,
+												damping: 32,
+											}}
+										/>
+									)}
 									<item.icon
 										className={cn(
+											"relative z-10 mr-3 h-5 w-5",
 											isActive
 												? "text-primary"
 												: "text-muted-foreground group-hover:text-muted-foreground",
-											"mr-3 h-5 w-5",
 										)}
 										aria-hidden="true"
 									/>
-									{item.name}
+									<span className="relative z-10">{item.name}</span>
 								</Link>
 							);
 						})}
@@ -156,21 +169,25 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
 
 				{/* User Info */}
 				<div className="border-t border-border p-4">
-					<div className="flex items-center">
-						<Avatar className="h-8 w-8">
-							<AvatarFallback>
-								{user.name
-									.split(" ")
-									.map((n) => n[0])
-									.join("")
-									.toUpperCase()}
-							</AvatarFallback>
-						</Avatar>
-						<div className="ml-3">
-							<p className="text-sm font-medium text-foreground">{user.name}</p>
-							<p className="text-xs text-muted-foreground">{user.email}</p>
+					<Link
+						href="/perfil"
+						className="-m-2 flex items-center rounded-md p-2 transition-colors hover:bg-muted"
+					>
+						<UserAvatar
+							name={user.name}
+							avatarUrl={user.avatarUrl}
+							role={user.role}
+							className="h-9 w-9"
+						/>
+						<div className="ml-3 min-w-0">
+							<p className="truncate text-sm font-medium text-foreground">
+								{user.name}
+							</p>
+							<p className="truncate text-xs text-muted-foreground">
+								{user.email}
+							</p>
 						</div>
-					</div>
+					</Link>
 					<Button
 						onClick={handleLogout}
 						variant="ghost"

@@ -9,7 +9,7 @@ const updateUserSchema = z.object({
 	name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres").optional(),
 	email: z.string().email("Email inválido").optional(),
 	phone: z.string().optional(),
-	role: z.enum(["ADMIN", "SUPPLIER", "CLIENT"]).optional(),
+	role: z.enum(["ADMIN", "REPRESENTATIVE", "CLIENT"]).optional(),
 	companyId: z.string().nullable().optional(),
 });
 

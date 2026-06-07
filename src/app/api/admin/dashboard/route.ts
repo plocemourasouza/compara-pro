@@ -7,25 +7,41 @@ export async function GET() {
 		await requireAuth(["ADMIN"]);
 
 		// Buscar métricas de usuários
-		const [totalUsers, activeUsers, usersByRole] = await Promise.all([
-			prisma.user.count(),
-			prisma.user.count({ where: { deletedAt: null } }),
-			prisma.user.groupBy({
-				by: ["role"],
-				_count: { role: true },
-				where: { deletedAt: null },
-			}),
-		]);
+		const [totalUsers, activeUsers, usersByRole, usersByRoleTotal] =
+			await Promise.all([
+				prisma.user.count(),
+				prisma.user.count({ where: { deletedAt: null } }),
+				prisma.user.groupBy({
+					by: ["role"],
+					_count: { role: true },
+					where: { deletedAt: null },
+				}),
+				prisma.user.groupBy({ by: ["role"], _count: { role: true } }),
+			]);
+
+		const roleActive = (r: string) =>
+			usersByRole.find((u) => u.role === r)?._count.role || 0;
+		const roleTotal = (r: string) =>
+			usersByRoleTotal.find((u) => u.role === r)?._count.role || 0;
+		const roleStat = (r: string) => {
+			const total = roleTotal(r);
+			const active = roleActive(r);
+			return { total, active, inactive: total - active };
+		};
 
 		const usersMetrics = {
 			total: totalUsers,
 			active: activeUsers,
 			inactive: totalUsers - activeUsers,
 			byRole: {
-				admin: usersByRole.find((u) => u.role === "ADMIN")?._count.role || 0,
-				supplier:
-					usersByRole.find((u) => u.role === "SUPPLIER")?._count.role || 0,
-				client: usersByRole.find((u) => u.role === "CLIENT")?._count.role || 0,
+				admin: roleActive("ADMIN"),
+				supplier: roleActive("REPRESENTATIVE"),
+				client: roleActive("CLIENT"),
+			},
+			roleBreakdown: {
+				admin: roleStat("ADMIN"),
+				supplier: roleStat("REPRESENTATIVE"),
+				client: roleStat("CLIENT"),
 			},
 		};
 
@@ -58,6 +74,7 @@ export async function GET() {
 			uploadsThisWeek,
 			uploadsThisMonth,
 			uploadsByStatus,
+			activeLists,
 		] = await Promise.all([
 			prisma.uploadHistory.count(),
 			prisma.uploadHistory.count({ where: { uploadedAt: { gte: today } } }),
@@ -67,6 +84,10 @@ export async function GET() {
 				by: ["status"],
 				_count: { status: true },
 			}),
+			// Listas de fornecedor ativas (1 por fornecedor — a anterior é inativada).
+			prisma.uploadHistory.count({
+				where: { isActive: true, uploadType: "SUPPLIER_PRODUCTS" },
+			}),
 		]);
 
 		const uploadsMetrics = {
@@ -74,6 +95,7 @@ export async function GET() {
 			today: uploadsToday,
 			thisWeek: uploadsThisWeek,
 			thisMonth: uploadsThisMonth,
+			activeLists,
 			byStatus: {
 				success:
 					uploadsByStatus.find((u) => u.status === "COMPLETED")?._count

@@ -21,7 +21,7 @@ export interface UserData {
 	name: string;
 	email: string;
 	phone?: string | null;
-	role: "ADMIN" | "SUPPLIER" | "CLIENT";
+	role: "ADMIN" | "REPRESENTATIVE" | "CLIENT";
 	createdAt: string;
 	updatedAt: string;
 	deletedAt: string | null;
@@ -32,7 +32,7 @@ export interface UserData {
 export function getRoleLabel(role: string): string {
 	const labels: Record<string, string> = {
 		ADMIN: "Administrador",
-		SUPPLIER: "Fornecedor",
+		REPRESENTATIVE: "Representante",
 		CLIENT: "Cliente",
 	};
 	return labels[role] ?? role;
@@ -41,7 +41,7 @@ export function getRoleLabel(role: string): string {
 export function getRoleBadgeColor(role: string): string {
 	const colors: Record<string, string> = {
 		ADMIN: "bg-chart-4/10 text-chart-4",
-		SUPPLIER: "bg-primary/10 text-primary",
+		REPRESENTATIVE: "bg-primary/10 text-primary",
 		CLIENT: "bg-success/10 text-success",
 	};
 	return colors[role] ?? "bg-muted text-muted-foreground";

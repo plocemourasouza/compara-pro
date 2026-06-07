@@ -1,5 +1,6 @@
 "use server";
 
+import { getRepresentedSupplierIds } from "@/lib/auth-scope";
 import { requireAuth } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
 
@@ -25,25 +26,26 @@ export async function getDashboardStats() {
 			};
 		}
 
-		if (user.role === "SUPPLIER") {
-			// Estatísticas para fornecedor
+		if (user.role === "REPRESENTATIVE") {
+			// Estatísticas agregadas dos fornecedores representados
+			const supplierIds = await getRepresentedSupplierIds(user);
 			const [productCount, activePreOrders, totalPreOrders] = await Promise.all(
 				[
 					prisma.product.count({
 						where: {
-							companyId: user.company?.id,
+							companyId: { in: supplierIds },
 							deletedAt: null,
 						},
 					}),
 					prisma.preOrder.count({
 						where: {
-							supplierId: user.company?.id,
+							supplierId: { in: supplierIds },
 							status: "ACTIVE",
 						},
 					}),
 					prisma.preOrder.count({
 						where: {
-							supplierId: user.company?.id,
+							supplierId: { in: supplierIds },
 						},
 					}),
 				],
@@ -123,14 +125,16 @@ export async function getRecentActivities() {
 			};
 		}
 
-		if (user.role === "SUPPLIER") {
-			// Atividades recentes para fornecedor
+		if (user.role === "REPRESENTATIVE") {
+			// Atividades recentes dos fornecedores representados
+			const supplierIds = await getRepresentedSupplierIds(user);
 			const recentPreOrders = await prisma.preOrder.findMany({
 				take: 5,
-				where: { supplierId: user.company?.id },
+				where: { supplierId: { in: supplierIds } },
 				orderBy: { createdAt: "desc" },
 				include: {
 					client: true,
+					supplier: { select: { name: true } },
 					items: true,
 				},
 			});
@@ -140,10 +144,11 @@ export async function getRecentActivities() {
 				activities: recentPreOrders.map((po) => ({
 					id: po.id,
 					type: "pre_order_received",
-					description: `Pré-pedido de ${po.client.name}`,
+					description: `Pré-pedido de ${po.client.name} para ${po.supplier.name}`,
 					date: po.createdAt,
 					details: {
 						client: po.client.name,
+						supplier: po.supplier.name,
 						status: po.status,
 						itemCount: po.items.length,
 					},

@@ -19,9 +19,11 @@ model User {
   password            String? // null = conta pendente de ativação (primeiro acesso)
   name                String
   phone               String?
-  role                Role // ADMIN, SUPPLIER, CLIENT
+  avatarUrl           String? // foto de perfil (caminho público)
+  role                Role // ADMIN, REPRESENTATIVE, CLIENT
   companyId           String?
   company             Company?       @relation(fields: [companyId], references: [id])
+  representedSuppliers RepresentativeSupplier[] @relation("RepRepresented")
   notifications       Notification[]
   preferences         Json? // notificações, idioma, tema
   activationCodeHash  String? // código de primeiro acesso (hasheado)
@@ -69,11 +71,27 @@ model Company {
   vinculosFornecedor SupplierClient[] @relation("ClientCarteira")
   linkReqsAsSupplier SupplierLinkRequest[] @relation("LinkReqSupplier")
   linkReqsAsClient   SupplierLinkRequest[] @relation("LinkReqClient")
+  representatives    RepresentativeSupplier[] @relation("RepSuppliers")
   createdAt          DateTime         @default(now())
   updatedAt          DateTime         @updatedAt
   deletedAt          DateTime?
 
   @@map("companies")
+}
+
+// Vínculo N-N: um representante comercial representa vários fornecedores (Company type SUPPLIER).
+model RepresentativeSupplier {
+  id                String   @id @default(cuid())
+  representativeId  String // User.id (role REPRESENTATIVE)
+  representative    User     @relation("RepRepresented", fields: [representativeId], references: [id])
+  supplierCompanyId String // Company.id (type SUPPLIER)
+  supplier          Company  @relation("RepSuppliers", fields: [supplierCompanyId], references: [id])
+  createdAt         DateTime @default(now())
+
+  @@unique([representativeId, supplierCompanyId])
+  @@index([representativeId])
+  @@index([supplierCompanyId])
+  @@map("representative_suppliers")
 }
 
 // Carteira de clientes do fornecedor (N-N entre empresas).
@@ -168,6 +186,7 @@ model PreOrderItem {
   quantity   Int              @default(1)
   price      Float
   totalPrice Float
+  baselinePrice Float? // preço-alvo do cliente no momento do pré-pedido (base p/ economia)
   createdAt  DateTime         @default(now())
   updatedAt  DateTime         @updatedAt
   deletedAt  DateTime?
@@ -177,7 +196,7 @@ model PreOrderItem {
 
 enum Role {
   ADMIN
-  SUPPLIER
+  REPRESENTATIVE
   CLIENT
 }
 
@@ -231,6 +250,7 @@ model UploadedProduct {
   code            String?
   name            String
   price           Float?
+  targetPrice     Float? // preço de referência informado pelo cliente (requirements)
   description     String?
   category        String?
   unit            String?

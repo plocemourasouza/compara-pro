@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "framer-motion";
 import {
 	BarChart3,
 	Bell,
@@ -15,7 +16,7 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/shared/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -25,6 +26,7 @@ type User = {
 	name: string;
 	email: string;
 	role: string;
+	avatarUrl?: string | null;
 	company: {
 		id: string;
 		name: string;
@@ -139,24 +141,35 @@ export default function ClientSidebar({ user }: ClientSidebarProps) {
 									key={item.name}
 									href={item.href}
 									className={cn(
+										"group relative flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
 										isActive
-											? "bg-primary/10 text-primary"
+											? "text-primary"
 											: "text-muted-foreground hover:bg-muted hover:text-foreground",
-										"group flex items-center px-3 py-2 text-sm font-medium rounded-md",
 									)}
 								>
+									{isActive && (
+										<motion.span
+											layoutId="client-nav-active"
+											className="absolute inset-0 rounded-md bg-primary/10"
+											transition={{
+												type: "spring",
+												stiffness: 380,
+												damping: 32,
+											}}
+										/>
+									)}
 									<item.icon
 										className={cn(
+											"relative z-10 mr-3 h-5 w-5",
 											isActive
 												? "text-primary"
 												: "text-muted-foreground group-hover:text-muted-foreground",
-											"mr-3 h-5 w-5",
 										)}
 										aria-hidden="true"
 									/>
-									<span className="flex-1">{item.name}</span>
+									<span className="relative z-10 flex-1">{item.name}</span>
 									{badgeCount > 0 && (
-										<Badge variant="secondary" className="ml-2">
+										<Badge variant="secondary" className="relative z-10 ml-2">
 											{badgeCount}
 										</Badge>
 									)}
@@ -168,21 +181,25 @@ export default function ClientSidebar({ user }: ClientSidebarProps) {
 
 				{/* User Info */}
 				<div className="border-t border-border p-4">
-					<div className="flex items-center">
-						<Avatar className="h-8 w-8">
-							<AvatarFallback>
-								{user.name
-									.split(" ")
-									.map((n) => n[0])
-									.join("")
-									.toUpperCase()}
-							</AvatarFallback>
-						</Avatar>
-						<div className="ml-3">
-							<p className="text-sm font-medium text-foreground">{user.name}</p>
-							<p className="text-xs text-muted-foreground">{user.email}</p>
+					<Link
+						href="/perfil"
+						className="-m-2 flex items-center rounded-md p-2 transition-colors hover:bg-muted"
+					>
+						<UserAvatar
+							name={user.name}
+							avatarUrl={user.avatarUrl}
+							role={user.role}
+							className="h-9 w-9"
+						/>
+						<div className="ml-3 min-w-0">
+							<p className="truncate text-sm font-medium text-foreground">
+								{user.name}
+							</p>
+							<p className="truncate text-xs text-muted-foreground">
+								{user.email}
+							</p>
 						</div>
-					</div>
+					</Link>
 					<Button
 						onClick={handleLogout}
 						variant="ghost"

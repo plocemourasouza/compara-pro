@@ -220,7 +220,9 @@ export function UserForm({ mode, userId, defaultValues }: UserFormProps) {
 											</FormControl>
 											<SelectContent>
 												<SelectItem value="CLIENT">Cliente</SelectItem>
-												<SelectItem value="SUPPLIER">Fornecedor</SelectItem>
+												<SelectItem value="REPRESENTATIVE">
+													Representante
+												</SelectItem>
 												<SelectItem value="ADMIN">Administrador</SelectItem>
 											</SelectContent>
 										</Select>

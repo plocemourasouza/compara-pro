@@ -9,7 +9,7 @@ export default async function PreOrdersPage() {
 		redirect("/auth/login");
 	}
 
-	if (user.role !== "ADMIN" && user.role !== "SUPPLIER") {
+	if (user.role !== "ADMIN" && user.role !== "REPRESENTATIVE") {
 		redirect("/dashboard");
 	}
 

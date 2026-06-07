@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { getRepresentedSupplierIds } from "@/lib/auth-scope";
 import { getCurrentUser } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
 import { sendNotificationEmail } from "@/lib/email/mailer";
@@ -18,12 +19,14 @@ export async function POST(request: NextRequest) {
 			return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
 		}
 
-		if (user.role !== "SUPPLIER") {
+		if (user.role !== "REPRESENTATIVE") {
 			return NextResponse.json(
-				{ error: "Apenas fornecedores podem responder pré-pedidos" },
+				{ error: "Apenas representantes podem responder pré-pedidos" },
 				{ status: 403 },
 			);
 		}
+
+		const representedIds = await getRepresentedSupplierIds(user);
 
 		const body = await request.json();
 		const validationResult = bulkActionSchema.safeParse(body);
@@ -37,13 +40,14 @@ export async function POST(request: NextRequest) {
 
 		const { preOrderIds, action, notes } = validationResult.data;
 
-		// Verificar se todos os pré-pedidos pertencem ao fornecedor e estão ativos
+		// Pré-pedidos devem pertencer a um fornecedor representado e estar ativos.
 		const preOrders = await prisma.preOrder.findMany({
 			where: {
 				id: { in: preOrderIds },
-				supplierId: user.company?.id,
+				supplierId: { in: representedIds },
 				status: "ACTIVE",
 			},
+			include: { supplier: { select: { name: true } } },
 		});
 
 		if (preOrders.length !== preOrderIds.length) {
@@ -90,9 +94,12 @@ export async function POST(request: NextRequest) {
 				select: { id: true, email: true },
 			});
 
+			const supplierNames = [
+				...new Set(clientPreOrders.map((p) => p.supplier.name)),
+			];
 			const plural = clientPreOrders.length > 1;
 			const title = `Pré-pedido${plural ? "s" : ""} ${action === "APPROVE" ? "aprovado" : "rejeitado"}${plural ? "s" : ""}`;
-			const message = `${clientPreOrders.length} pré-pedido${plural ? "s foram" : " foi"} ${action === "APPROVE" ? "aprovado" : "rejeitado"} por ${user.company?.name}`;
+			const message = `${clientPreOrders.length} pré-pedido${plural ? "s foram" : " foi"} ${action === "APPROVE" ? "aprovado" : "rejeitado"} por ${supplierNames.join(", ")}`;
 
 			for (const clientUser of clientUsers) {
 				await prisma.notification.create({
@@ -107,8 +114,10 @@ export async function POST(request: NextRequest) {
 						metadata: {
 							preOrderIds: clientPreOrders.map((p) => p.id),
 							action,
-							supplierId: user.company?.id,
-							supplierName: user.company?.name,
+							supplierIds: [
+								...new Set(clientPreOrders.map((p) => p.supplierId)),
+							],
+							supplierNames,
 						},
 					},
 				});

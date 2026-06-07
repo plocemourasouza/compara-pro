@@ -30,7 +30,8 @@ interface HistoryClientProps {
 	user: User;
 }
 
-export default function HistoryClient({ user: _user }: HistoryClientProps) {
+export default function HistoryClient({ user }: HistoryClientProps) {
+	const showCompany = user.role === "REPRESENTATIVE" || user.role === "ADMIN";
 	const [uploads, setUploads] = useState<Upload[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [statusFilter, setStatusFilter] = useState("all");
@@ -63,8 +64,8 @@ export default function HistoryClient({ user: _user }: HistoryClientProps) {
 	};
 
 	const columns = useMemo(
-		() => getUploadColumns({ showPriceIndicator: true }),
-		[],
+		() => getUploadColumns({ showPriceIndicator: true, showCompany }),
+		[showCompany],
 	);
 
 	const filteredUploads = useMemo(

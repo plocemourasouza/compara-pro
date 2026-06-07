@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { ProductForm } from "@/components/shared/product-form";
+import { getRepresentedSupplierIds } from "@/lib/auth-scope";
 import { getCurrentUser } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
 import type { ProductFormValues } from "@/lib/validations/product";
@@ -11,7 +12,7 @@ export default async function NewSupplierProductPage() {
 		redirect("/auth/login");
 	}
 
-	if (user.role !== "ADMIN" && user.role !== "SUPPLIER") {
+	if (user.role !== "ADMIN" && user.role !== "REPRESENTATIVE") {
 		redirect("/dashboard");
 	}
 
@@ -22,16 +23,25 @@ export default async function NewSupplierProductPage() {
 				select: { id: true, name: true, type: true },
 				orderBy: { name: "asc" },
 			})
-		: [];
+		: await prisma.company.findMany({
+				where: {
+					id: { in: await getRepresentedSupplierIds(user) },
+					deletedAt: null,
+				},
+				select: { id: true, name: true, type: true },
+				orderBy: { name: "asc" },
+			});
 
-	const defaultValues: Partial<ProductFormValues> = isAdmin
-		? {}
-		: { companyId: user.company?.id ?? "" };
+	const defaultValues: Partial<ProductFormValues> =
+		!isAdmin && companies.length === 1
+			? { companyId: companies[0]?.id ?? "" }
+			: {};
 
 	return (
 		<ProductForm
 			mode="create"
-			isAdmin={isAdmin}
+			showCompanySelect={true}
+			companyLabel={isAdmin ? "Empresa *" : "Fornecedor *"}
 			companies={companies}
 			listHref="/supplier/products"
 			defaultValues={defaultValues}

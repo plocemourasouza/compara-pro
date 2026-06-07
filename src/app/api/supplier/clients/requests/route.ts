@@ -1,18 +1,19 @@
 import { NextResponse } from "next/server";
+import { getRepresentedSupplierIds } from "@/lib/auth-scope";
 import { AuthError, requireAuth } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
 
-// Solicitações de clientes pendentes para o fornecedor logado.
+// Solicitações de clientes pendentes para os fornecedores representados.
 export async function GET() {
 	try {
-		const user = await requireAuth(["SUPPLIER", "ADMIN"]);
-		const supplierCompanyId = user.company?.id;
-		if (!supplierCompanyId) {
+		const user = await requireAuth(["REPRESENTATIVE", "ADMIN"]);
+		const supplierIds = await getRepresentedSupplierIds(user);
+		if (supplierIds.length === 0) {
 			return NextResponse.json({ requests: [] });
 		}
 
 		const requests = await prisma.supplierLinkRequest.findMany({
-			where: { supplierCompanyId, status: "PENDING" },
+			where: { supplierCompanyId: { in: supplierIds }, status: "PENDING" },
 			orderBy: { createdAt: "desc" },
 			select: {
 				id: true,
@@ -20,6 +21,7 @@ export async function GET() {
 				client: {
 					select: { id: true, name: true, cnpj: true, city: true, state: true },
 				},
+				supplier: { select: { id: true, name: true } },
 			},
 		});
 
@@ -32,6 +34,8 @@ export async function GET() {
 				cnpj: r.client.cnpj,
 				city: r.client.city,
 				state: r.client.state,
+				supplierId: r.supplier.id,
+				supplierName: r.supplier.name,
 			})),
 		});
 	} catch (error) {

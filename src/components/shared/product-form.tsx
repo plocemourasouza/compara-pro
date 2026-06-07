@@ -47,9 +47,11 @@ interface CompanyOption {
 interface ProductFormProps {
 	mode: "create" | "edit";
 	productId?: string;
-	/** When true, render the company selector (ADMIN). */
-	isAdmin: boolean;
-	/** Companies for the ADMIN selector. */
+	/** When true, render the company/supplier selector (ADMIN or REPRESENTATIVE). */
+	showCompanySelect: boolean;
+	/** Label for the selector (e.g. "Empresa *" or "Fornecedor *"). */
+	companyLabel?: string;
+	/** Companies (admin) or represented suppliers (representative) for the selector. */
 	companies?: CompanyOption[];
 	/** Where to return after submit / cancel. */
 	listHref: string;
@@ -70,7 +72,8 @@ const EMPTY_DEFAULTS: ProductFormValues = {
 export function ProductForm({
 	mode,
 	productId,
-	isAdmin,
+	showCompanySelect,
+	companyLabel = "Empresa *",
 	companies = [],
 	listHref,
 	defaultValues,
@@ -247,7 +250,9 @@ export function ProductForm({
 								name="unit"
 								render={({ field }) => (
 									<FormItem
-										className={isAdmin ? "sm:col-span-2" : "sm:col-span-3"}
+										className={
+											showCompanySelect ? "sm:col-span-2" : "sm:col-span-3"
+										}
 									>
 										<FormLabel>Unidade</FormLabel>
 										<UnitCombobox
@@ -263,7 +268,9 @@ export function ProductForm({
 								name="category"
 								render={({ field }) => (
 									<FormItem
-										className={isAdmin ? "sm:col-span-2" : "sm:col-span-3"}
+										className={
+											showCompanySelect ? "sm:col-span-2" : "sm:col-span-3"
+										}
 									>
 										<FormLabel>Categoria</FormLabel>
 										<FormControl>
@@ -273,30 +280,26 @@ export function ProductForm({
 									</FormItem>
 								)}
 							/>
-							{isAdmin && (
+							{showCompanySelect && (
 								<FormField
 									control={form.control}
 									name="companyId"
 									render={({ field }) => (
 										<FormItem className="sm:col-span-2">
-											<FormLabel>Empresa *</FormLabel>
+											<FormLabel>{companyLabel}</FormLabel>
 											<Select
 												value={field.value}
 												onValueChange={field.onChange}
 											>
 												<FormControl>
 													<SelectTrigger className="w-full">
-														<SelectValue placeholder="Selecione uma empresa" />
+														<SelectValue placeholder="Selecione" />
 													</SelectTrigger>
 												</FormControl>
 												<SelectContent>
 													{companies.map((company) => (
 														<SelectItem key={company.id} value={company.id}>
-															{company.name} (
-															{company.type === "SUPPLIER"
-																? "Fornecedor"
-																: "Cliente"}
-															)
+															{company.name}
 														</SelectItem>
 													))}
 												</SelectContent>

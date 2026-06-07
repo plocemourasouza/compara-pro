@@ -1,21 +1,44 @@
 import { NextResponse } from "next/server";
+import { getRepresentedSupplierIds } from "@/lib/auth-scope";
 import { AuthError, requireAuth } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
 import { OptimizedProductMatcher } from "@/lib/services/optimized-product-matcher";
 
 export async function GET(
-	_request: Request,
+	request: Request,
 	{ params }: { params: Promise<{ id: string; uploadId: string }> },
 ) {
 	try {
 		const { id, uploadId } = await params;
-		const user = await requireAuth(["SUPPLIER", "ADMIN"]);
-		const supplierCompanyId = user.company?.id;
+		const user = await requireAuth(["REPRESENTATIVE", "ADMIN"]);
+		const supplierIds = await getRepresentedSupplierIds(user);
+		const requested = new URL(request.url).searchParams.get(
+			"supplierCompanyId",
+		);
+
+		// As indicações são por fornecedor (preço varia). Resolve qual fornecedor:
+		// o solicitado (se representado) ou o primeiro representado que carrega o
+		// cliente. Admin precisa informar o fornecedor explicitamente.
+		let supplierCompanyId: string | null = null;
+		if (user.role === "ADMIN") {
+			supplierCompanyId = requested;
+		} else if (requested && supplierIds.includes(requested)) {
+			supplierCompanyId = requested;
+		} else {
+			const link = await prisma.supplierClient.findFirst({
+				where: { supplierCompanyId: { in: supplierIds }, clientCompanyId: id },
+				select: { supplierCompanyId: true },
+			});
+			supplierCompanyId = link?.supplierCompanyId ?? null;
+		}
 		if (!supplierCompanyId) {
-			return NextResponse.json({ error: "Sem empresa" }, { status: 400 });
+			return NextResponse.json(
+				{ error: "Cliente não está na sua carteira" },
+				{ status: 404 },
+			);
 		}
 
-		// Cliente precisa estar na carteira do fornecedor.
+		// Cliente precisa estar na carteira do fornecedor escolhido.
 		if (user.role !== "ADMIN") {
 			const link = await prisma.supplierClient.findUnique({
 				where: {
@@ -50,7 +73,11 @@ export async function GET(
 			supplierCompanyId,
 		);
 
-		return NextResponse.json({ fileName: upload.fileName, ...indications });
+		return NextResponse.json({
+			fileName: upload.fileName,
+			supplierCompanyId,
+			...indications,
+		});
 	} catch (error) {
 		if (error instanceof AuthError) {
 			return NextResponse.json(

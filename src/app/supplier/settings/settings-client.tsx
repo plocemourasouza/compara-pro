@@ -125,8 +125,8 @@ export default function SettingsClient({ user }: SettingsClientProps) {
 		switch (role) {
 			case "ADMIN":
 				return <Badge variant="destructive">Administrador</Badge>;
-			case "SUPPLIER":
-				return <Badge variant="secondary">Fornecedor</Badge>;
+			case "REPRESENTATIVE":
+				return <Badge variant="secondary">Representante</Badge>;
 			case "CLIENT":
 				return <Badge variant="default">Cliente</Badge>;
 			default:

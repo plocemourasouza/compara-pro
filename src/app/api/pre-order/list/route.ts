@@ -1,10 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { getRepresentedSupplierIds } from "@/lib/auth-scope";
 import { AuthError, requireAuth } from "@/lib/auth-server";
 import { PreOrderService } from "@/lib/services/pre-order-service";
 
 export async function GET(request: NextRequest) {
 	try {
-		const user = await requireAuth(["CLIENT", "SUPPLIER", "ADMIN"]);
+		const user = await requireAuth(["CLIENT", "REPRESENTATIVE", "ADMIN"]);
 
 		// Não-admin precisa de empresa; admin enxerga todos os pré-pedidos.
 		if (user.role !== "ADMIN" && !user.company) {
@@ -18,9 +19,13 @@ export async function GET(request: NextRequest) {
 		const page = parseInt(searchParams.get("page") || "1", 10);
 		const limit = parseInt(searchParams.get("limit") || "10", 10);
 
+		const supplierIds =
+			user.role === "REPRESENTATIVE"
+				? await getRepresentedSupplierIds(user)
+				: [];
 		const result = await PreOrderService.listPreOrders(
-			user.company?.id ?? null,
-			user.role as "CLIENT" | "SUPPLIER" | "ADMIN",
+			{ clientId: user.company?.id ?? null, supplierIds },
+			user.role as "CLIENT" | "REPRESENTATIVE" | "ADMIN",
 			page,
 			Math.min(limit, 50), // Max 50 per page
 		);

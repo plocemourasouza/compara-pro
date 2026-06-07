@@ -46,6 +46,7 @@ export async function updateProfileAction(
 		where: { id: user.id },
 		data: { name, email, phone: phone?.trim() ? phone.trim() : null },
 	});
+	revalidatePath("/perfil");
 	revalidatePath("/admin/settings");
 	revalidatePath("/supplier/settings");
 	revalidatePath("/client/settings");

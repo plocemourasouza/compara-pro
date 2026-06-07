@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowLeft, Loader2, TriangleAlert } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -72,16 +72,21 @@ export default function IndicationsClient({
 	uploadId: string;
 }) {
 	const router = useRouter();
+	const searchParams = useSearchParams();
+	const supplierCompanyId = searchParams.get("supplierCompanyId");
 	const [data, setData] = useState<Indications | null>(null);
 	const [loading, setLoading] = useState(true);
 
 	useEffect(() => {
-		fetch(`/api/supplier/clients/${clientId}/indications/${uploadId}`)
+		const qs = supplierCompanyId
+			? `?supplierCompanyId=${supplierCompanyId}`
+			: "";
+		fetch(`/api/supplier/clients/${clientId}/indications/${uploadId}${qs}`)
 			.then((r) => (r.ok ? r.json() : Promise.reject(r)))
 			.then((d) => setData(d))
 			.catch(() => toast.error("Não foi possível gerar as indicações."))
 			.finally(() => setLoading(false));
-	}, [clientId, uploadId]);
+	}, [clientId, uploadId, supplierCompanyId]);
 
 	if (loading) {
 		return (

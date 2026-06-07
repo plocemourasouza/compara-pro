@@ -49,9 +49,13 @@ export default function UploadClient({ user }: UploadClientProps) {
 	const [progress, setProgress] = useState(0);
 
 	const uploadType =
-		user.role === "SUPPLIER" ? "SUPPLIER_PRODUCTS" : "CLIENT_REQUIREMENTS";
+		user.role === "REPRESENTATIVE"
+			? "SUPPLIER_PRODUCTS"
+			: "CLIENT_REQUIREMENTS";
 	const uploadLabel =
-		user.role === "SUPPLIER" ? "Lista de Produtos" : "Lista de Requisições";
+		user.role === "REPRESENTATIVE"
+			? "Lista de Produtos"
+			: "Lista de Requisições";
 
 	const onDrop = async (acceptedFiles: File[]) => {
 		const file = acceptedFiles[0];
@@ -139,7 +143,7 @@ export default function UploadClient({ user }: UploadClientProps) {
 	const downloadTemplate = () => {
 		// Create sample data based on user role
 		const sampleData =
-			user.role === "SUPPLIER"
+			user.role === "REPRESENTATIVE"
 				? [
 						{
 							SKU: "PROD001",
@@ -308,14 +312,15 @@ export default function UploadClient({ user }: UploadClientProps) {
 							)}
 						</div>
 
-						{uploadResult.priceChangeIndicator && user.role === "SUPPLIER" && (
-							<div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
-								{getPriceChangeIcon(uploadResult.priceChangeIndicator)}
-								<span className="text-sm font-medium">
-									{getPriceChangeLabel(uploadResult.priceChangeIndicator)}
-								</span>
-							</div>
-						)}
+						{uploadResult.priceChangeIndicator &&
+							user.role === "REPRESENTATIVE" && (
+								<div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
+									{getPriceChangeIcon(uploadResult.priceChangeIndicator)}
+									<span className="text-sm font-medium">
+										{getPriceChangeLabel(uploadResult.priceChangeIndicator)}
+									</span>
+								</div>
+							)}
 
 						{uploadResult.errors && uploadResult.errors.length > 0 && (
 							<div>

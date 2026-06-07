@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "framer-motion";
 import {
 	Bell,
 	CheckCheck,
@@ -112,11 +113,26 @@ export default function NotificationsClient() {
 							Nenhuma notificação.
 						</div>
 					) : (
-						<ul className="divide-y">
+						<motion.ul
+							className="divide-y"
+							initial="hidden"
+							animate="show"
+							variants={{
+								hidden: {},
+								show: { transition: { staggerChildren: 0.04 } },
+							}}
+						>
 							{items.map((n) => {
 								const Icon = ICONS[n.type] ?? Bell;
 								return (
-									<li key={n.id}>
+									<motion.li
+										key={n.id}
+										layout
+										variants={{
+											hidden: { opacity: 0, x: -8 },
+											show: { opacity: 1, x: 0 },
+										}}
+									>
 										<button
 											type="button"
 											onClick={() => markRead(n.id)}
@@ -139,7 +155,17 @@ export default function NotificationsClient() {
 												<div className="flex items-center gap-2">
 													<p className="font-medium text-sm">{n.title}</p>
 													{!n.read && (
-														<span className="h-2 w-2 shrink-0 rounded-full bg-primary" />
+														<motion.span
+															className="h-2 w-2 shrink-0 rounded-full bg-primary"
+															animate={{
+																scale: [1, 1.4, 1],
+																opacity: [1, 0.6, 1],
+															}}
+															transition={{
+																duration: 1.6,
+																repeat: Number.POSITIVE_INFINITY,
+															}}
+														/>
 													)}
 												</div>
 												<p className="text-muted-foreground text-sm">
@@ -150,10 +176,10 @@ export default function NotificationsClient() {
 												</p>
 											</div>
 										</button>
-									</li>
+									</motion.li>
 								);
 							})}
-						</ul>
+						</motion.ul>
 					)}
 				</CardContent>
 			</Card>

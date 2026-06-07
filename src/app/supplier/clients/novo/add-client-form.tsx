@@ -24,9 +24,17 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import { masks } from "@/lib/utils/masks";
 
 const schema = z.object({
+	supplierCompanyId: z.string().min(1, "Selecione o fornecedor"),
 	companyName: z.string().min(2, "Informe o nome da empresa"),
 	cnpj: z.string().optional(),
 	city: z.string().optional(),
@@ -38,7 +46,11 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
-export default function AddClientForm() {
+interface AddClientFormProps {
+	suppliers: { id: string; name: string }[];
+}
+
+export default function AddClientForm({ suppliers }: AddClientFormProps) {
 	const router = useRouter();
 	const [result, setResult] = useState<{
 		name: string;
@@ -50,6 +62,7 @@ export default function AddClientForm() {
 	const form = useForm<FormValues>({
 		resolver: zodResolver(schema),
 		defaultValues: {
+			supplierCompanyId: suppliers.length === 1 ? (suppliers[0]?.id ?? "") : "",
 			companyName: "",
 			cnpj: "",
 			city: "",
@@ -155,6 +168,30 @@ export default function AddClientForm() {
 							<CardDescription>Dados da empresa cliente.</CardDescription>
 						</CardHeader>
 						<CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-6">
+							<FormField
+								control={form.control}
+								name="supplierCompanyId"
+								render={({ field }) => (
+									<FormItem className="sm:col-span-6">
+										<FormLabel>Fornecedor *</FormLabel>
+										<Select value={field.value} onValueChange={field.onChange}>
+											<FormControl>
+												<SelectTrigger className="w-full">
+													<SelectValue placeholder="Para qual fornecedor é este cliente?" />
+												</SelectTrigger>
+											</FormControl>
+											<SelectContent>
+												{suppliers.map((s) => (
+													<SelectItem key={s.id} value={s.id}>
+														{s.name}
+													</SelectItem>
+												))}
+											</SelectContent>
+										</Select>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
 							<FormField
 								control={form.control}
 								name="companyName"

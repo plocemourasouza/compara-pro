@@ -3,6 +3,7 @@ import { UserForm } from "@/components/shared/user-form";
 import { getCurrentUser } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
 import type { UserFormValues } from "@/lib/validations/user";
+import RepresentativeSuppliers from "./representative-suppliers";
 
 export default async function EditUserPage({
 	params,
@@ -36,5 +37,12 @@ export default async function EditUserPage({
 		role: target.role as UserFormValues["role"],
 	};
 
-	return <UserForm mode="edit" userId={id} defaultValues={defaultValues} />;
+	return (
+		<div className="space-y-6">
+			<UserForm mode="edit" userId={id} defaultValues={defaultValues} />
+			{target.role === "REPRESENTATIVE" && (
+				<RepresentativeSuppliers userId={id} />
+			)}
+		</div>
+	);
 }

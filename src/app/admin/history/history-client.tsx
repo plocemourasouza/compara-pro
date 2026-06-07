@@ -31,7 +31,7 @@ interface HistoryClientProps {
 }
 
 export default function HistoryClient({ user }: HistoryClientProps) {
-	const showPriceIndicator = user.role === "SUPPLIER";
+	const showPriceIndicator = user.role === "REPRESENTATIVE";
 	const [uploads, setUploads] = useState<Upload[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [statusFilter, setStatusFilter] = useState("all");

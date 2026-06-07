@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { getRepresentedSupplierIds } from "@/lib/auth-scope";
 import { AuthError, requireAuth } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
 import { FileProcessor } from "@/lib/services/file-processor";
@@ -7,14 +8,7 @@ import { uploadFileSchema } from "@/lib/validations/upload";
 export async function POST(request: NextRequest) {
 	try {
 		// Verificar autenticação
-		const user = await requireAuth(["SUPPLIER", "CLIENT"]);
-
-		if (!user.company) {
-			return NextResponse.json(
-				{ error: "Usuário deve estar associado a uma empresa" },
-				{ status: 400 },
-			);
-		}
+		const user = await requireAuth(["REPRESENTATIVE", "CLIENT"]);
 
 		// Parse form data
 		const formData = await request.formData();
@@ -25,13 +19,33 @@ export async function POST(request: NextRequest) {
 			return NextResponse.json({ error: "File is required" }, { status: 400 });
 		}
 
-		// Validate upload type based on user role
+		// Validate upload type + resolve the owning supplier company.
 		let validUploadType: "SUPPLIER_PRODUCTS" | "CLIENT_REQUIREMENTS";
+		let ownerCompanyId: string;
 
-		if (user.role === "SUPPLIER" && uploadType === "SUPPLIER_PRODUCTS") {
+		if (user.role === "REPRESENTATIVE" && uploadType === "SUPPLIER_PRODUCTS") {
 			validUploadType = "SUPPLIER_PRODUCTS";
+			// O representante escolhe de qual fornecedor é a lista de preços.
+			const supplierCompanyId = formData.get("supplierCompanyId") as
+				| string
+				| null;
+			const ids = await getRepresentedSupplierIds(user);
+			if (!supplierCompanyId || !ids.includes(supplierCompanyId)) {
+				return NextResponse.json(
+					{ error: "Selecione um fornecedor que você representa" },
+					{ status: 403 },
+				);
+			}
+			ownerCompanyId = supplierCompanyId;
 		} else if (user.role === "CLIENT" && uploadType === "CLIENT_REQUIREMENTS") {
 			validUploadType = "CLIENT_REQUIREMENTS";
+			if (!user.company) {
+				return NextResponse.json(
+					{ error: "Usuário deve estar associado a uma empresa" },
+					{ status: 400 },
+				);
+			}
+			ownerCompanyId = user.company.id;
 		} else {
 			return NextResponse.json(
 				{ error: "Tipo de upload inválido para seu perfil" },
@@ -59,7 +73,7 @@ export async function POST(request: NextRequest) {
 		const result = await FileProcessor.processFile(
 			file,
 			validUploadType,
-			user.company.id,
+			ownerCompanyId,
 			user.id,
 		);
 
@@ -101,7 +115,7 @@ export async function POST(request: NextRequest) {
 // Get upload status
 export async function GET(request: NextRequest) {
 	try {
-		const user = await requireAuth(["SUPPLIER", "CLIENT"]);
+		const user = await requireAuth(["REPRESENTATIVE", "CLIENT"]);
 		const { searchParams } = new URL(request.url);
 		const uploadId = searchParams.get("uploadId");
 
@@ -129,8 +143,13 @@ export async function GET(request: NextRequest) {
 			);
 		}
 
-		// Verify ownership
-		if (upload.companyId !== user.company?.id) {
+		// Verify ownership: client owns its company's upload; representative owns
+		// uploads of any represented supplier.
+		const owns =
+			user.role === "REPRESENTATIVE"
+				? (await getRepresentedSupplierIds(user)).includes(upload.companyId)
+				: upload.companyId === user.company?.id;
+		if (!owns) {
 			return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
 		}
 

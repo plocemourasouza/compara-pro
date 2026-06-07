@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { validations } from "@/lib/utils/masks";
 
-export const userRoles = ["ADMIN", "SUPPLIER", "CLIENT"] as const;
+export const userRoles = ["ADMIN", "REPRESENTATIVE", "CLIENT"] as const;
 export type UserRole = (typeof userRoles)[number];
 
 const phoneField = z

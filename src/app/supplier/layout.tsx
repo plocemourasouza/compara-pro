@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { PageTransition } from "@/components/shared/page-transition";
 import { getCurrentUser } from "@/lib/auth-server";
 import SupplierSidebar from "./supplier-sidebar";
 
@@ -15,7 +16,7 @@ export default async function SupplierLayout({
 		redirect("/auth/login");
 	}
 
-	if (user.role !== "ADMIN" && user.role !== "SUPPLIER") {
+	if (user.role !== "ADMIN" && user.role !== "REPRESENTATIVE") {
 		redirect("/client");
 	}
 
@@ -24,7 +25,9 @@ export default async function SupplierLayout({
 			<div className="flex">
 				<SupplierSidebar user={user} />
 				<main className="flex-1 ml-64">
-					<div className="p-8">{children}</div>
+					<div className="p-8">
+						<PageTransition>{children}</PageTransition>
+					</div>
 				</main>
 			</div>
 		</div>

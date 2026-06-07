@@ -83,7 +83,7 @@ test.describe("cadastros — padrão lista → detalhe → editar", () => {
 		page,
 	}) => {
 		await page.goto("/auth/login");
-		await page.fill('input[name="email"]', "fornecedor.alfa@demo.com");
+		await page.fill('input[name="email"]', "representante@demo.com");
 		await page.fill('input[name="password"]', "demo1234");
 		await page.getByRole("button", { name: /entrar/i }).click();
 		await page.waitForURL("**/supplier", { timeout: 20_000 });

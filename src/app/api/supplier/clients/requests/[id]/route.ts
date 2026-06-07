@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { getRepresentedSupplierIds } from "@/lib/auth-scope";
 import { AuthError, requireAuth } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
 
@@ -11,24 +12,26 @@ export async function PATCH(
 ) {
 	try {
 		const { id } = await params;
-		const user = await requireAuth(["SUPPLIER"]);
-		const supplierCompanyId = user.company?.id;
-		if (!supplierCompanyId) {
-			return NextResponse.json({ error: "Sem empresa" }, { status: 400 });
-		}
+		const user = await requireAuth(["REPRESENTATIVE"]);
+		const supplierIds = await getRepresentedSupplierIds(user);
 
 		const parsed = schema.safeParse(await request.json());
 		if (!parsed.success) {
 			return NextResponse.json({ error: "Ação inválida" }, { status: 400 });
 		}
 
-		const req = await prisma.supplierLinkRequest.findUnique({ where: { id } });
-		if (!req || req.supplierCompanyId !== supplierCompanyId) {
+		const req = await prisma.supplierLinkRequest.findUnique({
+			where: { id },
+			include: { supplier: { select: { name: true } } },
+		});
+		// A solicitação pertence a um dos fornecedores representados.
+		if (!req || !supplierIds.includes(req.supplierCompanyId)) {
 			return NextResponse.json(
 				{ error: "Solicitação não encontrada" },
 				{ status: 404 },
 			);
 		}
+		const supplierCompanyId = req.supplierCompanyId;
 		if (req.status !== "PENDING") {
 			return NextResponse.json(
 				{ error: "Solicitação já respondida" },
@@ -81,8 +84,8 @@ export async function PATCH(
 						? "Fornecedor aprovou seu vínculo"
 						: "Fornecedor recusou seu vínculo",
 					message: approve
-						? `${user.company?.name ?? "O fornecedor"} aceitou você na carteira.`
-						: `${user.company?.name ?? "O fornecedor"} recusou a solicitação.`,
+						? `${req.supplier?.name ?? "O fornecedor"} aceitou você na carteira.`
+						: `${req.supplier?.name ?? "O fornecedor"} recusou a solicitação.`,
 					metadata: JSON.stringify({ supplierCompanyId }),
 				})),
 			});
