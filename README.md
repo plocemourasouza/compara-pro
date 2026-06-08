@@ -48,16 +48,12 @@ cp .env.example .env.local
 #   - DATABASE_URL (Postgres)
 #   - JWT_SECRET
 #   - AI_CONFIG_ENCRYPTION_KEY  ->  openssl rand -base64 32   (necessária p/ configurar IA)
+#   - R2_* (storage de avatar; só necessário em produção — ver seção Deploy)
 
 # 3. Banco (Postgres via docker-compose) + schema
 docker compose up -d
-#   Base NOVA:
-npx prisma db push
-#   Base EXISTENTE com o papel antigo SUPPLIER (preserva linhas):
-#   node scripts/rename-role-enum.cjs   # ALTER TYPE Role: SUPPLIER -> REPRESENTATIVE (antes do push)
-#   npx prisma generate && npx prisma db push
-#   (se `db push` não criar a tabela do vínculo: node scripts/create-representative-suppliers-table.cjs)
-#   node scripts/backfill-representatives.cjs   # vincula cada representante ao seu fornecedor atual
+npx prisma migrate deploy        # aplica a migration baseline (prisma/migrations/0_init)
+npx prisma generate
 
 # 4. Dados de demonstração (opcional)
 node scripts/seed-demo.cjs     # senha demo1234
@@ -97,6 +93,29 @@ scripts              seed e verificação ponta a ponta
 
 Auth em toda rota/Server Action, validação Zod em toda entrada externa, chave de IA criptografada e
 nunca exposta. Advisories de dependência aceitas estão documentadas em [SECURITY.md](SECURITY.md).
+
+## Deploy (Vercel)
+
+O `npm run build` roda `prisma generate && prisma migrate deploy && next build` — a migration baseline
+(`prisma/migrations/0_init`) é aplicada automaticamente no primeiro deploy contra um banco vazio.
+
+Variáveis de ambiente em produção:
+
+```
+DATABASE_URL           Postgres de produção
+JWT_SECRET             segredo de sessão
+AI_CONFIG_ENCRYPTION_KEY
+AWS_REGION             ex. us-east-1
+AWS_ACCESS_KEY_ID      IAM user com s3:PutObject/s3:DeleteObject no bucket
+AWS_SECRET_ACCESS_KEY
+S3_BUCKET              nome do bucket de avatares
+S3_PUBLIC_URL          opcional: domínio CloudFront/custom (sem barra final).
+                       Vazio = https://<S3_BUCKET>.s3.<AWS_REGION>.amazonaws.com
+```
+
+Avatares vão para AWS S3 — a fs da Vercel é read-only, então uploads não podem ir para
+`public/uploads/`. O bucket precisa servir leitura pública (bucket policy) ou via CloudFront. Sem as
+vars de S3, o upload de avatar falha com erro genérico (fail-secure); o resto do app funciona.
 
 ## Status
 

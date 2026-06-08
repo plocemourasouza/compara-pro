@@ -54,6 +54,7 @@ next-env.d.ts
 
 # local editor / agent state
 .cursor/
+.serena/
 .claude/settings.local.json
 
 # local sqlite dev artifacts (project uses PostgreSQL)

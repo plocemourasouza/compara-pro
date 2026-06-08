@@ -1,39 +1,51 @@
-# STATE — handoff para próxima sessão
+# STATE — handoff
 
-_Última atualização: 2026-06-07 (sessão Opus 4.8)._
+**Atualizado:** 2026-06-07 · Branch **main** · último commit `2487a3c` (nada novo commitado nesta sessão).
+**Build:** `npm run typecheck` → exit 0 · `npm test` → **67/67**.
 
-## Onde estamos
-Branch **main**, commit `0da8698`, **pushado para `main` e `dev`** (mesmo ref no remoto). Working tree **limpo**. `npm run typecheck` exit 0, `npm run build` OK, `npm test` 67/67, `playwright` (suite) 34/34. DB migrado (DDL via script). Dev na :3000.
+---
 
-## Última entrega — Dashboard administrativo operacional (commit 0da8698)
-Nova rota `/api/admin/dashboard/insights` (aditiva — `/api/admin/dashboard` intocada p/ não quebrar `reports`). Componentes em [src/app/admin/_dashboard/](src/app/admin/_dashboard/):
-- **KPIs linha 1** (metrics, 30s): Total de Usuários · Representantes · Clientes · **Listas ativas** · Uploads Hoje. Representantes/Clientes com **total/ativos/inativos** (`users.roleBreakdown`). Listas ativas = `uploadHistory.count({ isActive:true, uploadType:SUPPLIER_PRODUCTS })` (1 por fornecedor; desativação em [file-processor.ts:87-97](src/lib/services/file-processor.ts#L87)).
-- **KPIs linha 2** (insights, 60s): Pré-pedidos em aberto · finalizados · Taxa de aprovação · **Valor economizado**.
-- **Funil**: "Listas de clientes enviadas" → Comparações → Pré-pedidos criados → finalizados. **Tendência 30d**, **Top representantes** (valor finalizado agregado por representante via `RepresentativeSupplier`) + **Top clientes**, **Qualidade do matching**, **fila de atenção**.
-- `formatCurrency`/`formatPct` em [src/lib/format.ts](src/lib/format.ts) (guard ÷0 → "—").
+## ⚠️ Tudo desta sessão está UNCOMMITTED
 
-**Captura de baseline p/ economia:** colunas `UploadedProduct.targetPrice` + `PreOrderItem.baselinePrice` (snapshot na criação do pré-pedido — `createPreOrder` **e** `createPreOrdersBatch`). Economia = `Σ max(0, baseline − price) × qtd` nos finalizados. Seed também popula `Comparison.previousTotal`.
+`git status`: 12 arquivos modificados, 3 migrations deletadas (staged), 4 arquivos novos (untracked). Preferência: **merge direto na main, não PR** (`[[merge-over-pr-preference]]`). Ao commitar/push: atualizar **README + About do GitHub** (`[[sync-repo-update-readme-about]]`).
 
-**Seeds:** dashboard cheio = **`npm run reset:data && npm run seed:demo && npm run seed:full`**. `seed:demo` é baseline (NÃO alterar — e2e global-setup + specs dependem). `seed:full` ([scripts/seed-demo-full.cjs](scripts/seed-demo-full.cjs)) é aditivo (6 fornecedores, 4 reps, 6 clientes, 22 pré-pedidos em 30d, falhas de upload, 2 usuários inativos). Login: `admin@demo.com` / `demo1234`.
+`.serena/` aparece untracked — artefato do MCP, não é nosso (gitignore ou ignorar).
 
-## Histórico anterior (já commitado em 0da8698)
-- **Representante multi-fornecedor**: `Role.REPRESENTATIVE` representa N `Company(SUPPLIER)` via `RepresentativeSupplier`; helper [src/lib/auth-scope.ts](src/lib/auth-scope.ts) (`getRepresentedSupplierIds`); upload com "Fornecedor de origem"; tela `/supplier/fornecedores`.
-- **UX**: tooltips ([HintTooltip](src/components/shared/hint-tooltip.tsx)), animações framer-motion ([PageTransition](src/components/shared/page-transition.tsx), sidebars `layoutId`), tela `/perfil` (avatar + dados + senha), [UserAvatar](src/components/shared/user-avatar.tsx).
+---
 
-## Pendências / próximos passos
-1. **[IMPORTANTE] Migration Prisma faltando** — `targetPrice`/`baselinePrice` (+ DDL anteriores: enum Role, tabela representative_suppliers, users.avatarUrl) aplicadas via `$executeRawUnsafe`. **Sem migration versionada** → antes de deploy, gerar migration ou rodar o mesmo DDL no destino. Ver [[prisma-db-push-gotcha]].
-2. **Economia na tela de sugestão do cliente** ([compare-client.tsx](src/app/client/compare/compare-client.tsx)) — adiado; backend pronto. Ver [[economia-tela-sugestao-cliente]].
-3. **README + "About" do GitHub** — usuário não respondeu se quer atualizar pós-push. Ver [[sync-repo-update-readme-about]].
+## O que foi feito nesta sessão
+
+### 1. 🔴→✅ Migration baseline (squash)
+História estava quebrada (3 migrations fora de ordem, `_prisma_migrations` com 1 linha). **Squashada para 1 baseline** `prisma/migrations/0_init/migration.sql` (schema completo + perf indexes + `pg_trgm` + GIN trgm). Validada aplicando em DB scratch. 3 migrations antigas deletadas (`git rm`). Dev DB baselinado (`migrate resolve --applied 0_init`). `build` agora = `prisma generate && prisma migrate deploy && next build`. Ver `[[prisma-db-push-gotcha]]`.
+**Gotcha:** `npx prisma` quebra com rtk → usar **`./node_modules/.bin/prisma`**.
+
+### 2. 🔴→✅ Avatar storage → AWS S3
+Antes ia pra `public/uploads/` (Vercel fs read-only). Agora `src/lib/storage.ts` (fail-secure) + `avatar/route.ts`. Bucket **`compara-pro`** (sa-east-1) criado, público em `avatars/*`, smoke test passou. Vars `AWS_*`/`S3_*` no `.env`/`.env.local` (gitignored) + README. Ver `[[avatar-storage-s3]]`. **`.env` sincronizado com `.env.local`** (`[[env-files-structure-sync]]`).
+
+### 3. ✅ Overhaul do dashboard admin (`admin-dashboard.tsx`)
+- **Uploads Hoje:** 3 valores (Total · Representantes · Clientes) em `grid-cols-3`; secundário "falhas" com `ml-auto` (direita). API expõe `uploads.todayByType`.
+- **Precisa de atenção:** "Listas ativas" virou 1ª linha clicável (→ `/admin/history`); subtítulos de breakdown em "Listas ativas" (reps·fornec·produtos·valor) e "Pré-pedidos" (clientes·fornec·produtos·valor). API: `attention.listsBreakdown` + `preOrdersBreakdown`.
+- **Layout:** ordem Funil → Qualidade do matching → Precisa de atenção (grid 3-col).
+- **Atividade 30 dias** (`trend-chart.tsx`): 3 séries — uploads representantes / clientes / pré-pedidos. API `trend` splitado por `uploadType`.
+- **Usuários por Papel:** lista → **donut** (`role-donut.tsx`, total no centro).
+- **Removido:** card "Estatísticas de Pré-pedidos".
+- **Top 3 Produtos → "Top fornecedores"** (`supplier-bars.tsx`): barras verticais empilhadas, coluna = fornecedor (top 6 por valor R$), empilhada pelos top 10 produtos (maior no topo), tooltip com nomes. `barCategoryGap="30%"` (ajustado pelo user). API: `metrics.topSuppliers`.
+
+**Arquivos novos:** `src/lib/storage.ts`, `prisma/migrations/0_init/`, `src/app/admin/_dashboard/{role-donut,supplier-bars}.tsx`.
+
+---
+
+## Pendências / próximo
+
+1. **Commitar + merge na main** (não PR) → atualizar README + About do GitHub no push.
+2. **Vercel:** replicar `AWS_*`/`S3_*` em Settings→Env (prod). Rotacionar a access key colada no chat (higiene).
+3. **Economia na tela do cliente** — adiado, backend pronto (`[[economia-tela-sugestao-cliente]]`).
+4. **CI** adiado até deploy (`[[ci-deferred-until-deploy]]`). Backlog: `[[backlog-deferred-items]]`.
+
+---
 
 ## Gotchas do ambiente
-- **Reiniciar `npm run dev` após `prisma generate`** — Next dev não recarrega o Prisma Client em memória; rota com campos novos dá 500 com o processo velho (causou o "Não foi possível carregar os insights").
-- **`.env.local` tem `JWT_SECRET` próprio** (≠ `.env`); Next usa o do `.env.local`. P/ forjar token de teste, assinar com o secret do `.env.local`.
-- `prisma db push` quebrado (`rtk: No such file`) → DDL via `$executeRawUnsafe` + `prisma generate`.
-- Padrão do usuário: **push direto em main (e dev)**, não PR.
-
-## Follow-ups (não-bloqueadores)
-- **Avatar em produção:** `public/uploads/` só funciona em dev (Vercel read-only). Migrar p/ Supabase Storage/S3 antes de deploy.
-- **Aba "Perfil" de /settings** duplica edição com /perfil — opcional virar atalho.
-- **CI** adiado ([[ci-deferred-until-deploy]]).
-- E2E `_probe`/`_reveal` (debug) foram commitados — remover se incomodar.
-- Lint debt pré-existente em `scripts/verify-parecer.cjs` / `verify-prompt.cjs`.
+- Prisma CLI: **`./node_modules/.bin/prisma`** (npx quebra com rtk).
+- Edits com tabs falham no Edit tool → usar `mcp__serena__replace_content` (regex, whitespace-flexível).
+- Após `prisma generate`: reiniciar `npm run dev` (client custom stale).
+- DB local: Postgres `localhost:5435/price_comparison`. Seed: `reset:data` → `seed:demo` → `seed:full`.
