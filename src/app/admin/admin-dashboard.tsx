@@ -3,13 +3,9 @@
 import {
 	AlertTriangle,
 	CheckCircle,
-	ClipboardList,
-	Clock,
-	DollarSign,
 	Percent,
 	PiggyBank,
 	ShoppingCart,
-	TrendingUp,
 	Upload,
 	UserCog,
 	UserRound,
@@ -17,14 +13,22 @@ import {
 	XCircle,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatCurrency, formatPct } from "@/lib/format";
 import { AttentionQueue } from "./_dashboard/attention-queue";
 import { FunnelCard } from "./_dashboard/funnel-card";
 import { LeaderboardCard } from "./_dashboard/leaderboard-card";
 import { MatchingQualityCard } from "./_dashboard/matching-quality-card";
+import { RoleDonut } from "./_dashboard/role-donut";
 import { StatCard } from "./_dashboard/stat-card";
+import { SupplierBars } from "./_dashboard/supplier-bars";
 import { TrendChart } from "./_dashboard/trend-chart";
 import type { Insights } from "./_dashboard/types";
 
@@ -90,6 +94,7 @@ interface DashboardMetrics {
 	uploads: {
 		total: number;
 		today: number;
+		todayByType: { representatives: number; clients: number };
 		thisWeek: number;
 		thisMonth: number;
 		activeLists: number;
@@ -111,6 +116,12 @@ interface DashboardMetrics {
 		productName: string;
 		totalValue: number;
 		supplierCount: number;
+	}>;
+	topSuppliers: Array<{
+		supplierId: string;
+		name: string;
+		total: number;
+		products: Array<{ name: string; value: number }>;
 	}>;
 }
 
@@ -200,7 +211,7 @@ export default function AdminDashboard({ user: _user }: AdminDashboardProps) {
 					</CardContent>
 				</Card>
 			) : (
-				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
 					<StatCard
 						title="Total de Usuários"
 						icon={Users}
@@ -224,20 +235,34 @@ export default function AdminDashboard({ user: _user }: AdminDashboardProps) {
 						hint={activeInactiveHint(metrics.users.roleBreakdown.client)}
 					/>
 					<StatCard
-						title="Listas ativas"
-						icon={ClipboardList}
-						iconClassName="text-primary"
-						value={metrics.uploads.activeLists}
-						hint={<span>catálogos de fornecedores</span>}
-					/>
-					<StatCard
 						title="Uploads Hoje"
 						icon={Upload}
-						value={metrics.uploads.today}
+						value={
+							<div className="grid grid-cols-3 gap-2">
+								<div className="flex flex-col leading-none">
+									<span>{metrics.uploads.today}</span>
+									<span className="text-[11px] font-normal text-muted-foreground mt-1">
+										Total
+									</span>
+								</div>
+								<div className="flex flex-col leading-none">
+									<span>{metrics.uploads.todayByType.representatives}</span>
+									<span className="text-[11px] font-normal text-muted-foreground mt-1">
+										Representantes
+									</span>
+								</div>
+								<div className="flex flex-col leading-none">
+									<span>{metrics.uploads.todayByType.clients}</span>
+									<span className="text-[11px] font-normal text-muted-foreground mt-1">
+										Clientes
+									</span>
+								</div>
+							</div>
+						}
 						hint={
 							<>
 								<span>{metrics.uploads.thisMonth} este mês</span>
-								<span className="flex items-center gap-1">
+								<span className="flex items-center gap-1 ml-auto">
 									<AlertTriangle className="h-3 w-3 text-destructive" />
 									{metrics.uploads.byStatus.failed} falhas
 									{(() => {
@@ -314,17 +339,21 @@ export default function AdminDashboard({ user: _user }: AdminDashboardProps) {
 						/>
 					</div>
 
-					{/* Funil + fila de atenção */}
-					<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+					{/* Funil + qualidade do matching + fila de atenção */}
+					<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 						<FunnelCard funnel={insights.funnel} />
-						<AttentionQueue attention={insights.attention} />
+						<MatchingQualityCard matching={insights.matching} />
+						<AttentionQueue
+							attention={insights.attention}
+							activeLists={metrics?.uploads.activeLists ?? 0}
+						/>
 					</div>
 
 					{/* Tendência */}
 					<TrendChart trend={insights.trend} />
 
-					{/* Rankings + qualidade */}
-					<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+					{/* Rankings */}
+					<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 						<LeaderboardCard
 							title="Top representantes"
 							description="Por valor de pré-pedidos finalizados"
@@ -347,146 +376,35 @@ export default function AdminDashboard({ user: _user }: AdminDashboardProps) {
 							valueFormatter={formatCurrency}
 							emptyLabel="Nenhum pré-pedido finalizado."
 						/>
-						<MatchingQualityCard matching={insights.matching} />
 					</div>
 				</>
 			)}
 
 			{/* Distribuição por papel + top produtos (mantidos) */}
 			{metrics && (
-				<>
-					<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-						<Card>
-							<CardHeader>
-								<CardTitle>Usuários por Papel</CardTitle>
-							</CardHeader>
-							<CardContent>
-								<div className="space-y-4">
-									<div className="flex items-center justify-between">
-										<div className="flex items-center gap-2">
-											<div className="w-3 h-3 bg-chart-4 rounded-full" />
-											<span>Administradores</span>
-										</div>
-										<span className="font-semibold">
-											{metrics.users.byRole.admin}
-										</span>
-									</div>
-									<div className="flex items-center justify-between">
-										<div className="flex items-center gap-2">
-											<div className="w-3 h-3 bg-primary rounded-full" />
-											<span>Representantes</span>
-										</div>
-										<span className="font-semibold">
-											{metrics.users.byRole.supplier}
-										</span>
-									</div>
-									<div className="flex items-center justify-between">
-										<div className="flex items-center gap-2">
-											<div className="w-3 h-3 bg-success rounded-full" />
-											<span>Clientes</span>
-										</div>
-										<span className="font-semibold">
-											{metrics.users.byRole.client}
-										</span>
-									</div>
-								</div>
-							</CardContent>
-						</Card>
-
-						<Card>
-							<CardHeader>
-								<CardTitle>Top 3 Produtos em Pré-pedidos</CardTitle>
-							</CardHeader>
-							<CardContent>
-								<div className="space-y-4">
-									{metrics.topProductsInPreOrders.length > 0 ? (
-										metrics.topProductsInPreOrders.map((product, index) => (
-											<div
-												key={product.matchId}
-												className="flex items-center justify-between"
-											>
-												<div className="flex items-center gap-2">
-													<div
-														className={`w-2 h-2 rounded-full ${
-															index === 0
-																? "bg-yellow-500"
-																: index === 1
-																	? "bg-secondary"
-																	: "bg-orange-500"
-														}`}
-													/>
-													<div className="flex flex-col">
-														<span className="text-sm font-medium truncate max-w-[200px]">
-															{product.productName}
-														</span>
-														<span className="text-xs text-muted-foreground">
-															{product.supplierCount} fornecedor
-															{product.supplierCount !== 1 ? "es" : ""}
-														</span>
-													</div>
-												</div>
-												<span className="font-semibold text-sm">
-													{formatCurrency(product.totalValue)}
-												</span>
-											</div>
-										))
-									) : (
-										<div className="text-center text-muted-foreground py-4">
-											Nenhum produto em pré-pedidos
-										</div>
-									)}
-								</div>
-							</CardContent>
-						</Card>
-					</div>
-
-					{/* Estatísticas de Pré-pedidos */}
+				<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 					<Card>
 						<CardHeader>
-							<CardTitle className="flex items-center gap-2">
-								<TrendingUp className="h-5 w-5" />
-								Estatísticas de Pré-pedidos
-							</CardTitle>
+							<CardTitle>Usuários por Papel</CardTitle>
 						</CardHeader>
 						<CardContent>
-							<div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-								<div className="text-center p-4 bg-primary/10 rounded-lg">
-									<Clock className="h-6 w-6 mx-auto mb-2 text-primary" />
-									<div className="text-2xl font-bold text-primary">
-										{metrics.preOrders.pending}
-									</div>
-									<p className="text-sm text-primary">Pendentes</p>
-								</div>
-
-								<div className="text-center p-4 bg-success/10 rounded-lg">
-									<CheckCircle className="h-6 w-6 mx-auto mb-2 text-success" />
-									<div className="text-2xl font-bold text-success">
-										{metrics.preOrders.approved}
-									</div>
-									<p className="text-sm text-success">Aprovados</p>
-								</div>
-
-								<div className="text-center p-4 bg-destructive/10 rounded-lg">
-									<XCircle className="h-6 w-6 mx-auto mb-2 text-destructive" />
-									<div className="text-2xl font-bold text-destructive">
-										{metrics.preOrders.rejected}
-									</div>
-									<p className="text-sm text-destructive">Rejeitados</p>
-								</div>
-
-								<div className="text-center p-4 bg-chart-4/10 rounded-lg">
-									<DollarSign className="h-6 w-6 mx-auto mb-2 text-chart-4" />
-									<div className="text-lg font-bold text-chart-4">
-										{metrics.preOrders.pending +
-											metrics.preOrders.approved +
-											metrics.preOrders.rejected}
-									</div>
-									<p className="text-sm text-chart-4">Total</p>
-								</div>
-							</div>
+							<RoleDonut byRole={metrics.users.byRole} />
 						</CardContent>
 					</Card>
-				</>
+
+					<Card>
+						<CardHeader>
+							<CardTitle>Top fornecedores</CardTitle>
+							<CardDescription>
+								Por valor em pré-pedidos — cada coluna empilha os 10 maiores
+								produtos do fornecedor
+							</CardDescription>
+						</CardHeader>
+						<CardContent>
+							<SupplierBars data={metrics.topSuppliers} />
+						</CardContent>
+					</Card>
+				</div>
 			)}
 		</div>
 	);

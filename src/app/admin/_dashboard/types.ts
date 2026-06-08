@@ -6,7 +6,12 @@ export interface Insights {
 		preOrdersCreated: number;
 		preOrdersFinalized: number;
 	};
-	trend: Array<{ date: string; uploads: number; preOrders: number }>;
+	trend: Array<{
+		date: string;
+		repUploads: number;
+		clientUploads: number;
+		preOrders: number;
+	}>;
 	gmv: {
 		totalPreOrderValue: number;
 		finalizedValue: number;
@@ -28,6 +33,18 @@ export interface Insights {
 		pendingLinkRequests: number;
 		agingLinkRequests: number;
 		activePreOrders: number;
+		listsBreakdown: {
+			representatives: number;
+			suppliers: number;
+			products: number;
+			totalValue: number;
+		};
+		preOrdersBreakdown: {
+			clients: number;
+			suppliers: number;
+			products: number;
+			totalValue: number;
+		};
 	};
 	leaderboards: {
 		topRepresentatives: Array<{

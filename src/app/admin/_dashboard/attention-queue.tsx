@@ -1,5 +1,11 @@
 import type { LucideIcon } from "lucide-react";
-import { ChevronRight, Clock, Link2, ShoppingCart } from "lucide-react";
+import {
+	ChevronRight,
+	ClipboardList,
+	Clock,
+	Link2,
+	ShoppingCart,
+} from "lucide-react";
 import Link from "next/link";
 import {
 	Card,
@@ -8,26 +14,42 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
+import { formatCurrency } from "@/lib/format";
 import type { Insights } from "./types";
 
 interface AttentionQueueProps {
 	attention: Insights["attention"];
+	activeLists: number;
 }
 
 interface QueueRow {
 	icon: LucideIcon;
 	label: string;
+	subtitle?: string;
 	detail?: string;
 	count: number;
 	href: string;
 	warn?: boolean;
 }
 
-export function AttentionQueue({ attention }: AttentionQueueProps) {
+export function AttentionQueue({
+	attention,
+	activeLists,
+}: AttentionQueueProps) {
+	const { listsBreakdown: lb, preOrdersBreakdown: pb } = attention;
+
 	const rows: QueueRow[] = [
+		{
+			icon: ClipboardList,
+			label: "Listas ativas",
+			subtitle: `${lb.representatives} representantes · ${lb.suppliers} fornecedores · ${lb.products} produtos · ${formatCurrency(lb.totalValue)}`,
+			count: activeLists,
+			href: "/admin/history",
+		},
 		{
 			icon: ShoppingCart,
 			label: "Pré-pedidos aguardando resposta",
+			subtitle: `${pb.clients} clientes · ${pb.suppliers} fornecedores · ${pb.products} produtos · ${formatCurrency(pb.totalValue)}`,
 			count: attention.activePreOrders,
 			href: "/admin/pre-orders",
 		},
@@ -82,6 +104,11 @@ export function AttentionQueue({ attention }: AttentionQueueProps) {
 									</div>
 									<div>
 										<p className="text-sm font-medium">{row.label}</p>
+										{row.subtitle && (
+											<p className="text-xs text-muted-foreground">
+												{row.subtitle}
+											</p>
+										)}
 										{row.detail && (
 											<p className="text-xs text-destructive">{row.detail}</p>
 										)}

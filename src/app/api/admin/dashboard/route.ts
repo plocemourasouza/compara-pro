@@ -75,6 +75,8 @@ export async function GET() {
 			uploadsThisMonth,
 			uploadsByStatus,
 			activeLists,
+			uploadsTodaySupplier,
+			uploadsTodayClient,
 		] = await Promise.all([
 			prisma.uploadHistory.count(),
 			prisma.uploadHistory.count({ where: { uploadedAt: { gte: today } } }),
@@ -88,11 +90,25 @@ export async function GET() {
 			prisma.uploadHistory.count({
 				where: { isActive: true, uploadType: "SUPPLIER_PRODUCTS" },
 			}),
+			// Uploads de hoje por tipo (representante = SUPPLIER_PRODUCTS, cliente = CLIENT_REQUIREMENTS).
+			prisma.uploadHistory.count({
+				where: { uploadedAt: { gte: today }, uploadType: "SUPPLIER_PRODUCTS" },
+			}),
+			prisma.uploadHistory.count({
+				where: {
+					uploadedAt: { gte: today },
+					uploadType: "CLIENT_REQUIREMENTS",
+				},
+			}),
 		]);
 
 		const uploadsMetrics = {
 			total: totalUploads,
 			today: uploadsToday,
+			todayByType: {
+				representatives: uploadsTodaySupplier,
+				clients: uploadsTodayClient,
+			},
 			thisWeek: uploadsThisWeek,
 			thisMonth: uploadsThisMonth,
 			activeLists,
@@ -169,12 +185,81 @@ export async function GET() {
 			};
 		});
 
+		// Top fornecedores por valor em pré-pedidos, cada coluna empilhada pelos
+		// seus 10 produtos de maior valor (segmento = produto; ver SupplierBars).
+		const TOP_SUPPLIERS = 6;
+		const poItems = await prisma.preOrderItem.findMany({
+			select: {
+				totalPrice: true,
+				matchId: true,
+				preOrder: { select: { supplierId: true } },
+			},
+		});
+		const bySupplier = new Map<
+			string,
+			{ total: number; products: Map<string, number> }
+		>();
+		for (const it of poItems) {
+			const sid = it.preOrder.supplierId;
+			const val = Number(it.totalPrice) || 0;
+			if (val === 0) continue;
+			const entry = bySupplier.get(sid) ?? { total: 0, products: new Map() };
+			entry.total += val;
+			const key = it.matchId ?? "__none__";
+			entry.products.set(key, (entry.products.get(key) ?? 0) + val);
+			bySupplier.set(sid, entry);
+		}
+		const rankedSuppliers = [...bySupplier.entries()]
+			.sort((a, b) => b[1].total - a[1].total)
+			.slice(0, TOP_SUPPLIERS);
+		const supplierTopMatches = new Set<string>();
+		const rankedTop10 = rankedSuppliers.map(([id, agg]) => {
+			const top10 = [...agg.products.entries()]
+				.filter(([k]) => k !== "__none__")
+				.sort((a, b) => b[1] - a[1])
+				.slice(0, 10);
+			for (const [mid] of top10) supplierTopMatches.add(mid);
+			return { id, total: agg.total, top10 };
+		});
+		const [supplierCompanies, supplierMatches] = await Promise.all([
+			rankedSuppliers.length
+				? prisma.company.findMany({
+						where: { id: { in: rankedSuppliers.map(([id]) => id) } },
+						select: { id: true, name: true },
+					})
+				: Promise.resolve([] as { id: string; name: string }[]),
+			supplierTopMatches.size
+				? prisma.comparisonMatch.findMany({
+						where: { id: { in: [...supplierTopMatches] } },
+						select: { id: true, clientProduct: { select: { name: true } } },
+					})
+				: Promise.resolve(
+						[] as { id: string; clientProduct: { name: string } }[],
+					),
+		]);
+		const supplierNameById = new Map(
+			supplierCompanies.map((c) => [c.id, c.name]),
+		);
+		const productNameByMatch = new Map(
+			supplierMatches.map((m) => [m.id, m.clientProduct.name]),
+		);
+		const topSuppliers = rankedTop10.map((s) => ({
+			supplierId: s.id,
+			name: supplierNameById.get(s.id) || "Fornecedor",
+			total: s.total,
+			products: s.top10.map(([mid, value]) => ({
+				name: productNameByMatch.get(mid) || "Produto",
+				value,
+			})),
+		}));
+
 		const metrics = {
 			users: usersMetrics,
 			companies: companiesMetrics,
 			uploads: uploadsMetrics,
 			preOrders: preOrdersMetrics,
 			topProductsInPreOrders: topProductsDetails,
+			topSuppliers,
 		};
 
 		return NextResponse.json({

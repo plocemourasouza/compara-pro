@@ -51,6 +51,12 @@ export async function GET() {
 			errorRowsAgg,
 			uploadRows,
 			preOrderRows,
+			activeListSuppliers,
+			activeCatalogCount,
+			activeCatalogValue,
+			activePoClients,
+			activePoSuppliers,
+			activePoItems,
 		] = await Promise.all([
 			// Funil
 			prisma.uploadHistory.count({
@@ -121,12 +127,33 @@ export async function GET() {
 			// Tendência — linhas mínimas, bucket em JS (evita $queryRaw)
 			prisma.uploadHistory.findMany({
 				where: { uploadedAt: { gte: windowStart } },
-				select: { uploadedAt: true },
+				select: { uploadedAt: true, uploadType: true },
 			}),
 			prisma.preOrder.findMany({
 				where: { createdAt: { gte: windowStart } },
 				select: { createdAt: true },
 			}),
+			// Breakdown "Listas ativas": fornecedores com lista vigente.
+			prisma.uploadHistory.groupBy({
+				by: ["companyId"],
+				where: { isActive: true, uploadType: "SUPPLIER_PRODUCTS" },
+			}),
+			// Produtos do catálogo vigente + valor (Σ preço unitário).
+			prisma.product.count({ where: { isActive: true, deletedAt: null } }),
+			prisma.product.aggregate({
+				_sum: { price: true },
+				where: { isActive: true, deletedAt: null },
+			}),
+			// Breakdown "Pré-pedidos aguardando resposta" (status ACTIVE).
+			prisma.preOrder.groupBy({
+				by: ["clientId"],
+				where: { status: "ACTIVE" },
+			}),
+			prisma.preOrder.groupBy({
+				by: ["supplierId"],
+				where: { status: "ACTIVE" },
+			}),
+			prisma.preOrderItem.count({ where: { preOrder: { status: "ACTIVE" } } }),
 		]);
 
 		const statusCount = (s: "ACTIVE" | "FINALIZED" | "REJECTED") =>
@@ -134,6 +161,17 @@ export async function GET() {
 		const finalized = statusCount("FINALIZED");
 		const rejected = statusCount("REJECTED");
 		const active = statusCount("ACTIVE");
+
+		// Representantes ligados (RepresentativeSupplier) aos fornecedores que têm
+		// lista vigente — UploadHistory não registra o usuário que subiu a lista.
+		const activeListSupplierIds = new Set(
+			activeListSuppliers.map((r) => r.companyId),
+		);
+		const activeListReps = new Set(
+			repLinks
+				.filter((l) => activeListSupplierIds.has(l.supplierCompanyId))
+				.map((l) => l.representativeId),
+		).size;
 
 		// Top representantes — valor finalizado por empresa fornecedora reatribuído
 		// a cada representante que a representa (RepresentativeSupplier é N–N).
@@ -183,14 +221,23 @@ export async function GET() {
 			matchesByType.find((m) => m.matchType === t)?._count.matchType || 0;
 
 		// Tendência — pré-preenche todos os dias da janela (sem buracos no gráfico).
-		const trendMap = new Map<string, { uploads: number; preOrders: number }>();
+		const trendMap = new Map<
+			string,
+			{ repUploads: number; clientUploads: number; preOrders: number }
+		>();
 		for (let i = 0; i < TREND_DAYS; i++) {
 			const d = new Date(windowStart.getTime() + i * 86_400_000);
-			trendMap.set(dayKey(d), { uploads: 0, preOrders: 0 });
+			trendMap.set(dayKey(d), {
+				repUploads: 0,
+				clientUploads: 0,
+				preOrders: 0,
+			});
 		}
 		for (const row of uploadRows) {
 			const b = trendMap.get(dayKey(row.uploadedAt));
-			if (b) b.uploads += 1;
+			if (!b) continue;
+			if (row.uploadType === "SUPPLIER_PRODUCTS") b.repUploads += 1;
+			else if (row.uploadType === "CLIENT_REQUIREMENTS") b.clientUploads += 1;
 		}
 		for (const row of preOrderRows) {
 			const b = trendMap.get(dayKey(row.createdAt));
@@ -243,6 +290,18 @@ export async function GET() {
 				pendingLinkRequests,
 				agingLinkRequests,
 				activePreOrders: active,
+				listsBreakdown: {
+					representatives: activeListReps,
+					suppliers: activeListSuppliers.length,
+					products: activeCatalogCount,
+					totalValue: Number(activeCatalogValue._sum.price) || 0,
+				},
+				preOrdersBreakdown: {
+					clients: activePoClients.length,
+					suppliers: activePoSuppliers.length,
+					products: activePoItems,
+					totalValue: Number(gmvOpen._sum.totalAmount) || 0,
+				},
 			},
 			leaderboards: { topRepresentatives, topClients },
 			uploadHealth: {
