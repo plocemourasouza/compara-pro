@@ -1,8 +1,7 @@
-import { mkdir, unlink, writeFile } from "node:fs/promises";
-import { join } from "node:path";
 import { NextResponse } from "next/server";
 import { AuthError, requireAuth } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
+import { deleteObject, putObject } from "@/lib/storage";
 
 const MAX_BYTES = 2 * 1024 * 1024; // 2MB
 const EXT: Record<string, string> = {
@@ -10,17 +9,6 @@ const EXT: Record<string, string> = {
 	"image/jpeg": "jpg",
 	"image/webp": "webp",
 };
-const AVATAR_DIR = join(process.cwd(), "public", "uploads", "avatars");
-
-/** Remove um avatar anterior do disco (best-effort, nunca quebra o fluxo). */
-async function removeFile(avatarUrl: string | null) {
-	if (!avatarUrl?.startsWith("/uploads/avatars/")) return;
-	try {
-		await unlink(join(process.cwd(), "public", avatarUrl));
-	} catch {
-		// arquivo já removido / inexistente — ignora
-	}
-}
 
 export async function POST(request: Request) {
 	try {
@@ -47,18 +35,16 @@ export async function POST(request: Request) {
 			);
 		}
 
-		await mkdir(AVATAR_DIR, { recursive: true });
-		const fileName = `${user.id}-${Date.now()}.${ext}`;
+		const key = `avatars/${user.id}-${Date.now()}.${ext}`;
 		const bytes = Buffer.from(await file.arrayBuffer());
-		await writeFile(join(AVATAR_DIR, fileName), bytes);
 
 		const previous = await prisma.user.findUnique({
 			where: { id: user.id },
 			select: { avatarUrl: true },
 		});
-		const avatarUrl = `/uploads/avatars/${fileName}`;
+		const avatarUrl = await putObject(key, bytes, file.type);
 		await prisma.user.update({ where: { id: user.id }, data: { avatarUrl } });
-		await removeFile(previous?.avatarUrl ?? null);
+		await deleteObject(previous?.avatarUrl ?? null);
 
 		return NextResponse.json({ avatarUrl });
 	} catch (error) {
@@ -87,7 +73,7 @@ export async function DELETE() {
 			where: { id: user.id },
 			data: { avatarUrl: null },
 		});
-		await removeFile(current?.avatarUrl ?? null);
+		await deleteObject(current?.avatarUrl ?? null);
 		return NextResponse.json({ success: true });
 	} catch (error) {
 		if (error instanceof AuthError) {
