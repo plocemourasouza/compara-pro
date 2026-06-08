@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2, Plus } from "lucide-react";
+import { Building2, Factory, Package, Plus, Store } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -15,6 +15,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { StatCard } from "../_dashboard/stat-card";
 import { type Company, getCompaniesColumns } from "./columns";
 import { companyDetailSections } from "./detail-fields";
 
@@ -108,6 +109,20 @@ export default function CompaniesClient({ user: _user }: CompaniesClientProps) {
 		[companies, typeFilter],
 	);
 
+	// Indicadores: totais globais (não reagem ao filtro de tipo)
+	const stats = useMemo(
+		() => ({
+			total: companies.length,
+			suppliers: companies.filter((c) => c.type === "SUPPLIER").length,
+			clients: companies.filter((c) => c.type === "CLIENT").length,
+			products: companies.reduce(
+				(sum, c) => sum + (c._count?.products ?? 0),
+				0,
+			),
+		}),
+		[companies],
+	);
+
 	return (
 		<div className="space-y-6">
 			{/* Header */}
@@ -122,6 +137,23 @@ export default function CompaniesClient({ user: _user }: CompaniesClientProps) {
 					<Plus className="mr-2 h-4 w-4" />
 					Nova Empresa
 				</Button>
+			</div>
+
+			{/* Indicadores */}
+			<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+				<StatCard
+					title="Total de Empresas"
+					icon={Building2}
+					value={stats.total}
+					hint={`${stats.suppliers} fornecedores · ${stats.clients} clientes`}
+				/>
+				<StatCard title="Fornecedores" icon={Factory} value={stats.suppliers} />
+				<StatCard title="Clientes" icon={Store} value={stats.clients} />
+				<StatCard
+					title="Produtos cadastrados"
+					icon={Package}
+					value={stats.products}
+				/>
 			</div>
 
 			{/* Tabela */}

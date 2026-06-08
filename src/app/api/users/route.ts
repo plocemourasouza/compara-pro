@@ -79,33 +79,54 @@ export async function GET(request: NextRequest) {
 			where.deletedAt = { not: null };
 		}
 
-		const [usersRaw, total] = await Promise.all([
-			prisma.user.findMany({
-				where,
-				skip,
-				take: limit,
-				orderBy: { createdAt: "desc" },
-				select: {
-					id: true,
-					name: true,
-					email: true,
-					phone: true,
-					role: true,
-					createdAt: true,
-					updatedAt: true,
-					deletedAt: true,
-					password: true,
-					company: {
-						select: {
-							id: true,
-							name: true,
-							type: true,
+		const [usersRaw, total, roleGroups, activeCount, inactiveCount] =
+			await Promise.all([
+				prisma.user.findMany({
+					where,
+					skip,
+					take: limit,
+					orderBy: { createdAt: "desc" },
+					select: {
+						id: true,
+						name: true,
+						email: true,
+						phone: true,
+						role: true,
+						createdAt: true,
+						updatedAt: true,
+						deletedAt: true,
+						password: true,
+						company: {
+							select: {
+								id: true,
+								name: true,
+								type: true,
+							},
 						},
 					},
-				},
-			}),
-			prisma.user.count({ where }),
-		]);
+				}),
+				prisma.user.count({ where }),
+				// stats: agregados GLOBAIS (ignoram os filtros de busca/papel/status)
+				prisma.user.groupBy({
+					by: ["role"],
+					_count: { _all: true },
+					where: { deletedAt: null },
+				}),
+				prisma.user.count({ where: { deletedAt: null } }),
+				prisma.user.count({ where: { deletedAt: { not: null } } }),
+			]);
+
+		const roleCount = (target: Role) =>
+			roleGroups.find((g) => g.role === target)?._count._all ?? 0;
+
+		const stats = {
+			total: activeCount + inactiveCount,
+			active: activeCount,
+			inactive: inactiveCount,
+			admins: roleCount("ADMIN"),
+			representatives: roleCount("REPRESENTATIVE"),
+			clients: roleCount("CLIENT"),
+		};
 
 		// pending = sem senha (primeiro acesso ainda não concluído). Nunca devolve o hash.
 		const users = usersRaw.map(({ password, ...u }) => ({
@@ -115,6 +136,7 @@ export async function GET(request: NextRequest) {
 
 		return NextResponse.json({
 			users,
+			stats,
 			pagination: {
 				page,
 				limit,

@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import { Building2, DollarSign, Package, Plus, Tags } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { EntityDetailModal } from "@/components/shared/entity-detail-modal";
@@ -19,6 +19,8 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { formatters } from "@/lib/utils/masks";
+import { StatCard } from "../_dashboard/stat-card";
 
 type User = {
 	id: string;
@@ -124,6 +126,19 @@ export default function ProductsClient({ user: _user }: ProductsClientProps) {
 		[products, categoryFilter, companyFilter],
 	);
 
+	// Indicadores: totais globais (não reagem aos filtros)
+	const stats = useMemo(() => {
+		const withPrice = products.filter((p) => typeof p.price === "number");
+		const avgPrice = withPrice.length
+			? withPrice.reduce((sum, p) => sum + (p.price ?? 0), 0) / withPrice.length
+			: 0;
+		return {
+			total: products.length,
+			companies: new Set(products.map((p) => p.company.id)).size,
+			avgPrice,
+		};
+	}, [products]);
+
 	return (
 		<div className="space-y-6">
 			{/* Header */}
@@ -138,6 +153,22 @@ export default function ProductsClient({ user: _user }: ProductsClientProps) {
 					<Plus className="mr-2 h-4 w-4" />
 					Novo Produto
 				</Button>
+			</div>
+
+			{/* Indicadores */}
+			<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+				<StatCard
+					title="Total de Produtos"
+					icon={Package}
+					value={stats.total}
+				/>
+				<StatCard title="Categorias" icon={Tags} value={categories.length} />
+				<StatCard title="Empresas" icon={Building2} value={stats.companies} />
+				<StatCard
+					title="Preço médio"
+					icon={DollarSign}
+					value={formatters.currency(stats.avgPrice)}
+				/>
 			</div>
 
 			{/* Tabela */}

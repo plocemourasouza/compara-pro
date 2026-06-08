@@ -1,16 +1,22 @@
 "use client";
 
 import type { OnChangeFn, PaginationState } from "@tanstack/react-table";
-import { Filter, Plus, Search, Users } from "lucide-react";
+import {
+	Plus,
+	Search,
+	ShieldCheck,
+	UserCog,
+	UserRound,
+	Users,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { EntityDetailModal } from "@/components/shared/entity-detail-modal";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
 	Select,
 	SelectContent,
@@ -18,6 +24,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { StatCard } from "../_dashboard/stat-card";
 import { getUsersColumns, type UserData } from "./columns";
 import { userDetailSections } from "./detail-fields";
 
@@ -45,6 +52,24 @@ const INITIAL_FILTERS: UserFilters = {
 	status: "active",
 };
 
+interface UserStats {
+	total: number;
+	active: number;
+	inactive: number;
+	admins: number;
+	representatives: number;
+	clients: number;
+}
+
+const INITIAL_STATS: UserStats = {
+	total: 0,
+	active: 0,
+	inactive: 0,
+	admins: 0,
+	representatives: 0,
+	clients: 0,
+};
+
 const ITEMS_PER_PAGE = 10;
 
 export default function UsersClient({ user: _user }: UsersClientProps) {
@@ -54,7 +79,7 @@ export default function UsersClient({ user: _user }: UsersClientProps) {
 	const [actionLoading, setActionLoading] = useState(false);
 	const [page, setPage] = useState(1);
 	const [totalPages, setTotalPages] = useState(1);
-	const [total, setTotal] = useState(0);
+	const [stats, setStats] = useState<UserStats>(INITIAL_STATS);
 	const [filters, setFilters] = useState<UserFilters>(INITIAL_FILTERS);
 	const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
 	const [detailOpen, setDetailOpen] = useState(false);
@@ -83,7 +108,7 @@ export default function UsersClient({ user: _user }: UsersClientProps) {
 			const data = await response.json();
 			setUsers(data.users || []);
 			setTotalPages(data.pagination?.pages || 1);
-			setTotal(data.pagination?.total || 0);
+			setStats(data.stats ?? INITIAL_STATS);
 		} catch (error) {
 			console.error("Erro ao carregar usuários:", error);
 			toast.error("Não foi possível carregar os usuários");
@@ -205,73 +230,26 @@ export default function UsersClient({ user: _user }: UsersClientProps) {
 				</Button>
 			</div>
 
-			{/* Filtros */}
-			<Card>
-				<CardHeader>
-					<CardTitle className="flex items-center justify-between">
-						<div className="flex items-center gap-2">
-							<Filter className="h-5 w-5" />
-							Filtros
-						</div>
-						<div className="flex items-center gap-2 text-sm text-muted-foreground">
-							<Users className="h-4 w-4" />
-							{total} usuários
-						</div>
-					</CardTitle>
-				</CardHeader>
-				<CardContent>
-					<div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-						<div className="space-y-2">
-							<Label htmlFor="search">Buscar</Label>
-							<div className="relative">
-								<Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-								<Input
-									id="search"
-									placeholder="Nome ou email..."
-									value={filters.search}
-									onChange={(e) => updateFilters({ search: e.target.value })}
-									className="pl-9"
-								/>
-							</div>
-						</div>
-
-						<div className="space-y-2">
-							<Label htmlFor="role-filter">Papel</Label>
-							<Select
-								value={filters.role}
-								onValueChange={(value) => updateFilters({ role: value })}
-							>
-								<SelectTrigger id="role-filter">
-									<SelectValue />
-								</SelectTrigger>
-								<SelectContent>
-									<SelectItem value="all">Todos</SelectItem>
-									<SelectItem value="ADMIN">Administrador</SelectItem>
-									<SelectItem value="REPRESENTATIVE">Representante</SelectItem>
-									<SelectItem value="CLIENT">Cliente</SelectItem>
-								</SelectContent>
-							</Select>
-						</div>
-
-						<div className="space-y-2">
-							<Label htmlFor="status-filter">Status</Label>
-							<Select
-								value={filters.status}
-								onValueChange={(value) => updateFilters({ status: value })}
-							>
-								<SelectTrigger id="status-filter">
-									<SelectValue />
-								</SelectTrigger>
-								<SelectContent>
-									<SelectItem value="active">Ativos</SelectItem>
-									<SelectItem value="inactive">Inativos</SelectItem>
-									<SelectItem value="all">Todos</SelectItem>
-								</SelectContent>
-							</Select>
-						</div>
-					</div>
-				</CardContent>
-			</Card>
+			{/* Indicadores */}
+			<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+				<StatCard
+					title="Total de Usuários"
+					icon={Users}
+					value={stats.total}
+					hint={`${stats.active} ativos · ${stats.inactive} inativos`}
+				/>
+				<StatCard
+					title="Administradores"
+					icon={ShieldCheck}
+					value={stats.admins}
+				/>
+				<StatCard
+					title="Representantes"
+					icon={UserCog}
+					value={stats.representatives}
+				/>
+				<StatCard title="Clientes" icon={UserRound} value={stats.clients} />
+			</div>
 
 			{/* Tabela */}
 			<Card>
@@ -286,6 +264,49 @@ export default function UsersClient({ user: _user }: UsersClientProps) {
 						pageCount={totalPages}
 						pagination={{ pageIndex: page - 1, pageSize: ITEMS_PER_PAGE }}
 						onPaginationChange={handlePaginationChange}
+						toolbar={
+							<>
+								<div className="relative w-full sm:w-md">
+									<Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+									<Input
+										placeholder="Nome ou email..."
+										value={filters.search}
+										onChange={(e) => updateFilters({ search: e.target.value })}
+										className="pl-9"
+										aria-label="Buscar usuários"
+									/>
+								</div>
+								<Select
+									value={filters.role}
+									onValueChange={(value) => updateFilters({ role: value })}
+								>
+									<SelectTrigger className="w-full sm:w-44" aria-label="Papel">
+										<SelectValue />
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value="all">Todos os papéis</SelectItem>
+										<SelectItem value="ADMIN">Administrador</SelectItem>
+										<SelectItem value="REPRESENTATIVE">
+											Representante
+										</SelectItem>
+										<SelectItem value="CLIENT">Cliente</SelectItem>
+									</SelectContent>
+								</Select>
+								<Select
+									value={filters.status}
+									onValueChange={(value) => updateFilters({ status: value })}
+								>
+									<SelectTrigger className="w-full sm:w-36" aria-label="Status">
+										<SelectValue />
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value="active">Ativos</SelectItem>
+										<SelectItem value="inactive">Inativos</SelectItem>
+										<SelectItem value="all">Todos</SelectItem>
+									</SelectContent>
+								</Select>
+							</>
+						}
 					/>
 				</CardContent>
 			</Card>

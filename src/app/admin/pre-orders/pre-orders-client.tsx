@@ -1,5 +1,6 @@
 "use client";
 
+import { CheckCircle2, ClipboardList, Clock, DollarSign } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { PreOrderDetailModal } from "@/components/shared/pre-order-detail-modal";
@@ -16,6 +17,8 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { formatters } from "@/lib/utils/masks";
+import { StatCard } from "../_dashboard/stat-card";
 
 type User = {
 	id: string;
@@ -73,6 +76,17 @@ export default function PreOrdersClient({ user: _user }: PreOrdersClientProps) {
 		[preOrders, statusFilter],
 	);
 
+	// Indicadores: totais globais (não reagem ao filtro de status)
+	const stats = useMemo(
+		() => ({
+			total: preOrders.length,
+			pending: preOrders.filter((o) => o.status === "ACTIVE").length,
+			approved: preOrders.filter((o) => o.status === "FINALIZED").length,
+			totalValue: preOrders.reduce((sum, o) => sum + (o.totalAmount ?? 0), 0),
+		}),
+		[preOrders],
+	);
+
 	return (
 		<div className="space-y-6">
 			<div>
@@ -80,6 +94,27 @@ export default function PreOrdersClient({ user: _user }: PreOrdersClientProps) {
 				<p className="text-muted-foreground">
 					Acompanhe todos os pré-pedidos do sistema
 				</p>
+			</div>
+
+			{/* Indicadores */}
+			<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+				<StatCard
+					title="Total de Pré-pedidos"
+					icon={ClipboardList}
+					value={stats.total}
+				/>
+				<StatCard title="Pendentes" icon={Clock} value={stats.pending} />
+				<StatCard
+					title="Aprovados"
+					icon={CheckCircle2}
+					iconClassName="text-success"
+					value={stats.approved}
+				/>
+				<StatCard
+					title="Valor total"
+					icon={DollarSign}
+					value={formatters.currency(stats.totalValue)}
+				/>
 			</div>
 
 			<Card>
