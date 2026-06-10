@@ -132,6 +132,16 @@ export async function GET(request: NextRequest) {
 			include: {
 				products: {
 					take: 10, // Preview only
+					select: {
+						id: true,
+						sku: true,
+						code: true,
+						name: true,
+						price: true,
+						category: true,
+						unit: true,
+						quantity: true,
+					},
 				},
 			},
 		});
