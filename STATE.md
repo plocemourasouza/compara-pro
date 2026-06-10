@@ -1,62 +1,45 @@
 # STATE — handoff
 
-**Atualizado:** 2026-06-10 · Branch **main** · HEAD `680cdee`.
-**Build:** `npm run typecheck` → exit 0 · `npm test` → **78/78** · `biome check` → 0 erros.
+**Atualizado:** 2026-06-10 · Branch **main** · HEAD `f30ac7e` · working tree **limpo**.
+**Sincronizado:** `main` == `dev` == `origin/*` (0/0). Tudo da última sessão commitado + pushado.
+**Build:** typecheck exit 0 · `npm test` 78/78 · e2e business-flow verde.
 
 ---
 
-## Sessão atual (UNCOMMITTED) — feature `economia-tela-cliente`
+## Shipado na última sessão (já em main + dev)
 
-Planejada via `.specs/` (Discover→Specify→Design→Tasks) e implementada via TDD.
-Artefatos: `.specs/features/economia-tela-cliente/{discovery,spec,design,tasks}.md`.
-
-**Mostra "valor economizado" (targetPrice − preço escolhido × qtd) na tela de comparação do cliente** — por item (badge verde) + total (card "Economia" no resumo). Mesma fórmula do `savings.finalizedSavings` do admin.
-
-**Mudanças:**
-- `src/lib/savings.ts` **(novo)** — `calcItemSavings` + `calcTotalSavings`, puros.
-- `src/lib/savings.test.ts` **(novo)** — 11 testes (AC-03/04/05/06/09/10, paridade admin).
-- `src/app/api/comparison/[id]/route.ts` — expõe `targetPrice` no map do `clientProduct` (era descartado).
-- `src/app/client/compare/compare-client.tsx` — tipo `ClientProduct.targetPrice`, economia por item + card total, dedup `formatCurrency` (→ `@/lib/format`).
-
-**Tasks:** 12/12. **Integração verificada (server :3150):** `verify:cycle` PASS (fluxo intacto) + `targetPrice` exposto live nos 3 matches (`scripts/verify-economia-api.cjs`) + render coberto no E2E business-flow (economia condicional).
-
-Preferência: **merge direto na main, não PR** (`[[merge-over-pr-preference]]`). Ao push: atualizar README + About (`[[sync-repo-update-readme-about]]`).
-
-### + F6 staging cleanup (código done, integração pendente)
-Spec: `.specs/features/f6-supplier-staging-cleanup/`. **Conserta bug latente de FK** + remove staging supplier redundante.
-- `searchProducts` ([optimized-product-matcher.ts](src/lib/services/optimized-product-matcher.ts)) → lê catálogo `prisma.product` (era `uploadedProduct` SUPPLIER).
-- `matching.ts` match manual → `prisma.product.findUnique` + `.companyId`/`.company.type` (era `.upload.*`). **Fix FK:** `SupplierMatch.supplierProductId` é FK→Product; antes gravava `UploadedProduct.id` ❌.
-- `file-processor.ts` → `uploadedProduct.create` só p/ `CLIENT_REQUIREMENTS` (supplier não grava mais staging; catálogo `products` é fonte única).
-- UI match manual = passthrough (`/api/products/search` → searchProducts → id já é Product.id).
-- **Verificado estático:** typecheck 0 · lint 0 · 78/78 · dashboards usam `uploadHistory`/`product` (sem regressão) · nenhum leitor de staging supplier restante.
-- **Integração verificada (server :3150):** `verify:cycle` PASS (auto-match→pré-pedido→aprovar FINALIZED, sem regressão) + `scripts/verify-search-catalog.cjs` confirma searchProducts → **Product.id** (2/2, 0 staging) ⇒ FK de `SupplierMatch` satisfeita por construção (AC-07). Match-manual via UI não exercitado (seed sem produto unmatched); tests RED unit pulados (projeto só testa funções puras, sem mock de Prisma).
-
-### + GET /api/upload overfetch (done + verificado)
-[route.ts](src/app/api/upload/route.ts) — add `select` de 8 campos no preview; nenhum consumidor lê `preview`. typecheck 0 · lint 0 · 78/78.
-
-### + E2E business-flow (done + verde)
-Spec: `.specs/features/e2e-business-flow/`. Novo `e2e/business-flow.spec.ts` (2 browser contexts, `describe.serial`) dirige comprador→fornecedor pela UI: login→Select upload (Radix)→Comparar→Confirmar pré-pedido→representante→Aprovar. Novo helper `e2e/helpers/auth.ts` (`loginAs`), reusado em `client-routes.spec.ts` (AC-04). `playwright.config.ts` agora honra `BASE_URL` (rodar em :3150 sem subir 2º server). **Rodar:** `BASE_URL=http://localhost:3150 npx playwright test --workers=1`.
-- **Verde:** business-flow + client-routes PASS; suíte 33/35.
-- **2 falhas pré-existentes (não minhas):** `company-lookup:47` hardcoda `http://localhost:3000` (ECONNREFUSED na 3150); `upload-detail` strict-mode `getByText('Estatísticas')` casa 2 elementos. Corrigir à parte.
-- T-08 (match manual via UI) não feito: seed casa todos os produtos (sem unmatched p/ disparar o dialog).
+1. **economia-tela-cliente** — economia (max(0, targetPrice − preço) × qtd) por item + total na compare-client. `src/lib/savings.ts` (+11 testes), API expõe `targetPrice`, dedup `formatCurrency`. Spec: `.specs/features/economia-tela-cliente/`.
+2. **F6 + fix FK** — `SupplierMatch.supplierProductId` é FK→Product; match manual gravava `UploadedProduct.id` (bug). Migrado searchProducts + matching.ts p/ catálogo `products`; file-processor para de gravar staging supplier (client mantém). Spec: `.specs/features/f6-supplier-staging-cleanup/`.
+3. **e2e-business-flow** — `e2e/business-flow.spec.ts` (2 contexts, comprador→fornecedor pela UI) + `e2e/helpers/auth.ts` (`loginAs`). `playwright.config` + `verify-cycle` honram `BASE_URL`. Spec: `.specs/features/e2e-business-flow/`.
+4. **perf(upload)** — `select` no preview do GET `/api/upload`.
+5. README + About do GitHub atualizados.
 
 ---
 
-## Pendências / próximo (local-first — ver `[[local-first-no-deploy]]`)
+## Como rodar / verificar (server na 3150, ver `[[verify-server-port-baseurl]]`)
+```
+# user sobe o dev server (porta 3150) — agente não sobe (permissão negada)
+BASE_URL=http://localhost:3150 npm run verify:cycle
+BASE_URL=http://localhost:3150 node scripts/verify-search-catalog.cjs
+BASE_URL=http://localhost:3150 npx playwright test --workers=1   # cross-role: serial
+npm test ; npm run typecheck ; npm run lint
+```
 
-1. **Commit/merge** (sua pref: merge direto na main): economia + F6 (fix FK) + GET cleanup + E2E business-flow + helper. Tudo UNCOMMITTED, verificado.
-2. **Backlog técnico restante** (`[[backlog-deferred-items]]`): match-manual via UI no E2E (precisa produto unmatched no seed); parecer/override no E2E (T-08); 2 specs E2E pré-existentes com bug (port hardcode + strict-mode selector).
-3. **Housekeeping:** `AGENTS.md` untracked (commitar ou gitignore).
+## Próximo / backlog (`[[backlog-deferred-items]]`)
+1. **2 specs E2E pré-existentes quebrados** (corrigir à parte, 1 linha cada):
+   - `e2e/company-lookup.spec.ts:47` — hardcoda `http://localhost:3000` → trocar por `request` relativo a `baseURL`.
+   - `e2e/upload-detail.spec.ts:23` — `getByText('Estatísticas')` casa 2 elementos (strict-mode) → usar `getByRole('heading', {name})`.
+2. **E2E match-manual** via UI: precisa de produto **unmatched** no seed (hoje casa tudo) p/ disparar o dialog → fecha F6 AC-07 ponta-a-ponta. Hoje provado por construção (searchProducts → Product.id).
+3. **E2E parecer/override** (T-08 de e2e-business-flow).
+4. F6 leftover: limpar `UploadedProduct` supplier legado (opcional, inerte) — `[[backlog-deferred-items]]`.
 
-## 🔒 Bloqueado até tudo rodar 100% local (`[[local-first-no-deploy]]`)
-- Vercel: replicar `AWS_*`/`S3_*` em prod + rotacionar access key.
-- CI GitHub Actions (`[[ci-deferred-until-deploy]]`).
+## 🔒 Bloqueado até tudo 100% local (`[[local-first-no-deploy]]`)
+Vercel env (`AWS_*`/`S3_*`) + rotação de chave + CI GitHub Actions.
 
----
-
-## Gotchas do ambiente
-- Prisma CLI: **`./node_modules/.bin/prisma`** (npx quebra com rtk).
-- `grep`/`find` via rtk distorcem saída → usar `rtk proxy grep ...` p/ raw, ou Read.
-- Edits com tabs podem falhar no Edit tool → `mcp__serena__replace_content` (literal/regex).
-- Após `prisma generate`: reiniciar `npm run dev` (client custom stale).
-- DB local: Postgres `localhost:5435/price_comparison`. Seed: `reset:data` → `seed:demo` → `seed:full`.
+## Gotchas
+- Dev server na **3150** (não 3000); smokes/E2E via `BASE_URL`.
+- Testes do projeto = só **funções puras** (sem mock de Prisma); `verify:cycle` é o oráculo de integração.
+- Prisma CLI: `./node_modules/.bin/prisma` (npx quebra com rtk). DB: Postgres `localhost:5435/price_comparison`, Docker `price-comparison-db`. Seed: `reset:data`→`seed:demo`→`seed:full`.
+- `grep`/`find` via rtk distorcem saída → `rtk proxy grep`. Edits com tabs → `mcp__serena__replace_content`.
+- Auth routing em `src/proxy.ts` (não `middleware.ts`).
+- Preferências: merge direto na main (não PR) `[[merge-over-pr-preference]]`; ao push, README + About `[[sync-repo-update-readme-about]]`.
