@@ -18,7 +18,8 @@ recomendação de fornecedor). Na mesma tela o comprador ajusta as escolhas por 
   configurável**; chave **criptografada em repouso** (AES-256-GCM) e nunca devolvida ao cliente.
   Degrada graciosamente para análise determinística quando não há IA configurada.
 - **Override + pré-pedido agrupado** — o comprador troca fornecedor/quantidade por produto e confirma um
-  pré-pedido por fornecedor numa ação só (transacional).
+  pré-pedido por fornecedor numa ação só (transacional). Vê a **economia** (vs. preço-alvo informado) por
+  item e total no momento da decisão.
 - **Fluxo do representante** — fornecedores representados, lista de pré-pedidos recebidos, aprovar/rejeitar
   (com motivo).
 - **Área administrativa** — usuários, empresas, produtos, histórico de uploads, relatórios (métricas
@@ -77,6 +78,9 @@ npm run dev                    # http://localhost:3000
 | `npm run lint` | Biome (lint + format check) |
 | `npm run seed:demo` | popula dados de demonstração |
 | `npm run verify:cycle` | smoke e2e do fluxo comprador→representante (precisa do dev server) |
+
+> Se o dev server não estiver na porta 3000, aponte os smokes/E2E com `BASE_URL`, ex.:
+> `BASE_URL=http://localhost:3150 npm run verify:cycle` · `BASE_URL=http://localhost:3150 npx playwright test --workers=1`.
 
 ## Estrutura
 
