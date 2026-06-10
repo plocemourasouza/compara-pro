@@ -24,13 +24,14 @@ export async function createManualMatchAction(
 			return { error: "Comparação não encontrada ou não autorizada" };
 		}
 
-		// Verificar se o produto do fornecedor existe
-		const supplierProduct = await prisma.uploadedProduct.findUnique({
+		// Produto do fornecedor vem do catálogo `products` (FK de SupplierMatch
+		// aponta para Product.id), não do staging `uploadedProduct`.
+		const supplierProduct = await prisma.product.findUnique({
 			where: { id: supplierProductId },
-			include: { upload: { include: { company: true } } },
+			include: { company: true },
 		});
 
-		if (supplierProduct?.upload.company.type !== "SUPPLIER") {
+		if (supplierProduct?.company.type !== "SUPPLIER") {
 			return { error: "Produto do fornecedor não encontrado" };
 		}
 
@@ -57,7 +58,7 @@ export async function createManualMatchAction(
 			const existingSupplierMatch = await prisma.supplierMatch.findFirst({
 				where: {
 					comparisonMatchId: existingMatch.id,
-					supplierCompanyId: supplierProduct.upload.companyId,
+					supplierCompanyId: supplierProduct.companyId,
 				},
 			});
 
@@ -78,7 +79,7 @@ export async function createManualMatchAction(
 					data: {
 						comparisonMatchId: existingMatch.id,
 						supplierProductId,
-						supplierCompanyId: supplierProduct.upload.companyId,
+						supplierCompanyId: supplierProduct.companyId,
 						price: supplierProduct.price ?? 0,
 						availableQuantity: supplierProduct.quantity || 0,
 						isActive: true,
@@ -98,7 +99,7 @@ export async function createManualMatchAction(
 					supplierMatches: {
 						create: [
 							{
-								supplierCompanyId: supplierProduct.upload.companyId,
+								supplierCompanyId: supplierProduct.companyId,
 								supplierProductId,
 								price: supplierProduct.price ?? 0,
 								availableQuantity: supplierProduct.quantity || 0,

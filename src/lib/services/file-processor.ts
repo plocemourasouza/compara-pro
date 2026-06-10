@@ -234,22 +234,22 @@ export class FileProcessor {
 					});
 				}
 
-				// Save to database
-				await prisma.uploadedProduct.create({
-					data: {
-						uploadId,
-						originalRow: rowNumber,
-						...validatedData,
-					},
-				});
-
 				// Supplier rows feed the catalog (single source for matching).
+				// Client requirements keep their staging row (fonte de targetPrice/quantity).
 				if (uploadType === "SUPPLIER_PRODUCTS") {
 					await FileProcessor.upsertCatalogProduct(
 						companyId,
 						uploadId,
 						validatedData as SupplierProduct,
 					);
+				} else {
+					await prisma.uploadedProduct.create({
+						data: {
+							uploadId,
+							originalRow: rowNumber,
+							...validatedData,
+						},
+					});
 				}
 
 				processedProducts.push(validatedData);

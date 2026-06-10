@@ -927,13 +927,13 @@ export class OptimizedProductMatcher {
 
 			const _normalizedQuery = OptimizedProductMatcher.normalizeString(query);
 
-			const where: Prisma.UploadedProductWhereInput = {
-				upload: {
-					uploadType: "SUPPLIER_PRODUCTS",
-					isActive: true,
-					status: "COMPLETED",
-					...(supplierId ? { companyId: supplierId } : {}),
-				},
+			// Fonte única: catálogo `products` (mesma do matching principal),
+			// não o staging `uploadedProduct`.
+			const where: Prisma.ProductWhereInput = {
+				isActive: true,
+				deletedAt: null,
+				company: { type: "SUPPLIER" },
+				...(supplierId ? { companyId: supplierId } : {}),
 				price: { gt: 0 }, // Only products with valid prices
 				OR: [
 					{ name: { contains: query, mode: "insensitive" } },
@@ -942,19 +942,24 @@ export class OptimizedProductMatcher {
 				],
 			};
 
-			const products = await prisma.uploadedProduct.findMany({
+			const products = await prisma.product.findMany({
 				where,
 				take: limit,
-				include: {
-					upload: {
-						include: {
-							company: {
-								select: {
-									id: true,
-									name: true,
-									type: true,
-								},
-							},
+				select: {
+					id: true,
+					sku: true,
+					code: true,
+					name: true,
+					price: true,
+					description: true,
+					category: true,
+					unit: true,
+					quantity: true,
+					company: {
+						select: {
+							id: true,
+							name: true,
+							type: true,
 						},
 					},
 				},
@@ -971,7 +976,7 @@ export class OptimizedProductMatcher {
 				category: product.category,
 				unit: product.unit,
 				quantity: product.quantity,
-				supplier: product.upload.company,
+				supplier: product.company,
 			}));
 		} catch (error) {
 			if (error instanceof AppError) {
