@@ -5,6 +5,7 @@ import {
 	BarChart3,
 	CheckCircle,
 	Filter,
+	PiggyBank,
 	Plus,
 	Search,
 	ShoppingCart,
@@ -30,6 +31,8 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { formatCurrency } from "@/lib/format";
+import { calcItemSavings, calcTotalSavings } from "@/lib/savings";
 
 type User = {
 	id: string;
@@ -62,6 +65,7 @@ interface ClientProduct {
 	name: string;
 	sku?: string;
 	code?: string;
+	targetPrice?: number | null;
 }
 
 interface SupplierProduct {
@@ -107,13 +111,6 @@ interface GroupSummary {
 
 interface CompareClientProps {
 	user: User;
-}
-
-function formatCurrency(value: number): string {
-	return new Intl.NumberFormat("pt-BR", {
-		style: "currency",
-		currency: "BRL",
-	}).format(value);
 }
 
 export default function CompareClient({ user: _user }: CompareClientProps) {
@@ -375,6 +372,9 @@ export default function CompareClient({ user: _user }: CompareClientProps) {
 	const groups = groupSummary();
 	const grandTotal = groups.reduce((sum, g) => sum + g.total, 0);
 	const totalItens = groups.reduce((sum, g) => sum + g.itens, 0);
+	const totalSavings = comparison
+		? calcTotalSavings(comparison.matches, selections)
+		: 0;
 
 	return (
 		<div className="space-y-6">
@@ -433,7 +433,11 @@ export default function CompareClient({ user: _user }: CompareClientProps) {
 			{comparison && (
 				<>
 					{/* Stats Summary */}
-					<div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+					<div
+						className={`grid grid-cols-1 gap-4 ${
+							totalSavings > 0 ? "md:grid-cols-5" : "md:grid-cols-4"
+						}`}
+					>
 						<Card>
 							<CardContent className="p-6">
 								<div className="flex items-center">
@@ -504,6 +508,25 @@ export default function CompareClient({ user: _user }: CompareClientProps) {
 								</div>
 							</CardContent>
 						</Card>
+						{totalSavings > 0 && (
+							<Card>
+								<CardContent className="p-6">
+									<div className="flex items-center">
+										<div className="p-2 bg-green-100 rounded-lg">
+											<PiggyBank className="h-6 w-6 text-green-600" />
+										</div>
+										<div className="ml-4">
+											<p className="text-sm font-medium text-muted-foreground">
+												Economia
+											</p>
+											<p className="text-2xl font-bold text-green-600">
+												{formatCurrency(totalSavings)}
+											</p>
+										</div>
+									</div>
+								</CardContent>
+							</Card>
+						)}
 					</div>
 
 					{comparison.matchedProducts === 0 && (
@@ -578,6 +601,13 @@ export default function CompareClient({ user: _user }: CompareClientProps) {
 										chosen && match.bestPrice
 											? chosen.price - match.bestPrice
 											: 0;
+									const itemSavings = sel
+										? calcItemSavings(
+												match.clientProduct.targetPrice,
+												chosen?.price,
+												sel.quantity,
+											)
+										: 0;
 									return (
 										<div key={match.id} className="border rounded-lg p-4">
 											<div className="flex justify-between items-start mb-3">
@@ -675,6 +705,11 @@ export default function CompareClient({ user: _user }: CompareClientProps) {
 																(chosen?.price ?? 0) * sel.quantity,
 															)}
 														</p>
+														{itemSavings > 0 && (
+															<p className="text-xs font-medium text-green-600">
+																Economia {formatCurrency(itemSavings)}
+															</p>
+														)}
 													</div>
 												</div>
 											) : (

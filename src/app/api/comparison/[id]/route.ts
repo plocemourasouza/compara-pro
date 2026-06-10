@@ -65,6 +65,7 @@ export async function GET(
 					description: match.clientProduct.description,
 					category: match.clientProduct.category,
 					unit: match.clientProduct.unit,
+					targetPrice: match.clientProduct.targetPrice,
 				},
 				matchType: match.matchType,
 				confidence: match.confidence,
