@@ -7,7 +7,7 @@ const { PrismaClient } = require("../src/generated/prisma");
 const prisma = new PrismaClient({
 	adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
 });
-const B = "http://localhost:3000";
+const B = process.env.BASE_URL || "http://localhost:3000";
 const sign = (id) =>
 	"auth_token=" +
 	jwt.sign({ userId: id }, process.env.JWT_SECRET, { expiresIn: "7d" });

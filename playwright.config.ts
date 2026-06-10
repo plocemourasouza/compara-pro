@@ -8,13 +8,13 @@ export default defineConfig({
 	reporter: "list",
 	globalSetup: "./e2e/global-setup.ts",
 	use: {
-		baseURL: "http://localhost:3000",
+		baseURL: process.env.BASE_URL || "http://localhost:3000",
 		trace: "on-first-retry",
 	},
 	projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
 	webServer: {
 		command: "npm run dev",
-		url: "http://localhost:3000",
+		url: process.env.BASE_URL || "http://localhost:3000",
 		reuseExistingServer: !process.env.CI,
 		timeout: 120_000,
 	},
