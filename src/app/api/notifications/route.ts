@@ -35,9 +35,8 @@ export async function GET(request: NextRequest) {
 				type: notification.type,
 				title: notification.title,
 				message: notification.message,
-				data: notification.metadata
-					? JSON.parse(notification.metadata as string)
-					: null,
+				// metadata já é JSON (campo Prisma Json) — não re-parsear.
+				data: notification.metadata ?? null,
 				read: notification.read,
 				createdAt: notification.createdAt,
 			})),

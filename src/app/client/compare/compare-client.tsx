@@ -258,19 +258,31 @@ export default function CompareClient({ user: _user }: CompareClientProps) {
 	};
 
 	const handleMatchProduct = async (supplierProductId: string) => {
-		if (!comparison) return;
+		const clientProduct = manualMatchDialog.clientProduct;
+		if (!comparison || !clientProduct) return;
 		setLoading(true);
 		try {
 			const { createManualMatchAction } = await import(
 				"@/lib/actions/matching"
 			);
+			// clientProduct.id é o UploadedProduct.id (não o id da comparação).
 			const result = await createManualMatchAction(
 				comparison.id,
 				supplierProductId,
-				comparison.id,
+				clientProduct.id,
 			);
 			if (result.success) {
-				setComparison(null);
+				setManualMatchDialog({ open: false });
+				// Recarrega a comparação p/ refletir o novo match na UI (e reconstrói
+				// as seleções p/ o produto recém-associado aparecer como casado).
+				const res = await fetch(`/api/comparison/${comparison.id}`, {
+					credentials: "include",
+				});
+				if (res.ok) {
+					const data = await res.json();
+					setComparison(data);
+					initSelections(data.matches);
+				}
 			} else {
 				console.error("Manual match error:", result.error);
 			}

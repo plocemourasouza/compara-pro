@@ -47,6 +47,35 @@ export async function GET(
 			);
 		}
 
+		// Produtos do cliente SEM correspondência (sem ComparisonMatch) — expostos
+		// como entradas sintéticas "NONE" p/ permitir match manual pela UI (F6 AC-07).
+		const matchedClientProductIds = comparison.matches.map(
+			(m) => m.clientProductId,
+		);
+		const unmatched = await prisma.uploadedProduct.findMany({
+			where: {
+				uploadId: comparison.clientUploadId,
+				id: { notIn: matchedClientProductIds },
+			},
+		});
+		const unmatchedEntries = unmatched.map((up) => ({
+			id: `unmatched-${up.id}`,
+			clientProduct: {
+				id: up.id,
+				sku: up.sku,
+				code: up.code,
+				name: up.name,
+				description: up.description,
+				category: up.category,
+				unit: up.unit,
+				targetPrice: up.targetPrice,
+			},
+			matchType: "NONE" as const,
+			confidence: 0,
+			bestPrice: null as number | null,
+			supplierMatches: [] as never[],
+		}));
+
 		// Format response
 		const formattedComparison = {
 			id: comparison.id,
@@ -55,39 +84,42 @@ export async function GET(
 			unmatchedProducts: comparison.unmatchedProducts,
 			bestPriceTotal: comparison.bestPriceTotal,
 			createdAt: comparison.createdAt,
-			matches: comparison.matches.map((match) => ({
-				id: match.id,
-				clientProduct: {
-					id: match.clientProduct.id,
-					sku: match.clientProduct.sku,
-					code: match.clientProduct.code,
-					name: match.clientProduct.name,
-					description: match.clientProduct.description,
-					category: match.clientProduct.category,
-					unit: match.clientProduct.unit,
-					targetPrice: match.clientProduct.targetPrice,
-				},
-				matchType: match.matchType,
-				confidence: match.confidence,
-				bestPrice: match.bestPrice,
-				supplierMatches: match.supplierMatches.map((supplierMatch) => ({
-					id: supplierMatch.id,
-					price: supplierMatch.price,
-					product: {
-						id: supplierMatch.supplierProduct.id,
-						sku: supplierMatch.supplierProduct.sku,
-						code: supplierMatch.supplierProduct.code,
-						name: supplierMatch.supplierProduct.name,
-						description: supplierMatch.supplierProduct.description,
-						price: supplierMatch.supplierProduct.price,
+			matches: [
+				...comparison.matches.map((match) => ({
+					id: match.id,
+					clientProduct: {
+						id: match.clientProduct.id,
+						sku: match.clientProduct.sku,
+						code: match.clientProduct.code,
+						name: match.clientProduct.name,
+						description: match.clientProduct.description,
+						category: match.clientProduct.category,
+						unit: match.clientProduct.unit,
+						targetPrice: match.clientProduct.targetPrice,
 					},
-					supplier: {
-						id: supplierMatch.supplierCompany.id,
-						name: supplierMatch.supplierCompany.name,
-						type: supplierMatch.supplierCompany.type,
-					},
+					matchType: match.matchType,
+					confidence: match.confidence,
+					bestPrice: match.bestPrice,
+					supplierMatches: match.supplierMatches.map((supplierMatch) => ({
+						id: supplierMatch.id,
+						price: supplierMatch.price,
+						product: {
+							id: supplierMatch.supplierProduct.id,
+							sku: supplierMatch.supplierProduct.sku,
+							code: supplierMatch.supplierProduct.code,
+							name: supplierMatch.supplierProduct.name,
+							description: supplierMatch.supplierProduct.description,
+							price: supplierMatch.supplierProduct.price,
+						},
+						supplier: {
+							id: supplierMatch.supplierCompany.id,
+							name: supplierMatch.supplierCompany.name,
+							type: supplierMatch.supplierCompany.type,
+						},
+					})),
 				})),
-			})),
+				...unmatchedEntries,
+			],
 		};
 
 		return NextResponse.json(formattedComparison);
