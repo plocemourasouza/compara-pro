@@ -29,7 +29,7 @@ type ProfileUser = {
 	email: string;
 	phone: string;
 	avatarUrl: string | null;
-	role: string;
+	area: string;
 	company: string | null;
 };
 
@@ -153,7 +153,7 @@ export default function PerfilClient({ user }: { user: ProfileUser }) {
 							<UserAvatar
 								name={profile.name || user.name}
 								avatarUrl={avatarUrl}
-								role={user.role}
+								role={user.area}
 								className="size-24 text-2xl ring-2 ring-border"
 							/>
 							<button
@@ -183,7 +183,7 @@ export default function PerfilClient({ user }: { user: ProfileUser }) {
 									{profile.name || user.name}
 								</h2>
 								<Badge variant="secondary">
-									{ROLE_LABEL[user.role] ?? user.role}
+									{ROLE_LABEL[user.area] ?? user.area}
 								</Badge>
 							</div>
 							<p className="text-muted-foreground text-sm">{user.email}</p>

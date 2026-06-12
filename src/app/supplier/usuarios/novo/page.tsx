@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 export default async function NewSupplierUserPage() {
 	const user = await getCurrentUser();
 	if (!user) redirect("/auth/login");
-	if (user.role !== "ADMIN" && user.role !== "REPRESENTATIVE") {
+	if (user.area !== "ADMIN" && user.area !== "REPRESENTATIVE") {
 		redirect("/client");
 	}
 
@@ -15,7 +15,7 @@ export default async function NewSupplierUserPage() {
 		<UserForm
 			mode="create"
 			scopeRole="REPRESENTATIVE"
-			actorIsAdmin={user.role === "ADMIN"}
+			actorIsAdmin={user.area === "ADMIN"}
 			returnTo="/supplier/usuarios"
 		/>
 	);

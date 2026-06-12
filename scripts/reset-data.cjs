@@ -26,7 +26,8 @@ const prisma = new PrismaClient({
 		await prisma.product.deleteMany();
 		await prisma.notification.deleteMany();
 		await prisma.uploadHistory.deleteMany();
-		await prisma.user.deleteMany({ where: { role: { not: "ADMIN" } } });
+		// Admins = usuários sem empresa (companyId null). Remove os demais.
+		await prisma.user.deleteMany({ where: { companyId: { not: null } } });
 		const companies = await prisma.company.findMany({
 			select: { id: true, _count: { select: { users: true } } },
 		});

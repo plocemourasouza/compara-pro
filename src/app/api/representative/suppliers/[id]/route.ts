@@ -60,11 +60,18 @@ export async function DELETE(_request: Request, { params }: RouteParams) {
 	try {
 		const { id } = await params;
 		const user = await requireAuth(["REPRESENTATIVE"]);
+		const agencyId = user.company?.id;
+		if (!agencyId) {
+			return NextResponse.json(
+				{ error: "Representante sem agência associada" },
+				{ status: 400 },
+			);
+		}
 
 		const link = await prisma.representativeSupplier.findUnique({
 			where: {
-				representativeId_supplierCompanyId: {
-					representativeId: user.id,
+				representativeCompanyId_supplierCompanyId: {
+					representativeCompanyId: agencyId,
 					supplierCompanyId: id,
 				},
 			},

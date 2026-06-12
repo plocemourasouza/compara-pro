@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { UserForm } from "@/components/shared/user-form";
+import { areaOf } from "@/lib/area";
 import { getCurrentUser } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
 import type { UserFormValues } from "@/lib/validations/user";
@@ -14,8 +15,8 @@ export default async function EditClientUserPage({
 	const { id } = await params;
 	const user = await getCurrentUser();
 	if (!user) redirect("/auth/login");
-	if (user.role !== "ADMIN" && user.role !== "CLIENT") {
-		redirect(user.role === "REPRESENTATIVE" ? "/supplier" : "/admin");
+	if (user.area !== "ADMIN" && user.area !== "CLIENT") {
+		redirect(user.area === "REPRESENTATIVE" ? "/supplier" : "/admin");
 	}
 
 	const target = await prisma.user.findUnique({
@@ -24,15 +25,15 @@ export default async function EditClientUserPage({
 			name: true,
 			email: true,
 			phone: true,
-			role: true,
 			companyId: true,
+			company: { select: { type: true } },
 		},
 	});
 
 	// Só clientes; autoatendimento limitado à própria empresa.
 	if (!target) notFound();
-	if (target.role !== "CLIENT") notFound();
-	if (user.role !== "ADMIN" && target.companyId !== user.company?.id) {
+	if (areaOf(target) !== "CLIENT") notFound();
+	if (user.area !== "ADMIN" && target.companyId !== user.company?.id) {
 		notFound();
 	}
 
@@ -49,7 +50,7 @@ export default async function EditClientUserPage({
 			userId={id}
 			defaultValues={defaultValues}
 			scopeRole="CLIENT"
-			actorIsAdmin={user.role === "ADMIN"}
+			actorIsAdmin={user.area === "ADMIN"}
 			returnTo="/client/usuarios"
 		/>
 	);

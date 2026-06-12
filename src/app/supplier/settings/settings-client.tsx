@@ -22,7 +22,7 @@ type UserType = {
 	name: string;
 	email: string;
 	phone?: string | null;
-	role: string;
+	area: string;
 	preferences?: unknown;
 	company: {
 		id: string;
@@ -220,7 +220,7 @@ export default function SettingsClient({ user }: SettingsClientProps) {
 								</div>
 								<div className="flex items-center gap-2">
 									<Label>Função:</Label>
-									{getRoleBadge(user.role)}
+									{getRoleBadge(user.area)}
 								</div>
 								<Button type="submit" disabled={savingProfile}>
 									{savingProfile ? "Salvando..." : "Salvar Alterações"}

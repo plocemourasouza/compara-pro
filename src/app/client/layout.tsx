@@ -16,8 +16,8 @@ export default async function ClientLayout({
 		redirect("/auth/login");
 	}
 
-	if (user.role !== "ADMIN" && user.role !== "CLIENT") {
-		redirect(user.role === "REPRESENTATIVE" ? "/supplier" : "/admin");
+	if (user.area !== "ADMIN" && user.area !== "CLIENT") {
+		redirect(user.area === "REPRESENTATIVE" ? "/supplier" : "/admin");
 	}
 
 	return (

@@ -46,7 +46,7 @@ interface User {
 	id: string;
 	name: string;
 	email: string;
-	role: "ADMIN" | "REPRESENTATIVE" | "CLIENT";
+	area: "ADMIN" | "REPRESENTATIVE" | "CLIENT";
 	company: {
 		id: string;
 		name: string;
@@ -131,14 +131,14 @@ export function SettingsClient({
 		else toast.error(result.error);
 	};
 
-	const getRoleBadge = (role: string) => {
+	const getRoleBadge = (area: string) => {
 		const variants = {
 			ADMIN: { variant: "destructive" as const, label: "Administrador" },
 			REPRESENTATIVE: { variant: "default" as const, label: "Representante" },
 			CLIENT: { variant: "secondary" as const, label: "Cliente" },
 		};
 
-		const config = variants[role as keyof typeof variants] || variants.CLIENT;
+		const config = variants[area as keyof typeof variants] || variants.CLIENT;
 
 		return <Badge variant={config.variant}>{config.label}</Badge>;
 	};
@@ -196,7 +196,7 @@ export function SettingsClient({
 									<Label>Função</Label>
 									<div className="flex items-center gap-2">
 										<Shield className="h-4 w-4 text-muted-foreground" />
-										{getRoleBadge(user.role)}
+										{getRoleBadge(user.area)}
 									</div>
 								</div>
 
@@ -461,7 +461,7 @@ export function SettingsClient({
 				</Card>
 
 				{/* Informações Adicionais para Admin */}
-				{user.role === "ADMIN" && (
+				{user.area === "ADMIN" && (
 					<>
 						<Card>
 							<CardHeader>

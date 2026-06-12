@@ -8,7 +8,7 @@ export async function getDashboardStats() {
 	try {
 		const user = await requireAuth();
 
-		if (user.role === "ADMIN") {
+		if (user.area === "ADMIN") {
 			// Estatísticas para admin
 			const [userCount, companyCount, productCount, preOrderCount] =
 				await Promise.all([
@@ -26,7 +26,7 @@ export async function getDashboardStats() {
 			};
 		}
 
-		if (user.role === "REPRESENTATIVE") {
+		if (user.area === "REPRESENTATIVE") {
 			// Estatísticas agregadas dos fornecedores representados
 			const supplierIds = await getRepresentedSupplierIds(user);
 			const [productCount, activePreOrders, totalPreOrders] = await Promise.all(
@@ -58,7 +58,7 @@ export async function getDashboardStats() {
 			};
 		}
 
-		if (user.role === "CLIENT") {
+		if (user.area === "CLIENT") {
 			// Estatísticas para cliente
 			const [productCount, activePreOrders, totalPreOrders] = await Promise.all(
 				[
@@ -100,7 +100,7 @@ export async function getRecentActivities() {
 	try {
 		const user = await requireAuth();
 
-		if (user.role === "ADMIN") {
+		if (user.area === "ADMIN") {
 			// Atividades recentes para admin
 			const recentUsers = await prisma.user.findMany({
 				take: 5,
@@ -119,13 +119,12 @@ export async function getRecentActivities() {
 					details: {
 						user: u.name,
 						company: u.company?.name,
-						role: u.role,
 					},
 				})),
 			};
 		}
 
-		if (user.role === "REPRESENTATIVE") {
+		if (user.area === "REPRESENTATIVE") {
 			// Atividades recentes dos fornecedores representados
 			const supplierIds = await getRepresentedSupplierIds(user);
 			const recentPreOrders = await prisma.preOrder.findMany({
@@ -156,7 +155,7 @@ export async function getRecentActivities() {
 			};
 		}
 
-		if (user.role === "CLIENT") {
+		if (user.area === "CLIENT") {
 			// Atividades recentes para cliente
 			const recentPreOrders = await prisma.preOrder.findMany({
 				take: 5,

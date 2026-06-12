@@ -16,7 +16,7 @@ export default async function SupplierLayout({
 		redirect("/auth/login");
 	}
 
-	if (user.role !== "ADMIN" && user.role !== "REPRESENTATIVE") {
+	if (user.area !== "ADMIN" && user.area !== "REPRESENTATIVE") {
 		redirect("/client");
 	}
 

@@ -5,7 +5,7 @@ import SuppliersClient from "./suppliers-client";
 export default async function ClientSuppliersPage() {
 	const user = await requireAuth();
 
-	if (user.role !== "CLIENT" && user.role !== "ADMIN") {
+	if (user.area !== "CLIENT" && user.area !== "ADMIN") {
 		redirect("/dashboard");
 	}
 

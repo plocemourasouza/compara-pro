@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import type { Prisma } from "@/generated/prisma";
+import { areaOf } from "@/lib/area";
 import {
 	activationExpiry,
 	buildActivationLink,
@@ -56,9 +57,15 @@ export async function GET(request: NextRequest) {
 		const status = searchParams.get("status") || "all"; // active, inactive, all
 		const skip = (page - 1) * limit;
 
-		// Papel e empresa são FORÇADOS pelo escopo — params do cliente não relaxam.
-		const where: Prisma.UserWhereInput = { role: scope.role };
-		if (scope.companyId) where.companyId = scope.companyId;
+		// Área e empresa são FORÇADAS pelo escopo (params do cliente não relaxam).
+		// Área = company.type; ADMIN = sem empresa (companyId null).
+		const where: Prisma.UserWhereInput = {};
+		if (scope.role === "ADMIN") {
+			where.companyId = null;
+		} else {
+			where.company = { type: scope.role };
+			if (scope.companyId) where.companyId = scope.companyId;
+		}
 
 		if (search) {
 			where.OR = [
@@ -75,8 +82,13 @@ export async function GET(request: NextRequest) {
 
 		// stats restritos ao MESMO escopo (papel+empresa) — sem agregados globais
 		// que vazariam contagens de outras empresas/papéis.
-		const scopeWhere: Prisma.UserWhereInput = { role: scope.role };
-		if (scope.companyId) scopeWhere.companyId = scope.companyId;
+		const scopeWhere: Prisma.UserWhereInput = {};
+		if (scope.role === "ADMIN") {
+			scopeWhere.companyId = null;
+		} else {
+			scopeWhere.company = { type: scope.role };
+			if (scope.companyId) scopeWhere.companyId = scope.companyId;
+		}
 
 		const [usersRaw, total, activeCount, inactiveCount] = await Promise.all([
 			prisma.user.findMany({
@@ -89,11 +101,11 @@ export async function GET(request: NextRequest) {
 					name: true,
 					email: true,
 					phone: true,
-					role: true,
 					createdAt: true,
 					updatedAt: true,
 					deletedAt: true,
 					password: true,
+					companyId: true,
 					company: {
 						select: { id: true, name: true, type: true },
 					},
@@ -110,9 +122,11 @@ export async function GET(request: NextRequest) {
 			inactive: inactiveCount,
 		};
 
-		// pending = sem senha (primeiro acesso ainda não concluído). Nunca devolve o hash.
+		// pending = sem senha (primeiro acesso ainda não concluído). Nunca devolve o
+		// hash. `area` derivada de company.type p/ exibição na lista.
 		const users = usersRaw.map(({ password, ...u }) => ({
 			...u,
+			area: areaOf(u),
 			pending: !password,
 		}));
 
@@ -211,7 +225,7 @@ export async function POST(request: NextRequest) {
 				company = await prisma.company.create({
 					data: {
 						name: companyName,
-						type: role === "REPRESENTATIVE" ? "SUPPLIER" : "CLIENT",
+						type: role === "REPRESENTATIVE" ? "REPRESENTATIVE" : "CLIENT",
 					},
 				});
 			}
@@ -228,7 +242,6 @@ export async function POST(request: NextRequest) {
 				email,
 				phone,
 				password: null,
-				role,
 				companyId: finalCompanyId || null,
 				activationCodeHash,
 				activationExpiresAt: activationExpiry(),
@@ -238,7 +251,6 @@ export async function POST(request: NextRequest) {
 				name: true,
 				email: true,
 				phone: true,
-				role: true,
 				createdAt: true,
 				company: {
 					select: { id: true, name: true, type: true },

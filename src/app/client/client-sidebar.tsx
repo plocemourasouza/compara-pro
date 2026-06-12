@@ -26,7 +26,7 @@ type User = {
 	id: string;
 	name: string;
 	email: string;
-	role: string;
+	area: string;
 	avatarUrl?: string | null;
 	company: {
 		id: string;
@@ -190,7 +190,7 @@ export default function ClientSidebar({ user }: ClientSidebarProps) {
 						<UserAvatar
 							name={user.name}
 							avatarUrl={user.avatarUrl}
-							role={user.role}
+							role={user.area}
 							className="h-9 w-9"
 						/>
 						<div className="ml-3 min-w-0">

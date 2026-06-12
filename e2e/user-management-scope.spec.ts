@@ -68,7 +68,7 @@ test.describe("autoatendimento do representante", () => {
 		const data = await res.json();
 		expect(Array.isArray(data.users)).toBeTruthy();
 		for (const u of data.users) {
-			expect(u.role).toBe("REPRESENTATIVE");
+			expect(u.area).toBe("REPRESENTATIVE");
 		}
 	});
 

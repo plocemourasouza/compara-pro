@@ -20,10 +20,8 @@ model User {
   name                String
   phone               String?
   avatarUrl           String? // foto de perfil (caminho público)
-  role                Role // ADMIN, REPRESENTATIVE, CLIENT
   companyId           String?
   company             Company?       @relation(fields: [companyId], references: [id])
-  representedSuppliers RepresentativeSupplier[] @relation("RepRepresented")
   notifications       Notification[]
   preferences         Json? // notificações, idioma, tema
   activationCodeHash  String? // código de primeiro acesso (hasheado)
@@ -71,7 +69,10 @@ model Company {
   vinculosFornecedor SupplierClient[] @relation("ClientCarteira")
   linkReqsAsSupplier SupplierLinkRequest[] @relation("LinkReqSupplier")
   linkReqsAsClient   SupplierLinkRequest[] @relation("LinkReqClient")
-  representatives    RepresentativeSupplier[] @relation("RepSuppliers")
+  // Esta empresa É a agência (type REPRESENTATIVE) e representa N fornecedores:
+  representedSuppliers RepresentativeSupplier[] @relation("AgencyRepresents")
+  // Esta empresa É o fornecedor (type SUPPLIER) representado por N agências:
+  representedByAgencies RepresentativeSupplier[] @relation("SupplierRepresentedBy")
   createdAt          DateTime         @default(now())
   updatedAt          DateTime         @updatedAt
   deletedAt          DateTime?
@@ -79,17 +80,19 @@ model Company {
   @@map("companies")
 }
 
-// Vínculo N-N: um representante comercial representa vários fornecedores (Company type SUPPLIER).
+// Vínculo N-N por AGÊNCIA: uma agência (Company type REPRESENTATIVE) representa
+// vários fornecedores (Company type SUPPLIER). Todos os usuários da agência
+// compartilham os fornecedores representados.
 model RepresentativeSupplier {
-  id                String   @id @default(cuid())
-  representativeId  String // User.id (role REPRESENTATIVE)
-  representative    User     @relation("RepRepresented", fields: [representativeId], references: [id])
-  supplierCompanyId String // Company.id (type SUPPLIER)
-  supplier          Company  @relation("RepSuppliers", fields: [supplierCompanyId], references: [id])
-  createdAt         DateTime @default(now())
+  id                      String   @id @default(cuid())
+  representativeCompanyId String // Company.id (type REPRESENTATIVE — a agência)
+  representativeCompany   Company  @relation("AgencyRepresents", fields: [representativeCompanyId], references: [id])
+  supplierCompanyId       String // Company.id (type SUPPLIER)
+  supplierCompany         Company  @relation("SupplierRepresentedBy", fields: [supplierCompanyId], references: [id])
+  createdAt               DateTime @default(now())
 
-  @@unique([representativeId, supplierCompanyId])
-  @@index([representativeId])
+  @@unique([representativeCompanyId, supplierCompanyId])
+  @@index([representativeCompanyId])
   @@index([supplierCompanyId])
   @@map("representative_suppliers")
 }
@@ -194,15 +197,11 @@ model PreOrderItem {
   @@map("pre_order_items")
 }
 
-enum Role {
-  ADMIN
-  REPRESENTATIVE
-  CLIENT
-}
 
 enum CompanyType {
-  SUPPLIER
-  CLIENT
+  SUPPLIER // empresa fornecedora (catálogo de produtos; sem login próprio)
+  CLIENT // empresa compradora (conta com N usuários)
+  REPRESENTATIVE // agência de representação (conta com N usuários; representa N fornecedores)
 }
 
 enum TaxRegime {

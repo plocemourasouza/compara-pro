@@ -7,52 +7,45 @@ vi.mock("@/lib/db", () => ({
 	},
 }));
 
-import {
-	getRepresentedSupplierIds,
-	resolveRepresentedSupplierIds,
-	scopedCompanyFilter,
-} from "./auth-scope";
+import { getRepresentedSupplierIds, scopedCompanyFilter } from "./auth-scope";
 
-describe("resolveRepresentedSupplierIds (puro)", () => {
-	it("retorna os vínculos quando existem", () => {
-		expect(resolveRepresentedSupplierIds(["a", "b"], "primary")).toEqual([
-			"a",
-			"b",
-		]);
-	});
-
-	it("faz fallback para o fornecedor primário sem vínculos", () => {
-		expect(resolveRepresentedSupplierIds([], "primary")).toEqual(["primary"]);
-	});
-
-	it("retorna vazio sem vínculos e sem primário", () => {
-		expect(resolveRepresentedSupplierIds([], null)).toEqual([]);
-	});
-});
-
-describe("getRepresentedSupplierIds", () => {
+describe("getRepresentedSupplierIds (agency-level)", () => {
 	beforeEach(() => findMany.mockReset());
 
-	it("mapeia os supplierCompanyId dos vínculos", async () => {
+	it("mapeia os supplierCompanyId dos vínculos da agência", async () => {
 		findMany.mockResolvedValue([
 			{ supplierCompanyId: "alfa" },
 			{ supplierCompanyId: "beta" },
 		]);
 		const ids = await getRepresentedSupplierIds({
 			id: "u1",
-			role: "REPRESENTATIVE",
+			area: "REPRESENTATIVE",
+			company: { id: "agency1" },
 		});
 		expect(ids).toEqual(["alfa", "beta"]);
+		expect(findMany).toHaveBeenCalledWith({
+			where: { representativeCompanyId: "agency1" },
+			select: { supplierCompanyId: true },
+		});
 	});
 
-	it("usa companyId primário quando não há vínculos", async () => {
+	it("sem agência (company) → [] e não consulta", async () => {
+		const ids = await getRepresentedSupplierIds({
+			id: "u1",
+			area: "REPRESENTATIVE",
+		});
+		expect(ids).toEqual([]);
+		expect(findMany).not.toHaveBeenCalled();
+	});
+
+	it("agência sem fornecedores → []", async () => {
 		findMany.mockResolvedValue([]);
 		const ids = await getRepresentedSupplierIds({
 			id: "u1",
-			role: "REPRESENTATIVE",
-			company: { id: "primary" },
+			area: "REPRESENTATIVE",
+			company: { id: "agency1" },
 		});
-		expect(ids).toEqual(["primary"]);
+		expect(ids).toEqual([]);
 	});
 });
 
@@ -60,20 +53,28 @@ describe("scopedCompanyFilter", () => {
 	beforeEach(() => findMany.mockReset());
 
 	it("ADMIN → undefined (sem filtro)", async () => {
-		const f = await scopedCompanyFilter({ id: "admin", role: "ADMIN" });
+		const f = await scopedCompanyFilter({ id: "admin", area: "ADMIN" });
 		expect(f).toBeUndefined();
 		expect(findMany).not.toHaveBeenCalled();
 	});
 
-	it("representante → { in: ids }", async () => {
+	it("representante → { in: ids } da agência", async () => {
 		findMany.mockResolvedValue([{ supplierCompanyId: "alfa" }]);
-		const f = await scopedCompanyFilter({ id: "u1", role: "REPRESENTATIVE" });
+		const f = await scopedCompanyFilter({
+			id: "u1",
+			area: "REPRESENTATIVE",
+			company: { id: "agency1" },
+		});
 		expect(f).toEqual({ in: ["alfa"] });
 	});
 
 	it("representante sem fornecedores → { in: [] } (não vê nada)", async () => {
 		findMany.mockResolvedValue([]);
-		const f = await scopedCompanyFilter({ id: "u1", role: "REPRESENTATIVE" });
+		const f = await scopedCompanyFilter({
+			id: "u1",
+			area: "REPRESENTATIVE",
+			company: { id: "agency1" },
+		});
 		expect(f).toEqual({ in: [] });
 	});
 });

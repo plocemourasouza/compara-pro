@@ -7,7 +7,7 @@ import SupplierUploadClient from "../supplier-upload-client";
 export default async function SupplierUploadPage() {
 	const user = await requireAuth();
 
-	if (user.role !== "REPRESENTATIVE" && user.role !== "ADMIN") {
+	if (user.area !== "REPRESENTATIVE" && user.area !== "ADMIN") {
 		redirect("/dashboard");
 	}
 

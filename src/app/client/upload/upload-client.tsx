@@ -21,7 +21,7 @@ type User = {
 	id: string;
 	name: string;
 	email: string;
-	role: string;
+	area: string;
 	company: {
 		id: string;
 		name: string;
@@ -49,11 +49,11 @@ export default function UploadClient({ user }: UploadClientProps) {
 	const [progress, setProgress] = useState(0);
 
 	const uploadType =
-		user.role === "REPRESENTATIVE"
+		user.area === "REPRESENTATIVE"
 			? "SUPPLIER_PRODUCTS"
 			: "CLIENT_REQUIREMENTS";
 	const uploadLabel =
-		user.role === "REPRESENTATIVE"
+		user.area === "REPRESENTATIVE"
 			? "Lista de Produtos"
 			: "Lista de Requisições";
 
@@ -143,7 +143,7 @@ export default function UploadClient({ user }: UploadClientProps) {
 	const downloadTemplate = () => {
 		// Create sample data based on user role
 		const sampleData =
-			user.role === "REPRESENTATIVE"
+			user.area === "REPRESENTATIVE"
 				? [
 						{
 							SKU: "PROD001",
@@ -313,7 +313,7 @@ export default function UploadClient({ user }: UploadClientProps) {
 						</div>
 
 						{uploadResult.priceChangeIndicator &&
-							user.role === "REPRESENTATIVE" && (
+							user.area === "REPRESENTATIVE" && (
 								<div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
 									{getPriceChangeIcon(uploadResult.priceChangeIndicator)}
 									<span className="text-sm font-medium">

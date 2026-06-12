@@ -9,7 +9,7 @@ export default async function FornecedoresPage() {
 		redirect("/auth/login");
 	}
 
-	if (user.role !== "REPRESENTATIVE" && user.role !== "ADMIN") {
+	if (user.area !== "REPRESENTATIVE" && user.area !== "ADMIN") {
 		redirect("/dashboard");
 	}
 

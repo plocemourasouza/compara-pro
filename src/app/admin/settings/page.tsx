@@ -14,8 +14,8 @@ export default async function SettingsPage() {
 		redirect("/auth/login");
 	}
 
-	if (user.role !== "ADMIN") {
-		redirect(user.role === "REPRESENTATIVE" ? "/supplier" : "/client");
+	if (user.area !== "ADMIN") {
+		redirect(user.area === "REPRESENTATIVE" ? "/supplier" : "/client");
 	}
 
 	const row = await prisma.user.findUnique({

@@ -17,7 +17,7 @@ export async function GET(
 
 		// Admin vê qualquer upload; demais só os da própria empresa.
 		const where: Prisma.UploadHistoryWhereInput = { id: resolvedParams.id };
-		if (user.role !== "ADMIN") {
+		if (user.area !== "ADMIN") {
 			where.companyId = user.company?.id;
 		}
 

@@ -9,7 +9,7 @@ export default async function ComparePage() {
 		redirect("/auth/login");
 	}
 
-	if (user.role !== "CLIENT") {
+	if (user.area !== "CLIENT") {
 		redirect("/dashboard");
 	}
 

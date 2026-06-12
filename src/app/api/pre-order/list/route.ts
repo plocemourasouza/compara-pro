@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
 		const user = await requireAuth(["CLIENT", "REPRESENTATIVE", "ADMIN"]);
 
 		// Não-admin precisa de empresa; admin enxerga todos os pré-pedidos.
-		if (user.role !== "ADMIN" && !user.company) {
+		if (user.area !== "ADMIN" && !user.company) {
 			return NextResponse.json(
 				{ error: "Usuário deve estar associado a uma empresa" },
 				{ status: 400 },
@@ -20,12 +20,12 @@ export async function GET(request: NextRequest) {
 		const limit = parseInt(searchParams.get("limit") || "10", 10);
 
 		const supplierIds =
-			user.role === "REPRESENTATIVE"
+			user.area === "REPRESENTATIVE"
 				? await getRepresentedSupplierIds(user)
 				: [];
 		const result = await PreOrderService.listPreOrders(
 			{ clientId: user.company?.id ?? null, supplierIds },
-			user.role as "CLIENT" | "REPRESENTATIVE" | "ADMIN",
+			user.area as "CLIENT" | "REPRESENTATIVE" | "ADMIN",
 			page,
 			Math.min(limit, 50), // Max 50 per page
 		);

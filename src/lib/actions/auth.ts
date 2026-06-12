@@ -1,7 +1,7 @@
 "use server";
 
 import { cookies } from "next/headers";
-import type { Role } from "@/generated/prisma";
+import { areaOf, dashboardForArea } from "@/lib/area";
 import { generateToken, hashPassword, verifyPassword } from "@/lib/auth";
 import {
 	activationExpiry,
@@ -13,14 +13,6 @@ import {
 import { prisma } from "@/lib/db";
 import { sendNotificationEmail } from "@/lib/email/mailer";
 import { loginSchema, registerSchema } from "@/lib/validations/auth";
-
-function dashboardFor(role: string): string {
-	return role === "ADMIN"
-		? "/admin"
-		: role === "REPRESENTATIVE"
-			? "/supplier"
-			: "/client";
-}
 
 async function setAuthCookie(userId: string): Promise<void> {
 	const token = generateToken({ userId });
@@ -80,7 +72,7 @@ export async function loginAction(_prevState: unknown, formData: FormData) {
 
 		return {
 			success: true,
-			redirectUrl: dashboardFor(user.role),
+			redirectUrl: dashboardForArea(areaOf(user)),
 		};
 	} catch (error) {
 		console.error("Login error:", error);
@@ -134,7 +126,8 @@ export async function registerAction(_prevState: unknown, formData: FormData) {
 			company = await prisma.company.create({
 				data: {
 					name: companyName,
-					type: role === "REPRESENTATIVE" ? "SUPPLIER" : "CLIENT",
+					// Conta = empresa do tipo da área (auto-registro público só cria CLIENT).
+					type: role === "REPRESENTATIVE" ? "REPRESENTATIVE" : "CLIENT",
 				},
 			});
 		}
@@ -157,7 +150,6 @@ export async function registerAction(_prevState: unknown, formData: FormData) {
 				name,
 				email,
 				password: hashedPassword,
-				role: role as Role,
 				companyId: company.id,
 			},
 			include: { company: true },
@@ -174,12 +166,7 @@ export async function registerAction(_prevState: unknown, formData: FormData) {
 		});
 
 		// Retornar sucesso e URL de redirecionamento
-		const dashboardUrl =
-			user.role === "ADMIN"
-				? "/admin"
-				: user.role === "REPRESENTATIVE"
-					? "/supplier"
-					: "/client";
+		const dashboardUrl = dashboardForArea(areaOf(user));
 		return {
 			success: true,
 			redirectUrl: dashboardUrl,
@@ -212,7 +199,10 @@ export async function activateAccountAction(
 			return { error: "As senhas não conferem." };
 		}
 
-		const user = await prisma.user.findUnique({ where: { email } });
+		const user = await prisma.user.findUnique({
+			where: { email },
+			include: { company: { select: { type: true } } },
+		});
 
 		// Erro genérico — não revela qual parte falhou.
 		const genericError = { error: "Código inválido ou expirado." };
@@ -244,7 +234,7 @@ export async function activateAccountAction(
 
 		await setAuthCookie(user.id);
 
-		return { success: true, redirectUrl: dashboardFor(user.role) };
+		return { success: true, redirectUrl: dashboardForArea(areaOf(user)) };
 	} catch (error) {
 		console.error("Activate account error:", error);
 		return { error: "Erro interno do servidor" };

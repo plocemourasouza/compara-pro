@@ -23,14 +23,14 @@ export async function GET(request: NextRequest) {
 		};
 
 		// Filter by company based on user role
-		if (user.role === "REPRESENTATIVE") {
+		if (user.area === "REPRESENTATIVE") {
 			// Aggregate across all represented suppliers; allow narrowing to one.
 			const ids = await getRepresentedSupplierIds(user);
 			whereClause.companyId =
 				companyId && companyId !== "all" && ids.includes(companyId)
 					? companyId
 					: { in: ids };
-		} else if (user.role === "CLIENT") {
+		} else if (user.area === "CLIENT") {
 			// Clients can only see supplier products
 			whereClause.company = {
 				type: "SUPPLIER",
@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
 		}
 
 		// Apply company filter (only for ADMIN)
-		if (companyId && companyId !== "all" && user.role === "ADMIN") {
+		if (companyId && companyId !== "all" && user.area === "ADMIN") {
 			whereClause.companyId = companyId;
 		}
 
@@ -105,7 +105,7 @@ export async function POST(request: NextRequest) {
 
 		// Determine company ID based on user role
 		let finalCompanyId: string | undefined = companyId;
-		if (user.role === "REPRESENTATIVE") {
+		if (user.area === "REPRESENTATIVE") {
 			// Must choose one of the suppliers the representative represents.
 			const ids = await getRepresentedSupplierIds(user);
 			if (!companyId || !ids.includes(companyId)) {
@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
 				);
 			}
 			finalCompanyId = companyId;
-		} else if (user.role === "CLIENT") {
+		} else if (user.area === "CLIENT") {
 			return NextResponse.json(
 				{ error: "Clients cannot create products" },
 				{ status: 403 },

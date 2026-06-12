@@ -21,11 +21,11 @@ export async function GET(request: NextRequest) {
 		// opcional para um deles); comprador vê apenas o da própria empresa.
 		const where: Prisma.UploadHistoryWhereInput = {};
 		const companyIdParam = searchParams.get("companyId");
-		if (user.role === "ADMIN") {
+		if (user.area === "ADMIN") {
 			if (companyIdParam) {
 				where.companyId = companyIdParam;
 			}
-		} else if (user.role === "REPRESENTATIVE") {
+		} else if (user.area === "REPRESENTATIVE") {
 			const ids = await getRepresentedSupplierIds(user);
 			where.companyId =
 				companyIdParam && ids.includes(companyIdParam)

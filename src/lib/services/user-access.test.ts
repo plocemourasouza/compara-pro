@@ -6,15 +6,15 @@ import {
 	sanitizeUserCreate,
 } from "./user-access";
 
-const admin = { id: "admin1", role: "ADMIN" } as const;
+const admin = { id: "admin1", area: "ADMIN" } as const;
 const rep = {
 	id: "rep1",
-	role: "REPRESENTATIVE",
+	area: "REPRESENTATIVE",
 	company: { id: "co-sup" },
 } as const;
 const cli = {
 	id: "cli1",
-	role: "CLIENT",
+	area: "CLIENT",
 	company: { id: "co-cli" },
 } as const;
 
@@ -99,7 +99,7 @@ describe("sanitizeUserCreate", () => {
 	});
 
 	it("não-admin sem empresa → no_company", () => {
-		const orphan = { id: "x", role: "REPRESENTATIVE" } as const;
+		const orphan = { id: "x", area: "REPRESENTATIVE" } as const;
 		const r = sanitizeUserCreate(orphan, { name: "X" }, "REPRESENTATIVE");
 		expect(r).toEqual({ ok: false, reason: "no_company" });
 	});
@@ -108,21 +108,21 @@ describe("sanitizeUserCreate", () => {
 describe("canMutateTarget", () => {
 	it("ADMIN gerencia qualquer alvo", () => {
 		expect(
-			canMutateTarget(admin, { id: "t", role: "REPRESENTATIVE" }, "update"),
+			canMutateTarget(admin, { id: "t", area: "REPRESENTATIVE" }, "update"),
 		).toBe(true);
 		expect(
-			canMutateTarget(admin, { id: "t", role: "ADMIN" }, "deactivate"),
+			canMutateTarget(admin, { id: "t", area: "ADMIN" }, "deactivate"),
 		).toBe(true);
 	});
 
 	it("ninguém desativa a própria conta (nem admin)", () => {
 		expect(
-			canMutateTarget(admin, { id: "admin1", role: "ADMIN" }, "deactivate"),
+			canMutateTarget(admin, { id: "admin1", area: "ADMIN" }, "deactivate"),
 		).toBe(false);
 		expect(
 			canMutateTarget(
 				rep,
-				{ id: "rep1", role: "REPRESENTATIVE", companyId: "co-sup" },
+				{ id: "rep1", area: "REPRESENTATIVE", companyId: "co-sup" },
 				"deactivate",
 			),
 		).toBe(false);
@@ -132,7 +132,7 @@ describe("canMutateTarget", () => {
 		expect(
 			canMutateTarget(
 				rep,
-				{ id: "rep2", role: "REPRESENTATIVE", companyId: "co-sup" },
+				{ id: "rep2", area: "REPRESENTATIVE", companyId: "co-sup" },
 				"update",
 			),
 		).toBe(true);
@@ -142,7 +142,7 @@ describe("canMutateTarget", () => {
 		expect(
 			canMutateTarget(
 				rep,
-				{ id: "rep9", role: "REPRESENTATIVE", companyId: "co-outra" },
+				{ id: "rep9", area: "REPRESENTATIVE", companyId: "co-outra" },
 				"update",
 			),
 		).toBe(false);
@@ -152,14 +152,14 @@ describe("canMutateTarget", () => {
 		expect(
 			canMutateTarget(
 				rep,
-				{ id: "c", role: "CLIENT", companyId: "co-sup" },
+				{ id: "c", area: "CLIENT", companyId: "co-sup" },
 				"update",
 			),
 		).toBe(false);
 		expect(
 			canMutateTarget(
 				rep,
-				{ id: "a", role: "ADMIN", companyId: "co-sup" },
+				{ id: "a", area: "ADMIN", companyId: "co-sup" },
 				"update",
 			),
 		).toBe(false);
@@ -169,7 +169,7 @@ describe("canMutateTarget", () => {
 		expect(
 			canMutateTarget(
 				cli,
-				{ id: "r", role: "REPRESENTATIVE", companyId: "co-cli" },
+				{ id: "r", area: "REPRESENTATIVE", companyId: "co-cli" },
 				"update",
 			),
 		).toBe(false);

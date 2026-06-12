@@ -22,7 +22,7 @@ type User = {
 	id: string;
 	name: string;
 	email: string;
-	role: string;
+	area: string;
 	company: { id: string; name: string; type: string } | null;
 };
 
@@ -31,7 +31,7 @@ interface HistoryClientProps {
 }
 
 export default function HistoryClient({ user }: HistoryClientProps) {
-	const showPriceIndicator = user.role === "REPRESENTATIVE";
+	const showPriceIndicator = user.area === "REPRESENTATIVE";
 	const [uploads, setUploads] = useState<Upload[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [statusFilter, setStatusFilter] = useState("all");

@@ -15,7 +15,7 @@ export async function GET(
 			return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 		}
 
-		if (user.role !== "ADMIN") {
+		if (user.area !== "ADMIN") {
 			return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 		}
 
@@ -54,7 +54,6 @@ export async function GET(
 						id: true,
 						name: true,
 						email: true,
-						role: true,
 					},
 				},
 				products: {
@@ -104,7 +103,7 @@ export async function PUT(
 			return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 		}
 
-		if (user.role !== "ADMIN") {
+		if (user.area !== "ADMIN") {
 			return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 		}
 
@@ -255,7 +254,7 @@ export async function DELETE(
 			return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 		}
 
-		if (user.role !== "ADMIN") {
+		if (user.area !== "ADMIN") {
 			return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 		}
 

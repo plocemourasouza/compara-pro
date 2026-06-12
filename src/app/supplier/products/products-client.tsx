@@ -25,7 +25,7 @@ type User = {
 	id: string;
 	name: string;
 	email: string;
-	role: string;
+	area: string;
 	company: { id: string; name: string; type: string } | null;
 };
 
@@ -35,8 +35,8 @@ interface ProductsClientProps {
 
 export default function ProductsClient({ user }: ProductsClientProps) {
 	const router = useRouter();
-	const isAdmin = user.role === "ADMIN";
-	const isRepresentative = user.role === "REPRESENTATIVE";
+	const isAdmin = user.area === "ADMIN";
+	const isRepresentative = user.area === "REPRESENTATIVE";
 	const showCompany = isAdmin || isRepresentative;
 	const [products, setProducts] = useState<Product[]>([]);
 	const [companies, setCompanies] = useState<

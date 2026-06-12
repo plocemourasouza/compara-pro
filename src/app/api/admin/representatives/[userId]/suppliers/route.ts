@@ -7,12 +7,16 @@ type RouteParams = { params: Promise<{ userId: string }> };
 
 const putSchema = z.object({ supplierCompanyIds: z.array(z.string()) });
 
-async function assertRepresentative(userId: string) {
+// Resolve a AGÊNCIA (Company type REPRESENTATIVE) do usuário. A representação é
+// por agência: editar pelos usuários afeta toda a agência (todos compartilham).
+async function resolveAgencyId(userId: string) {
 	const target = await prisma.user.findUnique({
 		where: { id: userId },
-		select: { id: true, role: true },
+		select: { companyId: true, company: { select: { type: true } } },
 	});
-	return target && target.role === "REPRESENTATIVE" ? target : null;
+	return target?.company?.type === "REPRESENTATIVE"
+		? (target.companyId ?? null)
+		: null;
 }
 
 // Lista todas as empresas fornecedoras + quais estão vinculadas ao representante.
@@ -20,8 +24,8 @@ export async function GET(_request: Request, { params }: RouteParams) {
 	try {
 		await requireAuth(["ADMIN"]);
 		const { userId } = await params;
-		const target = await assertRepresentative(userId);
-		if (!target) {
+		const agencyId = await resolveAgencyId(userId);
+		if (!agencyId) {
 			return NextResponse.json(
 				{ error: "Representante não encontrado" },
 				{ status: 404 },
@@ -35,7 +39,7 @@ export async function GET(_request: Request, { params }: RouteParams) {
 				orderBy: { name: "asc" },
 			}),
 			prisma.representativeSupplier.findMany({
-				where: { representativeId: userId },
+				where: { representativeCompanyId: agencyId },
 				select: { supplierCompanyId: true },
 			}),
 		]);
@@ -64,8 +68,8 @@ export async function PUT(request: Request, { params }: RouteParams) {
 	try {
 		await requireAuth(["ADMIN"]);
 		const { userId } = await params;
-		const target = await assertRepresentative(userId);
-		if (!target) {
+		const agencyId = await resolveAgencyId(userId);
+		if (!agencyId) {
 			return NextResponse.json(
 				{ error: "Representante não encontrado" },
 				{ status: 404 },
@@ -88,7 +92,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
 		await prisma.$transaction([
 			prisma.representativeSupplier.deleteMany({
 				where: {
-					representativeId: userId,
+					representativeCompanyId: agencyId,
 					supplierCompanyId: {
 						notIn: validIds.length ? validIds : ["__none__"],
 					},
@@ -96,7 +100,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
 			}),
 			prisma.representativeSupplier.createMany({
 				data: validIds.map((supplierCompanyId) => ({
-					representativeId: userId,
+					representativeCompanyId: agencyId,
 					supplierCompanyId,
 				})),
 				skipDuplicates: true,

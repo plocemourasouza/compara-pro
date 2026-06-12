@@ -5,7 +5,7 @@ import NotificationsClient from "./notifications-client";
 export default async function ClientNotificationsPage() {
 	const user = await requireAuth();
 
-	if (user.role !== "CLIENT" && user.role !== "ADMIN") {
+	if (user.area !== "CLIENT" && user.area !== "ADMIN") {
 		redirect("/dashboard");
 	}
 

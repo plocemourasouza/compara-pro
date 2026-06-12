@@ -9,7 +9,7 @@ export default async function HistoryPage() {
 		redirect("/auth/login");
 	}
 
-	if (user.role !== "ADMIN" && user.role !== "CLIENT") {
+	if (user.area !== "ADMIN" && user.area !== "CLIENT") {
 		redirect("/dashboard");
 	}
 

@@ -49,7 +49,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
 			);
 		}
 		if (
-			user.role === "REPRESENTATIVE" &&
+			user.area === "REPRESENTATIVE" &&
 			!(await getRepresentedSupplierIds(user)).includes(product.companyId)
 		) {
 			return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
@@ -86,11 +86,11 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 			);
 		}
 		const representedIds =
-			user.role === "REPRESENTATIVE"
+			user.area === "REPRESENTATIVE"
 				? await getRepresentedSupplierIds(user)
 				: [];
 		if (
-			user.role === "REPRESENTATIVE" &&
+			user.area === "REPRESENTATIVE" &&
 			!representedIds.includes(existing.companyId)
 		) {
 			return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
@@ -99,7 +99,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 		// Representative may keep or move the product to another represented
 		// supplier; admin may target any company.
 		const finalCompanyId =
-			user.role === "REPRESENTATIVE"
+			user.area === "REPRESENTATIVE"
 				? parsed.data.companyId &&
 					representedIds.includes(parsed.data.companyId)
 					? parsed.data.companyId
@@ -165,7 +165,7 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
 			);
 		}
 		if (
-			user.role === "REPRESENTATIVE" &&
+			user.area === "REPRESENTATIVE" &&
 			!(await getRepresentedSupplierIds(user)).includes(existing.companyId)
 		) {
 			return NextResponse.json({ error: "Acesso negado" }, { status: 403 });

@@ -1,20 +1,24 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { areaOf } from "@/lib/area";
 import { AuthError, requireAuth } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
-import { canMutateTarget, lockUpdateFields } from "@/lib/services/user-access";
+import {
+	canMutateTarget,
+	lockUpdateFields,
+	type MutationTarget,
+} from "@/lib/services/user-access";
 
 type RouteParams = { params: Promise<{ id: string }> };
 
-// Papéis que podem gerenciar usuários: ADMIN (global) + REPRESENTATIVE/CLIENT
+// Áreas que podem gerenciar usuários: ADMIN (global) + REPRESENTATIVE/CLIENT
 // (autoatendimento — escopo aplicado por canMutateTarget/lockUpdateFields).
-const MANAGER_ROLES = ["ADMIN", "REPRESENTATIVE", "CLIENT"];
+const MANAGER_AREAS = ["ADMIN", "REPRESENTATIVE", "CLIENT"];
 
 const updateUserSchema = z.object({
 	name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres").optional(),
 	email: z.string().email("Email inválido").optional(),
 	phone: z.string().optional(),
-	role: z.enum(["ADMIN", "REPRESENTATIVE", "CLIENT"]).optional(),
 	companyId: z.string().nullable().optional(),
 });
 
@@ -23,12 +27,34 @@ const userSelect = {
 	name: true,
 	email: true,
 	phone: true,
-	role: true,
 	createdAt: true,
 	updatedAt: true,
 	deletedAt: true,
+	companyId: true,
 	company: { select: { id: true, name: true, type: true } },
 } as const;
+
+// Alvo p/ a checagem de autorização: área derivada de company.type.
+function toTarget(u: {
+	id: string;
+	companyId: string | null;
+	company: { type: string } | null;
+}): MutationTarget {
+	return { id: u.id, area: areaOf(u), companyId: u.companyId };
+}
+
+// Carrega o alvo com o mínimo p/ autorização + checagem de e-mail no update.
+function loadTarget(id: string) {
+	return prisma.user.findUnique({
+		where: { id },
+		select: {
+			id: true,
+			email: true,
+			companyId: true,
+			company: { select: { type: true } },
+		},
+	});
+}
 
 function handleError(error: unknown, label: string) {
 	if (error instanceof AuthError) {
@@ -51,14 +77,15 @@ const notFound = () =>
 export async function GET(_request: NextRequest, { params }: RouteParams) {
 	const { id } = await params;
 	try {
-		const actor = await requireAuth(MANAGER_ROLES);
+		const actor = await requireAuth(MANAGER_AREAS);
 		const targetUser = await prisma.user.findUnique({
 			where: { id },
 			select: { ...userSelect, password: true, companyId: true },
 		});
 		if (!targetUser) return notFound();
 		// Fora de escopo → 404 (não vaza existência para não-admin).
-		if (!canMutateTarget(actor, targetUser, "update")) return notFound();
+		if (!canMutateTarget(actor, toTarget(targetUser), "update"))
+			return notFound();
 
 		const { password, companyId: _companyId, ...rest } = targetUser;
 		return NextResponse.json({ user: { ...rest, pending: !password } });
@@ -71,7 +98,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
 export async function PUT(request: NextRequest, { params }: RouteParams) {
 	const { id } = await params;
 	try {
-		const actor = await requireAuth(MANAGER_ROLES);
+		const actor = await requireAuth(MANAGER_AREAS);
 
 		const body = await request.json();
 		const parsed = updateUserSchema.safeParse(body);
@@ -82,9 +109,10 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 			);
 		}
 
-		const existing = await prisma.user.findUnique({ where: { id } });
+		const existing = await loadTarget(id);
 		if (!existing) return notFound();
-		if (!canMutateTarget(actor, existing, "update")) return notFound();
+		if (!canMutateTarget(actor, toTarget(existing), "update"))
+			return notFound();
 
 		// Não-admin não altera papel nem empresa do alvo.
 		const data = lockUpdateFields(actor, parsed.data);
@@ -119,9 +147,9 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 export async function DELETE(_request: NextRequest, { params }: RouteParams) {
 	const { id } = await params;
 	try {
-		const actor = await requireAuth(MANAGER_ROLES);
+		const actor = await requireAuth(MANAGER_AREAS);
 
-		const existing = await prisma.user.findUnique({ where: { id } });
+		const existing = await loadTarget(id);
 		if (!existing) return notFound();
 		if (existing.id === actor.id) {
 			return NextResponse.json(
@@ -129,7 +157,8 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
 				{ status: 400 },
 			);
 		}
-		if (!canMutateTarget(actor, existing, "deactivate")) return notFound();
+		if (!canMutateTarget(actor, toTarget(existing), "deactivate"))
+			return notFound();
 
 		const deleted = await prisma.user.update({
 			where: { id },
@@ -149,7 +178,7 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
 	const { id } = await params;
 	try {
-		const actor = await requireAuth(MANAGER_ROLES);
+		const actor = await requireAuth(MANAGER_AREAS);
 
 		const body = (await request.json()) as { action?: string };
 		if (body.action !== "reactivate") {
@@ -159,9 +188,10 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 			);
 		}
 
-		const existing = await prisma.user.findUnique({ where: { id } });
+		const existing = await loadTarget(id);
 		if (!existing) return notFound();
-		if (!canMutateTarget(actor, existing, "reactivate")) return notFound();
+		if (!canMutateTarget(actor, toTarget(existing), "reactivate"))
+			return notFound();
 
 		const reactivated = await prisma.user.update({
 			where: { id },

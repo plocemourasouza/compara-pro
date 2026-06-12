@@ -199,7 +199,6 @@ export async function POST(request: Request) {
 					email: data.userEmail,
 					name: data.userName,
 					phone: data.userPhone?.trim() || null,
-					role: "CLIENT",
 					companyId: client.id,
 					password: null,
 					activationCodeHash: await hashActivationCode(code),

@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { areaOf } from "@/lib/area";
 import { verifyToken } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
@@ -21,7 +22,6 @@ export async function getCurrentUser() {
 				email: true,
 				phone: true,
 				avatarUrl: true,
-				role: true,
 				preferences: true,
 				company: {
 					select: {
@@ -33,7 +33,9 @@ export async function getCurrentUser() {
 			},
 		});
 
-		return user;
+		if (!user) return null;
+		// Área derivada de company.type (fonte única). Anexada p/ uso direto.
+		return { ...user, area: areaOf(user) };
 	} catch (error) {
 		console.error("Get current user error:", error);
 		return null;
@@ -50,14 +52,14 @@ export class AuthError extends Error {
 	}
 }
 
-export async function requireAuth(allowedRoles?: string[]) {
+export async function requireAuth(allowedAreas?: string[]) {
 	const user = await getCurrentUser();
 
 	if (!user) {
 		throw new AuthError("Usuário não autenticado", 401);
 	}
 
-	if (allowedRoles && !allowedRoles.includes(user.role)) {
+	if (allowedAreas && !allowedAreas.includes(user.area)) {
 		throw new AuthError("Acesso negado", 403);
 	}
 

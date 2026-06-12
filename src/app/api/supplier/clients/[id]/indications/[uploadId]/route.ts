@@ -20,7 +20,7 @@ export async function GET(
 		// o solicitado (se representado) ou o primeiro representado que carrega o
 		// cliente. Admin precisa informar o fornecedor explicitamente.
 		let supplierCompanyId: string | null = null;
-		if (user.role === "ADMIN") {
+		if (user.area === "ADMIN") {
 			supplierCompanyId = requested;
 		} else if (requested && supplierIds.includes(requested)) {
 			supplierCompanyId = requested;
@@ -39,7 +39,7 @@ export async function GET(
 		}
 
 		// Cliente precisa estar na carteira do fornecedor escolhido.
-		if (user.role !== "ADMIN") {
+		if (user.area !== "ADMIN") {
 			const link = await prisma.supplierClient.findUnique({
 				where: {
 					supplierCompanyId_clientCompanyId: {

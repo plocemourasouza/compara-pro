@@ -9,7 +9,7 @@ export default async function ProductsPage() {
 		redirect("/auth/login");
 	}
 
-	if (user.role !== "ADMIN" && user.role !== "REPRESENTATIVE") {
+	if (user.area !== "ADMIN" && user.area !== "REPRESENTATIVE") {
 		redirect("/dashboard");
 	}
 

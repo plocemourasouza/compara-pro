@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { UserForm } from "@/components/shared/user-form";
+import { areaOf } from "@/lib/area";
 import { getCurrentUser } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
 import type { UserFormValues } from "@/lib/validations/user";
@@ -15,7 +16,7 @@ export default async function EditSupplierUserPage({
 	const { id } = await params;
 	const user = await getCurrentUser();
 	if (!user) redirect("/auth/login");
-	if (user.role !== "ADMIN" && user.role !== "REPRESENTATIVE") {
+	if (user.area !== "ADMIN" && user.area !== "REPRESENTATIVE") {
 		redirect("/client");
 	}
 
@@ -25,15 +26,15 @@ export default async function EditSupplierUserPage({
 			name: true,
 			email: true,
 			phone: true,
-			role: true,
 			companyId: true,
+			company: { select: { type: true } },
 		},
 	});
 
 	// Só representantes; autoatendimento limitado à própria empresa.
 	if (!target) notFound();
-	if (target.role !== "REPRESENTATIVE") notFound();
-	if (user.role !== "ADMIN" && target.companyId !== user.company?.id) {
+	if (areaOf(target) !== "REPRESENTATIVE") notFound();
+	if (user.area !== "ADMIN" && target.companyId !== user.company?.id) {
 		notFound();
 	}
 
@@ -44,7 +45,7 @@ export default async function EditSupplierUserPage({
 		role: "REPRESENTATIVE",
 	};
 
-	const isAdmin = user.role === "ADMIN";
+	const isAdmin = user.area === "ADMIN";
 
 	return (
 		<div className="space-y-6">

@@ -110,7 +110,7 @@ async function makeCompanyWithUser({ name, type, cnpj, email }) {
 			email,
 			name: `Usuário ${name}`,
 			password: await bcrypt.hash("demo1234", 12),
-			role: type === "SUPPLIER" ? "REPRESENTATIVE" : "CLIENT",
+			// helper usado só para empresas-cliente (fornecedores não têm login).
 			companyId: company.id,
 		},
 	});
@@ -154,7 +154,6 @@ const daysAgo = (n) => new Date(Date.now() - n * 86_400_000);
 				email: "admin@demo.com",
 				name: "Admin Demo",
 				password: await bcrypt.hash("demo1234", 12),
-				role: "ADMIN",
 			},
 		});
 
@@ -191,20 +190,28 @@ const daysAgo = (n) => new Date(Date.now() - n * 86_400_000);
 			{ code: "PAP-A4", name: "Papel A4 Sulfite", price: 18.5 },
 		]);
 
-		// Representante comercial que representa Alfa E Beta (login do painel).
-		const rep = await prisma.user.create({
+		// Agência de representação = conta (com login) que representa Alfa E Beta.
+		// Fornecedores Alfa/Beta não têm login próprio; quem opera é a agência.
+		const agency = await prisma.company.create({
+			data: {
+				name: "Agência Representação Demo",
+				type: "REPRESENTATIVE",
+				cnpj: "55555555000155",
+				email: "agencia@demo.com",
+			},
+		});
+		await prisma.user.create({
 			data: {
 				email: "representante@demo.com",
 				name: "Representante Demo",
 				password: await bcrypt.hash("demo1234", 12),
-				role: "REPRESENTATIVE",
-				companyId: alfa.id, // fornecedor primário
+				companyId: agency.id,
 			},
 		});
 		await prisma.representativeSupplier.createMany({
 			data: [
-				{ representativeId: rep.id, supplierCompanyId: alfa.id },
-				{ representativeId: rep.id, supplierCompanyId: beta.id },
+				{ representativeCompanyId: agency.id, supplierCompanyId: alfa.id },
+				{ representativeCompanyId: agency.id, supplierCompanyId: beta.id },
 			],
 			skipDuplicates: true,
 		});

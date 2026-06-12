@@ -34,10 +34,10 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
 
 		// Admin vê qualquer pré-pedido; cliente só os da própria empresa;
 		// representante só os de fornecedores que representa.
-		if (user.role === "CLIENT" && preOrder.clientId !== user.company?.id) {
+		if (user.area === "CLIENT" && preOrder.clientId !== user.company?.id) {
 			return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
 		}
-		if (user.role === "REPRESENTATIVE") {
+		if (user.area === "REPRESENTATIVE") {
 			const ids = await getRepresentedSupplierIds(user);
 			if (!ids.includes(preOrder.supplierId)) {
 				return NextResponse.json({ error: "Acesso negado" }, { status: 403 });

@@ -7,7 +7,7 @@ import AddClientForm from "./add-client-form";
 export default async function NewSupplierClientPage() {
 	const user = await requireAuth();
 
-	if (user.role !== "REPRESENTATIVE") {
+	if (user.area !== "REPRESENTATIVE") {
 		redirect("/supplier");
 	}
 

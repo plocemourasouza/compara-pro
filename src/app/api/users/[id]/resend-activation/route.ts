@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { areaOf } from "@/lib/area";
 import {
 	activationExpiry,
 	buildActivationLink,
@@ -25,12 +26,19 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
 				id: true,
 				email: true,
 				password: true,
-				role: true,
 				companyId: true,
+				company: { select: { type: true } },
 			},
 		});
 		// Fora de escopo → 404 (não vaza existência).
-		if (!target || !canMutateTarget(actor, target, "resend")) {
+		if (
+			!target ||
+			!canMutateTarget(
+				actor,
+				{ id: target.id, area: areaOf(target), companyId: target.companyId },
+				"resend",
+			)
+		) {
 			return NextResponse.json(
 				{ error: "Usuário não encontrado" },
 				{ status: 404 },

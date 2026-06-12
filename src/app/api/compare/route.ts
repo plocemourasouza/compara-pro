@@ -53,7 +53,7 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
 		cache.users.set(userCacheKey, user, 15 * 60 * 1000);
 	}
 
-	if (!user.company || user.role !== "CLIENT") {
+	if (!user.company || user.area !== "CLIENT") {
 		throw createAuthError(
 			"insufficient",
 			{ requiredRole: "CLIENT" },

@@ -6,42 +6,50 @@ export async function GET() {
 	try {
 		await requireAuth(["ADMIN"]);
 
-		// Buscar métricas de usuários
-		const [totalUsers, activeUsers, usersByRole, usersByRoleTotal] =
-			await Promise.all([
-				prisma.user.count(),
-				prisma.user.count({ where: { deletedAt: null } }),
-				prisma.user.groupBy({
-					by: ["role"],
-					_count: { role: true },
-					where: { deletedAt: null },
-				}),
-				prisma.user.groupBy({ by: ["role"], _count: { role: true } }),
-			]);
+		// Métricas de usuários por ÁREA (= company.type; admin = sem empresa).
+		const [
+			totalUsers,
+			activeUsers,
+			adminActive,
+			adminTotal,
+			repActive,
+			repTotal,
+			cliActive,
+			cliTotal,
+		] = await Promise.all([
+			prisma.user.count(),
+			prisma.user.count({ where: { deletedAt: null } }),
+			prisma.user.count({ where: { companyId: null, deletedAt: null } }),
+			prisma.user.count({ where: { companyId: null } }),
+			prisma.user.count({
+				where: { company: { type: "REPRESENTATIVE" }, deletedAt: null },
+			}),
+			prisma.user.count({ where: { company: { type: "REPRESENTATIVE" } } }),
+			prisma.user.count({
+				where: { company: { type: "CLIENT" }, deletedAt: null },
+			}),
+			prisma.user.count({ where: { company: { type: "CLIENT" } } }),
+		]);
 
-		const roleActive = (r: string) =>
-			usersByRole.find((u) => u.role === r)?._count.role || 0;
-		const roleTotal = (r: string) =>
-			usersByRoleTotal.find((u) => u.role === r)?._count.role || 0;
-		const roleStat = (r: string) => {
-			const total = roleTotal(r);
-			const active = roleActive(r);
-			return { total, active, inactive: total - active };
-		};
+		const stat = (active: number, total: number) => ({
+			total,
+			active,
+			inactive: total - active,
+		});
 
 		const usersMetrics = {
 			total: totalUsers,
 			active: activeUsers,
 			inactive: totalUsers - activeUsers,
 			byRole: {
-				admin: roleActive("ADMIN"),
-				supplier: roleActive("REPRESENTATIVE"),
-				client: roleActive("CLIENT"),
+				admin: adminActive,
+				supplier: repActive,
+				client: cliActive,
 			},
 			roleBreakdown: {
-				admin: roleStat("ADMIN"),
-				supplier: roleStat("REPRESENTATIVE"),
-				client: roleStat("CLIENT"),
+				admin: stat(adminActive, adminTotal),
+				supplier: stat(repActive, repTotal),
+				client: stat(cliActive, cliTotal),
 			},
 		};
 

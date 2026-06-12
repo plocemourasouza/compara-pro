@@ -17,11 +17,11 @@ export default async function EditSupplierProductPage({
 		redirect("/auth/login");
 	}
 
-	if (user.role !== "ADMIN" && user.role !== "REPRESENTATIVE") {
+	if (user.area !== "ADMIN" && user.area !== "REPRESENTATIVE") {
 		redirect("/dashboard");
 	}
 
-	const isAdmin = user.role === "ADMIN";
+	const isAdmin = user.area === "ADMIN";
 	const representedIds = isAdmin ? [] : await getRepresentedSupplierIds(user);
 
 	const product = await prisma.product.findFirst({

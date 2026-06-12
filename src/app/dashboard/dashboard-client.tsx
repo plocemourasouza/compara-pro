@@ -10,7 +10,7 @@ type User = {
 	id: string;
 	name: string;
 	email: string;
-	role: string;
+	area: string;
 	company: {
 		id: string;
 		name: string;
@@ -51,9 +51,9 @@ export default function DashboardClient({ user }: { user: User }) {
 					</p>
 				</div>
 				<Badge variant="outline" className="text-sm">
-					{user.role === "ADMIN"
+					{user.area === "ADMIN"
 						? "Administrador"
-						: user.role === "REPRESENTATIVE"
+						: user.area === "REPRESENTATIVE"
 							? "Representante"
 							: "Cliente"}
 				</Badge>
@@ -62,10 +62,10 @@ export default function DashboardClient({ user }: { user: User }) {
 			{/* Stats Cards */}
 			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 				{/* Redireciona conforme o perfil do usuário */}
-				{user.role === "REPRESENTATIVE" && redirect("/supplier")}
-				{user.role === "CLIENT" && redirect("/client")}
+				{user.area === "REPRESENTATIVE" && redirect("/supplier")}
+				{user.area === "CLIENT" && redirect("/client")}
 
-				{user.role === "ADMIN" && (
+				{user.area === "ADMIN" && (
 					<>
 						<Link href="/admin">
 							<Card>

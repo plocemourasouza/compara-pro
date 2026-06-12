@@ -181,17 +181,20 @@ async function main() {
 		},
 	];
 	for (const r of repSpecs) {
-		const u = await prisma.user.create({
+		// Cada representante é uma agência (conta) que representa N fornecedores.
+		const agency = await prisma.company.create({
+			data: { name: `${r.name} (Agência)`, type: "REPRESENTATIVE" },
+		});
+		await prisma.user.create({
 			data: {
 				email: r.email,
 				name: r.name,
 				password: repPass,
-				role: "REPRESENTATIVE",
-				companyId: r.primary.id,
+				companyId: agency.id,
 			},
 		});
 		const links = [r.primary, ...r.also].map((c) => ({
-			representativeId: u.id,
+			representativeCompanyId: agency.id,
 			supplierCompanyId: c.id,
 		}));
 		await prisma.representativeSupplier.createMany({
@@ -251,7 +254,6 @@ async function main() {
 				email: `${spec.name.replace(/\s+/g, "").toLowerCase()}@demo.com`,
 				name: `Comprador ${spec.name}`,
 				password: clientPass,
-				role: "CLIENT",
 				companyId: company.id,
 			},
 		});
@@ -554,22 +556,29 @@ async function main() {
 		],
 	});
 
-	// Usuários inativos (soft-delete) p/ exibir "inativos" nos cards de papel.
+	// Usuários inativos (soft-delete) p/ exibir "inativos" nos cards. Cada um numa
+	// empresa do tipo correto (agência p/ rep, cliente p/ cliente) — coerente com
+	// o modelo "área = company.type".
+	const inativaAgency = await prisma.company.create({
+		data: { name: "Agência Inativa", type: "REPRESENTATIVE" },
+	});
+	const inativaClient = await prisma.company.create({
+		data: { name: "Cliente Inativo Ltda", type: "CLIENT" },
+	});
 	await prisma.user.createMany({
 		data: [
 			{
 				email: "rep.inativo@demo.com",
 				name: "Rep Inativo",
 				password: repPass,
-				role: "REPRESENTATIVE",
-				companyId: gama.company.id,
+				companyId: inativaAgency.id,
 				deletedAt: daysAgo(3),
 			},
 			{
 				email: "cliente.inativo@demo.com",
 				name: "Cliente Inativo",
 				password: clientPass,
-				role: "CLIENT",
+				companyId: inativaClient.id,
 				deletedAt: daysAgo(5),
 			},
 		],

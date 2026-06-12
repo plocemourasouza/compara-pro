@@ -58,6 +58,13 @@ export async function GET() {
 export async function POST(request: Request) {
 	try {
 		const user = await requireAuth(["REPRESENTATIVE"]);
+		const agencyId = user.company?.id;
+		if (!agencyId) {
+			return NextResponse.json(
+				{ error: "Representante sem agência associada" },
+				{ status: 400 },
+			);
+		}
 
 		const parsed = supplierCompanySchema.safeParse(await request.json());
 		if (!parsed.success) {
@@ -94,16 +101,19 @@ export async function POST(request: Request) {
 			});
 		}
 
-		// Vínculo idempotente representante ↔ fornecedor.
+		// Vínculo idempotente agência ↔ fornecedor.
 		await prisma.representativeSupplier.upsert({
 			where: {
-				representativeId_supplierCompanyId: {
-					representativeId: user.id,
+				representativeCompanyId_supplierCompanyId: {
+					representativeCompanyId: agencyId,
 					supplierCompanyId: company.id,
 				},
 			},
 			update: {},
-			create: { representativeId: user.id, supplierCompanyId: company.id },
+			create: {
+				representativeCompanyId: agencyId,
+				supplierCompanyId: company.id,
+			},
 		});
 
 		return NextResponse.json(

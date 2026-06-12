@@ -16,7 +16,7 @@ export default async function EditProductPage({
 		redirect("/auth/login");
 	}
 
-	if (user.role !== "ADMIN") {
+	if (user.area !== "ADMIN") {
 		redirect("/dashboard");
 	}
 

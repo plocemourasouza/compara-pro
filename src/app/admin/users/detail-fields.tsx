@@ -19,8 +19,8 @@ export const userDetailSections: DetailSection<UserData>[] = [
 			{
 				label: "Papel",
 				value: (u) => (
-					<Badge className={getRoleBadgeColor(u.role)}>
-						{getRoleLabel(u.role)}
+					<Badge className={getRoleBadgeColor(u.area)}>
+						{getRoleLabel(u.area)}
 					</Badge>
 				),
 			},

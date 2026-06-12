@@ -12,11 +12,11 @@ export default async function NewSupplierProductPage() {
 		redirect("/auth/login");
 	}
 
-	if (user.role !== "ADMIN" && user.role !== "REPRESENTATIVE") {
+	if (user.area !== "ADMIN" && user.area !== "REPRESENTATIVE") {
 		redirect("/dashboard");
 	}
 
-	const isAdmin = user.role === "ADMIN";
+	const isAdmin = user.area === "ADMIN";
 	const companies = isAdmin
 		? await prisma.company.findMany({
 				where: { deletedAt: null },

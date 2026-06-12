@@ -25,7 +25,7 @@ export async function GET(
 		const supplierIds = await getRepresentedSupplierIds(user);
 
 		const links = await carteiraLinks(supplierIds, id);
-		if (links.length === 0 && user.role !== "ADMIN") {
+		if (links.length === 0 && user.area !== "ADMIN") {
 			return NextResponse.json(
 				{ error: "Cliente não está na sua carteira" },
 				{ status: 404 },

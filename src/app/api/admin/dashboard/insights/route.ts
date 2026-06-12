@@ -108,9 +108,9 @@ export async function GET() {
 			}),
 			prisma.representativeSupplier.findMany({
 				select: {
-					representativeId: true,
+					representativeCompanyId: true,
 					supplierCompanyId: true,
-					representative: { select: { name: true } },
+					representativeCompany: { select: { name: true } },
 				},
 			}),
 			prisma.preOrder.groupBy({
@@ -170,7 +170,7 @@ export async function GET() {
 		const activeListReps = new Set(
 			repLinks
 				.filter((l) => activeListSupplierIds.has(l.supplierCompanyId))
-				.map((l) => l.representativeId),
+				.map((l) => l.representativeCompanyId),
 		).size;
 
 		// Top representantes — valor finalizado por empresa fornecedora reatribuído
@@ -185,12 +185,12 @@ export async function GET() {
 		for (const link of repLinks) {
 			const supplierValue = valueBySupplier.get(link.supplierCompanyId) || 0;
 			if (supplierValue === 0) continue;
-			const entry = repAgg.get(link.representativeId) ?? {
-				name: link.representative?.name || "Representante",
+			const entry = repAgg.get(link.representativeCompanyId) ?? {
+				name: link.representativeCompany?.name || "Representante",
 				value: 0,
 			};
 			entry.value += supplierValue;
-			repAgg.set(link.representativeId, entry);
+			repAgg.set(link.representativeCompanyId, entry);
 		}
 		const topRepresentatives = [...repAgg.entries()]
 			.map(([representativeId, v]) => ({

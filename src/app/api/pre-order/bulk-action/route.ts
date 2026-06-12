@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
 			return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
 		}
 
-		if (user.role !== "REPRESENTATIVE") {
+		if (user.area !== "REPRESENTATIVE") {
 			return NextResponse.json(
 				{ error: "Apenas representantes podem responder pré-pedidos" },
 				{ status: 403 },

@@ -9,7 +9,7 @@ export default async function UsersPage() {
 		redirect("/auth/login");
 	}
 
-	if (user.role !== "ADMIN") {
+	if (user.area !== "ADMIN") {
 		redirect("/dashboard");
 	}
 

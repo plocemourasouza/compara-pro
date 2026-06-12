@@ -13,7 +13,7 @@ export type AccessRole = "ADMIN" | "REPRESENTATIVE" | "CLIENT";
 /** Subset do usuário autenticado (espelha getCurrentUser / ScopeUser). */
 export type Actor = {
 	id: string;
-	role: string;
+	area: string;
 	company?: { id: string } | null;
 };
 
@@ -32,10 +32,10 @@ export function resolveUserListScope(
 	actor: Actor,
 	sessionRole: AccessRole,
 ): ListScope {
-	if (actor.role === "ADMIN") return { role: sessionRole };
-	if (actor.role !== sessionRole) return { forbidden: true };
+	if (actor.area === "ADMIN") return { role: sessionRole };
+	if (actor.area !== sessionRole) return { forbidden: true };
 	return {
-		role: actor.role as AccessRole,
+		role: actor.area as AccessRole,
 		companyId: actor.company?.id ?? "__none__",
 	};
 }
@@ -74,7 +74,7 @@ export function sanitizeUserCreate(
 	input: CreateInput,
 	sessionRole: AccessRole,
 ): CreateDecision {
-	if (actor.role === "ADMIN") {
+	if (actor.area === "ADMIN") {
 		return {
 			ok: true,
 			role: (input.role as AccessRole) ?? sessionRole,
@@ -83,9 +83,9 @@ export function sanitizeUserCreate(
 		};
 	}
 
-	if (actor.role !== sessionRole)
+	if (actor.area !== sessionRole)
 		return { ok: false, reason: "forbidden_area" };
-	if (input.role && input.role !== actor.role) {
+	if (input.role && input.role !== actor.area) {
 		return { ok: false, reason: "role_escalation" };
 	}
 	if (!actor.company?.id) return { ok: false, reason: "no_company" };
@@ -95,7 +95,7 @@ export function sanitizeUserCreate(
 
 	return {
 		ok: true,
-		role: actor.role as AccessRole,
+		role: actor.area as AccessRole,
 		companyId: actor.company.id,
 		allowCompanyAutoCreate: false,
 	};
@@ -104,7 +104,7 @@ export function sanitizeUserCreate(
 export type MutationOp = "update" | "deactivate" | "reactivate" | "resend";
 export type MutationTarget = {
 	id: string;
-	role: string;
+	area: string;
 	companyId?: string | null;
 };
 
@@ -120,9 +120,9 @@ export function canMutateTarget(
 	op: MutationOp,
 ): boolean {
 	if (op === "deactivate" && target.id === actor.id) return false;
-	if (actor.role === "ADMIN") return true;
-	if (target.role === "ADMIN") return false;
-	if (target.role !== actor.role) return false;
+	if (actor.area === "ADMIN") return true;
+	if (target.area === "ADMIN") return false;
+	if (target.area !== actor.area) return false;
 	return !!actor.company?.id && target.companyId === actor.company.id;
 }
 
@@ -134,7 +134,7 @@ export function lockUpdateFields<T extends Record<string, unknown>>(
 	actor: Actor,
 	data: T,
 ): Partial<T> {
-	if (actor.role === "ADMIN") return data;
+	if (actor.area === "ADMIN") return data;
 	const { role: _role, companyId: _companyId, ...rest } = data;
 	return rest as Partial<T>;
 }

@@ -22,7 +22,7 @@ type User = {
 	id: string;
 	name: string;
 	email: string;
-	role: string;
+	area: string;
 	company: { id: string; name: string; type: string } | null;
 };
 

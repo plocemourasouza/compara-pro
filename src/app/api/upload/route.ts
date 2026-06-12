@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
 		let validUploadType: "SUPPLIER_PRODUCTS" | "CLIENT_REQUIREMENTS";
 		let ownerCompanyId: string;
 
-		if (user.role === "REPRESENTATIVE" && uploadType === "SUPPLIER_PRODUCTS") {
+		if (user.area === "REPRESENTATIVE" && uploadType === "SUPPLIER_PRODUCTS") {
 			validUploadType = "SUPPLIER_PRODUCTS";
 			// O representante escolhe de qual fornecedor é a lista de preços.
 			const supplierCompanyId = formData.get("supplierCompanyId") as
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
 				);
 			}
 			ownerCompanyId = supplierCompanyId;
-		} else if (user.role === "CLIENT" && uploadType === "CLIENT_REQUIREMENTS") {
+		} else if (user.area === "CLIENT" && uploadType === "CLIENT_REQUIREMENTS") {
 			validUploadType = "CLIENT_REQUIREMENTS";
 			if (!user.company) {
 				return NextResponse.json(
@@ -156,7 +156,7 @@ export async function GET(request: NextRequest) {
 		// Verify ownership: client owns its company's upload; representative owns
 		// uploads of any represented supplier.
 		const owns =
-			user.role === "REPRESENTATIVE"
+			user.area === "REPRESENTATIVE"
 				? (await getRepresentedSupplierIds(user)).includes(upload.companyId)
 				: upload.companyId === user.company?.id;
 		if (!owns) {

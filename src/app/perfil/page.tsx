@@ -14,7 +14,7 @@ export default async function PerfilPage() {
 				email: user.email,
 				phone: user.phone ?? "",
 				avatarUrl: user.avatarUrl ?? null,
-				role: user.role,
+				area: user.area,
 				company: user.company?.name ?? null,
 			}}
 		/>

@@ -7,8 +7,8 @@ export const dynamic = "force-dynamic";
 export default async function ClientUsersPage() {
 	const user = await getCurrentUser();
 	if (!user) redirect("/auth/login");
-	if (user.role !== "ADMIN" && user.role !== "CLIENT") {
-		redirect(user.role === "REPRESENTATIVE" ? "/supplier" : "/admin");
+	if (user.area !== "ADMIN" && user.area !== "CLIENT") {
+		redirect(user.area === "REPRESENTATIVE" ? "/supplier" : "/admin");
 	}
 
 	return (
@@ -17,7 +17,7 @@ export default async function ClientUsersPage() {
 			basePath="/client/usuarios"
 			title="Usuários"
 			subtitle={
-				user.role === "ADMIN"
+				user.area === "ADMIN"
 					? "Gerencie os clientes do sistema"
 					: "Gerencie a equipe da sua empresa"
 			}
