@@ -20,7 +20,9 @@ test("admin carrega detalhe do upload sem erro", async ({ page }) => {
 	const dialog = page.getByRole("dialog");
 	await expect(dialog).toBeVisible();
 	// Detalhe carregou: mostra "Estatísticas" e NÃO a mensagem de erro.
-	await expect(dialog.getByText("Estatísticas")).toBeVisible({
+	await expect(
+		dialog.getByRole("heading", { name: "Estatísticas" }),
+	).toBeVisible({
 		timeout: 10_000,
 	});
 	await expect(
