@@ -79,18 +79,8 @@ async function makeCatalog(companyId, items) {
 			lastUploadId: upload.id,
 		})),
 	});
-	await prisma.uploadedProduct.createMany({
-		data: items.map((p, i) => ({
-			uploadId: upload.id,
-			originalRow: i + 2,
-			sku: p.sku ?? null,
-			code: p.code ?? null,
-			name: p.name,
-			price: p.price ?? null,
-			quantity: p.quantity ?? null,
-			unit: "UN",
-		})),
-	});
+	// F6: fornecedor NÃO grava staging UploadedProduct — o catálogo `products`
+	// (acima, com lastUploadId) é a fonte única; o detalhe do upload lê dele.
 	return upload;
 }
 

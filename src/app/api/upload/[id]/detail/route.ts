@@ -46,6 +46,27 @@ export async function GET(
 			);
 		}
 
+		// Upload de fornecedor: produtos vêm do CATÁLOGO (`products` por lastUploadId),
+		// não mais do staging UploadedProduct (F6 — staging supplier descontinuado).
+		// Client mantém o staging (guarda targetPrice/quantity).
+		const { products: stagingProducts, ...uploadRest } = upload;
+		const products =
+			upload.uploadType === "SUPPLIER_PRODUCTS"
+				? await prisma.product.findMany({
+						where: { lastUploadId: upload.id, deletedAt: null },
+						take: 50,
+						select: {
+							id: true,
+							sku: true,
+							code: true,
+							name: true,
+							price: true,
+							category: true,
+							unit: true,
+						},
+					})
+				: stagingProducts;
+
 		// Simular erros (em uma implementação real, isso viria de uma tabela de erros)
 		const errors =
 			upload.errorRows > 0
@@ -60,7 +81,8 @@ export async function GET(
 
 		return NextResponse.json({
 			upload: {
-				...upload,
+				...uploadRest,
+				products,
 				errors,
 			},
 		});
