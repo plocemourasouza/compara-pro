@@ -12,6 +12,7 @@ import {
 	Settings,
 	ShoppingCart,
 	Upload,
+	UserCog,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -63,6 +64,7 @@ const navigation: Array<{
 		icon: Bell,
 		badgeKey: "unread",
 	},
+	{ name: "Usuários", href: "/client/usuarios", icon: UserCog },
 	{ name: "Configurações", href: "/client/settings", icon: Settings },
 ];
 

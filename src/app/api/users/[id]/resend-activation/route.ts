@@ -8,20 +8,29 @@ import {
 import { AuthError, requireAuth } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
 import { sendNotificationEmail } from "@/lib/email/mailer";
+import { canMutateTarget } from "@/lib/services/user-access";
 
 type RouteParams = { params: Promise<{ id: string }> };
 
-// POST /api/users/[id]/resend-activation — regenera o código de primeiro acesso (ADMIN).
+// POST /api/users/[id]/resend-activation — regenera o código de primeiro acesso.
+// ADMIN (global) ou gestor da própria equipe (escopo via canMutateTarget).
 export async function POST(_request: NextRequest, { params }: RouteParams) {
 	const { id } = await params;
 	try {
-		await requireAuth(["ADMIN"]);
+		const actor = await requireAuth(["ADMIN", "REPRESENTATIVE", "CLIENT"]);
 
 		const target = await prisma.user.findUnique({
 			where: { id },
-			select: { id: true, email: true, password: true },
+			select: {
+				id: true,
+				email: true,
+				password: true,
+				role: true,
+				companyId: true,
+			},
 		});
-		if (!target) {
+		// Fora de escopo → 404 (não vaza existência).
+		if (!target || !canMutateTarget(actor, target, "resend")) {
 			return NextResponse.json(
 				{ error: "Usuário não encontrado" },
 				{ status: 404 },

@@ -4,29 +4,35 @@ import { getCurrentUser } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
 import type { UserFormValues } from "@/lib/validations/user";
 
-export default async function EditUserPage({
+export const dynamic = "force-dynamic";
+
+export default async function EditClientUserPage({
 	params,
 }: {
 	params: Promise<{ id: string }>;
 }) {
 	const { id } = await params;
 	const user = await getCurrentUser();
-
-	if (!user) {
-		redirect("/auth/login");
-	}
-
-	if (user.role !== "ADMIN") {
-		redirect("/dashboard");
+	if (!user) redirect("/auth/login");
+	if (user.role !== "ADMIN" && user.role !== "CLIENT") {
+		redirect(user.role === "REPRESENTATIVE" ? "/supplier" : "/admin");
 	}
 
 	const target = await prisma.user.findUnique({
 		where: { id },
-		select: { name: true, email: true, phone: true, role: true },
+		select: {
+			name: true,
+			email: true,
+			phone: true,
+			role: true,
+			companyId: true,
+		},
 	});
 
-	// /admin/users gerencia apenas ADMINs (representantes/clientes têm sessão própria).
-	if (target?.role !== "ADMIN") {
+	// Só clientes; autoatendimento limitado à própria empresa.
+	if (!target) notFound();
+	if (target.role !== "CLIENT") notFound();
+	if (user.role !== "ADMIN" && target.companyId !== user.company?.id) {
 		notFound();
 	}
 
@@ -34,7 +40,7 @@ export default async function EditUserPage({
 		name: target.name,
 		email: target.email,
 		phone: target.phone ?? "",
-		role: "ADMIN",
+		role: "CLIENT",
 	};
 
 	return (
@@ -42,9 +48,9 @@ export default async function EditUserPage({
 			mode="edit"
 			userId={id}
 			defaultValues={defaultValues}
-			scopeRole="ADMIN"
-			actorIsAdmin
-			returnTo="/admin/users"
+			scopeRole="CLIENT"
+			actorIsAdmin={user.role === "ADMIN"}
+			returnTo="/client/usuarios"
 		/>
 	);
 }

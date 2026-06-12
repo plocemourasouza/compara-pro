@@ -22,20 +22,20 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import type { AccessRole } from "@/lib/services/user-access";
 import { masks } from "@/lib/utils/masks";
 import {
 	createUserFormSchema,
 	type UserFormValues,
 	updateUserFormSchema,
 } from "@/lib/validations/user";
+
+const ROLE_LABELS: Record<AccessRole, string> = {
+	ADMIN: "Administrador",
+	REPRESENTATIVE: "Representante",
+	CLIENT: "Cliente",
+};
 
 const EMPTY_DEFAULTS: UserFormValues = {
 	name: "",
@@ -49,36 +49,58 @@ interface UserFormProps {
 	mode: "create" | "edit";
 	userId?: string;
 	defaultValues?: Partial<UserFormValues>;
+	/** Papel da área/sessão — implícito (sem dropdown). */
+	scopeRole: AccessRole;
+	/** Ator é ADMIN? Define se o campo Empresa aparece (admin precisa informar). */
+	actorIsAdmin: boolean;
+	/** Rota de volta após salvar/cancelar. */
+	returnTo: string;
 }
 
-export function UserForm({ mode, userId, defaultValues }: UserFormProps) {
+export function UserForm({
+	mode,
+	userId,
+	defaultValues,
+	scopeRole,
+	actorIsAdmin,
+	returnTo,
+}: UserFormProps) {
 	const router = useRouter();
 	const isEdit = mode === "edit";
 	const form = useForm<UserFormValues>({
 		resolver: zodResolver(
 			isEdit ? updateUserFormSchema : createUserFormSchema,
 		) as Resolver<UserFormValues>,
-		defaultValues: { ...EMPTY_DEFAULTS, ...defaultValues },
+		defaultValues: { ...EMPTY_DEFAULTS, role: scopeRole, ...defaultValues },
 	});
 
-	const role = form.watch("role");
+	// Empresa só quando ADMIN cria não-admin (admin não tem empresa própria).
+	// Representante/cliente em autoatendimento: empresa = a própria (implícita).
+	const showCompanyField = !isEdit && actorIsAdmin && scopeRole !== "ADMIN";
 
 	const onSubmit = async (values: UserFormValues) => {
-		const url = isEdit ? `/api/users/${userId}` : "/api/users";
+		// Admin criando não-admin: empresa é obrigatória (admin não tem própria).
+		if (showCompanyField && !values.companyName?.trim()) {
+			form.setError("companyName", { message: "Empresa é obrigatória" });
+			return;
+		}
+
+		const url = isEdit
+			? `/api/users/${userId}`
+			: `/api/users?scopeRole=${scopeRole}`;
 		const method = isEdit ? "PUT" : "POST";
 		const body = isEdit
 			? {
 					name: values.name,
 					email: values.email,
 					phone: values.phone,
-					role: values.role,
 				}
 			: {
 					name: values.name,
 					email: values.email,
 					phone: values.phone,
-					role: values.role,
-					...(values.role !== "ADMIN" && values.companyName
+					role: scopeRole,
+					...(showCompanyField && values.companyName
 						? { companyName: values.companyName }
 						: {}),
 				};
@@ -103,7 +125,7 @@ export function UserForm({ mode, userId, defaultValues }: UserFormProps) {
 						duration: 20000,
 					});
 				}
-				router.push("/admin/users");
+				router.push(returnTo);
 				router.refresh();
 				return;
 			}
@@ -206,31 +228,17 @@ export function UserForm({ mode, userId, defaultValues }: UserFormProps) {
 									</FormItem>
 								)}
 							/>
-							<FormField
-								control={form.control}
-								name="role"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>Papel *</FormLabel>
-										<Select value={field.value} onValueChange={field.onChange}>
-											<FormControl>
-												<SelectTrigger className="w-full">
-													<SelectValue />
-												</SelectTrigger>
-											</FormControl>
-											<SelectContent>
-												<SelectItem value="CLIENT">Cliente</SelectItem>
-												<SelectItem value="REPRESENTATIVE">
-													Representante
-												</SelectItem>
-												<SelectItem value="ADMIN">Administrador</SelectItem>
-											</SelectContent>
-										</Select>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-							{!isEdit && role !== "ADMIN" && (
+							{/* Papel é implícito pela sessão — somente leitura. */}
+							<div className="space-y-2">
+								<span className="text-sm font-medium leading-none">Papel</span>
+								<Input
+									value={ROLE_LABELS[scopeRole]}
+									disabled
+									readOnly
+									aria-label="Papel"
+								/>
+							</div>
+							{showCompanyField && (
 								<FormField
 									control={form.control}
 									name="companyName"
@@ -254,7 +262,7 @@ export function UserForm({ mode, userId, defaultValues }: UserFormProps) {
 						<Button
 							type="button"
 							variant="outline"
-							onClick={() => router.push("/admin/users")}
+							onClick={() => router.push(returnTo)}
 							disabled={isSubmitting}
 						>
 							Cancelar

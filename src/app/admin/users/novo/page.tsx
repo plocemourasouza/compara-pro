@@ -13,5 +13,12 @@ export default async function NewUserPage() {
 		redirect("/dashboard");
 	}
 
-	return <UserForm mode="create" />;
+	return (
+		<UserForm
+			mode="create"
+			scopeRole="ADMIN"
+			actorIsAdmin
+			returnTo="/admin/users"
+		/>
+	);
 }

@@ -12,9 +12,10 @@ test("admin cria usuário e usuário ativa no primeiro acesso", async ({
 	await page.getByRole("button", { name: /entrar/i }).click();
 	await page.waitForURL("**/admin", { timeout: 20_000 });
 
-	// Criar usuário (sem senha; com telefone)
+	// Criar usuário (sem senha; com telefone). Gestão de clientes vive na sessão
+	// do cliente — admin cria a partir de /client/usuarios (papel CLIENT implícito).
 	const email = `e2e-${Date.now()}@demo.com`;
-	await page.goto("/admin/users/novo");
+	await page.goto("/client/usuarios/novo");
 	await expect(
 		page.getByRole("heading", { level: 1, name: /criar novo usuário/i }),
 	).toBeVisible({ timeout: 15_000 });

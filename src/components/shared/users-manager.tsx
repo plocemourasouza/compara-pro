@@ -1,17 +1,13 @@
 "use client";
 
 import type { OnChangeFn, PaginationState } from "@tanstack/react-table";
-import {
-	Plus,
-	Search,
-	ShieldCheck,
-	UserCog,
-	UserRound,
-	Users,
-} from "lucide-react";
+import { Plus, Search, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { StatCard } from "@/app/admin/_dashboard/stat-card";
+import { getUsersColumns, type UserData } from "@/app/admin/users/columns";
+import { userDetailSections } from "@/app/admin/users/detail-fields";
 import { EntityDetailModal } from "@/components/shared/entity-detail-modal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -24,55 +20,40 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { StatCard } from "../_dashboard/stat-card";
-import { getUsersColumns, type UserData } from "./columns";
-import { userDetailSections } from "./detail-fields";
+import type { AccessRole } from "@/lib/services/user-access";
 
-type User = {
-	id: string;
-	name: string;
-	email: string;
-	role: string;
-	company: { id: string; name: string; type: string } | null;
-};
-
-interface UsersClientProps {
-	user: User;
+interface UsersManagerProps {
+	/** Papel da área (envia ?scopeRole; a API força papel/empresa por trás). */
+	scopeRole: AccessRole;
+	/** Base das rotas de novo/editar (ex.: "/supplier/usuarios"). */
+	basePath: string;
+	title: string;
+	subtitle: string;
 }
 
 interface UserFilters {
 	search: string;
-	role: string;
 	status: string;
 }
 
-const INITIAL_FILTERS: UserFilters = {
-	search: "",
-	role: "all",
-	status: "active",
-};
+const INITIAL_FILTERS: UserFilters = { search: "", status: "active" };
 
 interface UserStats {
 	total: number;
 	active: number;
 	inactive: number;
-	admins: number;
-	representatives: number;
-	clients: number;
 }
 
-const INITIAL_STATS: UserStats = {
-	total: 0,
-	active: 0,
-	inactive: 0,
-	admins: 0,
-	representatives: 0,
-	clients: 0,
-};
+const INITIAL_STATS: UserStats = { total: 0, active: 0, inactive: 0 };
 
 const ITEMS_PER_PAGE = 10;
 
-export default function UsersClient({ user: _user }: UsersClientProps) {
+export function UsersManager({
+	scopeRole,
+	basePath,
+	title,
+	subtitle,
+}: UsersManagerProps) {
 	const router = useRouter();
 	const [users, setUsers] = useState<UserData[]>([]);
 	const [loading, setLoading] = useState(true);
@@ -93,10 +74,10 @@ export default function UsersClient({ user: _user }: UsersClientProps) {
 		try {
 			setLoading(true);
 			const params = new URLSearchParams({
+				scopeRole,
 				page: page.toString(),
 				limit: ITEMS_PER_PAGE.toString(),
 				search: filters.search,
-				role: filters.role,
 				status: filters.status,
 			});
 
@@ -214,44 +195,26 @@ export default function UsersClient({ user: _user }: UsersClientProps) {
 
 	return (
 		<div className="space-y-6">
-			{/* Header */}
 			<div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
 				<div>
-					<h1 className="text-2xl font-bold tracking-tight">
-						Gestão de Usuários
-					</h1>
-					<p className="text-muted-foreground">
-						Gerencie todos os usuários do sistema
-					</p>
+					<h1 className="text-2xl font-bold tracking-tight">{title}</h1>
+					<p className="text-muted-foreground">{subtitle}</p>
 				</div>
-				<Button onClick={() => router.push("/admin/users/novo")}>
+				<Button onClick={() => router.push(`${basePath}/novo`)}>
 					<Plus className="mr-2 h-4 w-4" />
 					Novo Usuário
 				</Button>
 			</div>
 
-			{/* Indicadores */}
-			<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+			<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
 				<StatCard
 					title="Total de Usuários"
 					icon={Users}
 					value={stats.total}
 					hint={`${stats.active} ativos · ${stats.inactive} inativos`}
 				/>
-				<StatCard
-					title="Administradores"
-					icon={ShieldCheck}
-					value={stats.admins}
-				/>
-				<StatCard
-					title="Representantes"
-					icon={UserCog}
-					value={stats.representatives}
-				/>
-				<StatCard title="Clientes" icon={UserRound} value={stats.clients} />
 			</div>
 
-			{/* Tabela */}
 			<Card>
 				<CardContent className="pt-6">
 					<DataTable
@@ -277,22 +240,6 @@ export default function UsersClient({ user: _user }: UsersClientProps) {
 									/>
 								</div>
 								<Select
-									value={filters.role}
-									onValueChange={(value) => updateFilters({ role: value })}
-								>
-									<SelectTrigger className="w-full sm:w-44" aria-label="Papel">
-										<SelectValue />
-									</SelectTrigger>
-									<SelectContent>
-										<SelectItem value="all">Todos os papéis</SelectItem>
-										<SelectItem value="ADMIN">Administrador</SelectItem>
-										<SelectItem value="REPRESENTATIVE">
-											Representante
-										</SelectItem>
-										<SelectItem value="CLIENT">Cliente</SelectItem>
-									</SelectContent>
-								</Select>
-								<Select
 									value={filters.status}
 									onValueChange={(value) => updateFilters({ status: value })}
 								>
@@ -311,14 +258,13 @@ export default function UsersClient({ user: _user }: UsersClientProps) {
 				</CardContent>
 			</Card>
 
-			{/* Modal de Detalhes */}
 			<EntityDetailModal
 				open={detailOpen}
 				onOpenChange={setDetailOpen}
 				record={selectedUser}
 				title="Detalhes do Usuário"
 				sections={userDetailSections}
-				editHref={(u) => `/admin/users/${u.id}/editar`}
+				editHref={(u) => `${basePath}/${u.id}/editar`}
 			/>
 		</div>
 	);

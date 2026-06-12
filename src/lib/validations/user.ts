@@ -10,18 +10,15 @@ const phoneField = z
 	.refine((v) => validations.phone(v), "Telefone inválido");
 
 // Schema do formulário de criação (espelha o contrato de POST /api/users).
-export const createUserFormSchema = z
-	.object({
-		name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
-		email: z.string().email("Email inválido"),
-		phone: phoneField,
-		role: z.enum(userRoles),
-		companyName: z.string().optional().or(z.literal("")),
-	})
-	.refine((d) => d.role === "ADMIN" || !!d.companyName?.trim(), {
-		message: "Empresa é obrigatória para usuários não-admin",
-		path: ["companyName"],
-	});
+// Empresa é exigida apenas quando o campo é exibido (admin criando não-admin);
+// essa regra fica no UserForm (depende do ator), não no schema estático.
+export const createUserFormSchema = z.object({
+	name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
+	email: z.string().email("Email inválido"),
+	phone: phoneField,
+	role: z.enum(userRoles),
+	companyName: z.string().optional().or(z.literal("")),
+});
 
 // Schema do formulário de edição (espelha PUT /api/users/[id]).
 export const updateUserFormSchema = z.object({

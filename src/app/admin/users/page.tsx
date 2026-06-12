@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
+import { UsersManager } from "@/components/shared/users-manager";
 import { getCurrentUser } from "@/lib/auth-server";
-import UsersClient from "./users-client";
 
 export default async function UsersPage() {
 	const user = await getCurrentUser();
@@ -13,5 +13,14 @@ export default async function UsersPage() {
 		redirect("/dashboard");
 	}
 
-	return <UsersClient user={user} />;
+	// /admin/users gerencia apenas ADMINs. Representantes e clientes são geridos
+	// nas próprias sessões (/supplier/usuarios e /client/usuarios).
+	return (
+		<UsersManager
+			scopeRole="ADMIN"
+			basePath="/admin/users"
+			title="Administradores"
+			subtitle="Gerencie os administradores do sistema"
+		/>
+	);
 }

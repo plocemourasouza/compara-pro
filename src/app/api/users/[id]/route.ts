@@ -2,8 +2,13 @@ import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { AuthError, requireAuth } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
+import { canMutateTarget, lockUpdateFields } from "@/lib/services/user-access";
 
 type RouteParams = { params: Promise<{ id: string }> };
+
+// Papéis que podem gerenciar usuários: ADMIN (global) + REPRESENTATIVE/CLIENT
+// (autoatendimento — escopo aplicado por canMutateTarget/lockUpdateFields).
+const MANAGER_ROLES = ["ADMIN", "REPRESENTATIVE", "CLIENT"];
 
 const updateUserSchema = z.object({
 	name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres").optional(),
@@ -39,22 +44,23 @@ function handleError(error: unknown, label: string) {
 	);
 }
 
+const notFound = () =>
+	NextResponse.json({ error: "Usuário não encontrado" }, { status: 404 });
+
 // GET /api/users/[id]
 export async function GET(_request: NextRequest, { params }: RouteParams) {
 	const { id } = await params;
 	try {
-		await requireAuth(["ADMIN"]);
+		const actor = await requireAuth(MANAGER_ROLES);
 		const targetUser = await prisma.user.findUnique({
 			where: { id },
-			select: { ...userSelect, password: true },
+			select: { ...userSelect, password: true, companyId: true },
 		});
-		if (!targetUser) {
-			return NextResponse.json(
-				{ error: "Usuário não encontrado" },
-				{ status: 404 },
-			);
-		}
-		const { password, ...rest } = targetUser;
+		if (!targetUser) return notFound();
+		// Fora de escopo → 404 (não vaza existência para não-admin).
+		if (!canMutateTarget(actor, targetUser, "update")) return notFound();
+
+		const { password, companyId: _companyId, ...rest } = targetUser;
 		return NextResponse.json({ user: { ...rest, pending: !password } });
 	} catch (error) {
 		return handleError(error, "Get user error:");
@@ -65,7 +71,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
 export async function PUT(request: NextRequest, { params }: RouteParams) {
 	const { id } = await params;
 	try {
-		await requireAuth(["ADMIN"]);
+		const actor = await requireAuth(MANAGER_ROLES);
 
 		const body = await request.json();
 		const parsed = updateUserSchema.safeParse(body);
@@ -77,14 +83,12 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 		}
 
 		const existing = await prisma.user.findUnique({ where: { id } });
-		if (!existing) {
-			return NextResponse.json(
-				{ error: "Usuário não encontrado" },
-				{ status: 404 },
-			);
-		}
+		if (!existing) return notFound();
+		if (!canMutateTarget(actor, existing, "update")) return notFound();
 
-		const data = parsed.data;
+		// Não-admin não altera papel nem empresa do alvo.
+		const data = lockUpdateFields(actor, parsed.data);
+
 		if (data.email && data.email !== existing.email) {
 			const emailExists = await prisma.user.findUnique({
 				where: { email: data.email },
@@ -115,21 +119,17 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 export async function DELETE(_request: NextRequest, { params }: RouteParams) {
 	const { id } = await params;
 	try {
-		const user = await requireAuth(["ADMIN"]);
+		const actor = await requireAuth(MANAGER_ROLES);
 
 		const existing = await prisma.user.findUnique({ where: { id } });
-		if (!existing) {
-			return NextResponse.json(
-				{ error: "Usuário não encontrado" },
-				{ status: 404 },
-			);
-		}
-		if (existing.id === user.id) {
+		if (!existing) return notFound();
+		if (existing.id === actor.id) {
 			return NextResponse.json(
 				{ error: "Você não pode desativar sua própria conta" },
 				{ status: 400 },
 			);
 		}
+		if (!canMutateTarget(actor, existing, "deactivate")) return notFound();
 
 		const deleted = await prisma.user.update({
 			where: { id },
@@ -149,7 +149,7 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
 	const { id } = await params;
 	try {
-		await requireAuth(["ADMIN"]);
+		const actor = await requireAuth(MANAGER_ROLES);
 
 		const body = (await request.json()) as { action?: string };
 		if (body.action !== "reactivate") {
@@ -158,6 +158,10 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 				{ status: 400 },
 			);
 		}
+
+		const existing = await prisma.user.findUnique({ where: { id } });
+		if (!existing) return notFound();
+		if (!canMutateTarget(actor, existing, "reactivate")) return notFound();
 
 		const reactivated = await prisma.user.update({
 			where: { id },

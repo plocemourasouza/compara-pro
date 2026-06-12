@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import type { Prisma, Role } from "@/generated/prisma";
+import type { Prisma } from "@/generated/prisma";
 import {
 	activationExpiry,
 	buildActivationLink,
@@ -10,53 +10,55 @@ import {
 import { getCurrentUser } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
 import { sendNotificationEmail } from "@/lib/email/mailer";
+import {
+	type AccessRole,
+	resolveUserListScope,
+	sanitizeUserCreate,
+} from "@/lib/services/user-access";
 
-const createUserSchema = z
-	.object({
-		name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
-		email: z.string().email("Email inválido"),
-		phone: z.string().min(1, "Telefone é obrigatório"),
-		role: z.enum(["ADMIN", "REPRESENTATIVE", "CLIENT"]),
-		companyId: z.string().optional(),
-		companyName: z.string().optional(),
-	})
-	.refine(
-		(data) => {
-			// Se role não é ADMIN, deve ter companyId ou companyName
-			if (data.role !== "ADMIN") {
-				return data.companyId || data.companyName;
-			}
-			return true;
-		},
-		{
-			message: "Usuários não-admin devem ter uma empresa associada",
-		},
-	);
+// Campos base (papel/empresa NÃO vêm do body para não-admin — são forçados
+// pela camada de autorização). companyName/companyId só são honrados p/ ADMIN.
+const baseUserSchema = z.object({
+	name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
+	email: z.string().email("Email inválido"),
+	phone: z.string().min(1, "Telefone é obrigatório"),
+	companyId: z.string().optional(),
+	companyName: z.string().optional(),
+	role: z.enum(["ADMIN", "REPRESENTATIVE", "CLIENT"]).optional(),
+});
 
-// GET /api/users - Listar usuários com paginação
+const VALID_SCOPE_ROLES = ["ADMIN", "REPRESENTATIVE", "CLIENT"] as const;
+
+function parseScopeRole(raw: string | null | undefined): AccessRole {
+	return VALID_SCOPE_ROLES.includes(raw as AccessRole)
+		? (raw as AccessRole)
+		: "ADMIN";
+}
+
+// GET /api/users - Listar usuários (escopado por área + ator)
 export async function GET(request: NextRequest) {
 	try {
 		const user = await getCurrentUser();
-
-		if (user?.role !== "ADMIN") {
-			return NextResponse.json(
-				{ error: "Acesso negado. Apenas administradores podem acessar." },
-				{ status: 403 },
-			);
+		if (!user) {
+			return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
 		}
 
 		const { searchParams } = new URL(request.url);
+		const scopeRole = parseScopeRole(searchParams.get("scopeRole"));
+		const scope = resolveUserListScope(user, scopeRole);
+		if ("forbidden" in scope) {
+			return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
+		}
+
 		const page = parseInt(searchParams.get("page") || "1", 10);
 		const limit = parseInt(searchParams.get("limit") || "10", 10);
 		const search = searchParams.get("search") || "";
-		const role = searchParams.get("role") || "all";
-		const companyId = searchParams.get("companyId") || "";
 		const status = searchParams.get("status") || "all"; // active, inactive, all
-
 		const skip = (page - 1) * limit;
 
-		// Construir filtros
-		const where: Prisma.UserWhereInput = {};
+		// Papel e empresa são FORÇADOS pelo escopo — params do cliente não relaxam.
+		const where: Prisma.UserWhereInput = { role: scope.role };
+		if (scope.companyId) where.companyId = scope.companyId;
 
 		if (search) {
 			where.OR = [
@@ -65,67 +67,47 @@ export async function GET(request: NextRequest) {
 			];
 		}
 
-		if (role !== "all") {
-			where.role = role as Role;
-		}
-
-		if (companyId) {
-			where.companyId = companyId;
-		}
-
 		if (status === "active") {
 			where.deletedAt = null;
 		} else if (status === "inactive") {
 			where.deletedAt = { not: null };
 		}
 
-		const [usersRaw, total, roleGroups, activeCount, inactiveCount] =
-			await Promise.all([
-				prisma.user.findMany({
-					where,
-					skip,
-					take: limit,
-					orderBy: { createdAt: "desc" },
-					select: {
-						id: true,
-						name: true,
-						email: true,
-						phone: true,
-						role: true,
-						createdAt: true,
-						updatedAt: true,
-						deletedAt: true,
-						password: true,
-						company: {
-							select: {
-								id: true,
-								name: true,
-								type: true,
-							},
-						},
-					},
-				}),
-				prisma.user.count({ where }),
-				// stats: agregados GLOBAIS (ignoram os filtros de busca/papel/status)
-				prisma.user.groupBy({
-					by: ["role"],
-					_count: { _all: true },
-					where: { deletedAt: null },
-				}),
-				prisma.user.count({ where: { deletedAt: null } }),
-				prisma.user.count({ where: { deletedAt: { not: null } } }),
-			]);
+		// stats restritos ao MESMO escopo (papel+empresa) — sem agregados globais
+		// que vazariam contagens de outras empresas/papéis.
+		const scopeWhere: Prisma.UserWhereInput = { role: scope.role };
+		if (scope.companyId) scopeWhere.companyId = scope.companyId;
 
-		const roleCount = (target: Role) =>
-			roleGroups.find((g) => g.role === target)?._count._all ?? 0;
+		const [usersRaw, total, activeCount, inactiveCount] = await Promise.all([
+			prisma.user.findMany({
+				where,
+				skip,
+				take: limit,
+				orderBy: { createdAt: "desc" },
+				select: {
+					id: true,
+					name: true,
+					email: true,
+					phone: true,
+					role: true,
+					createdAt: true,
+					updatedAt: true,
+					deletedAt: true,
+					password: true,
+					company: {
+						select: { id: true, name: true, type: true },
+					},
+				},
+			}),
+			prisma.user.count({ where }),
+			prisma.user.count({ where: { ...scopeWhere, deletedAt: null } }),
+			prisma.user.count({ where: { ...scopeWhere, deletedAt: { not: null } } }),
+		]);
 
 		const stats = {
 			total: activeCount + inactiveCount,
 			active: activeCount,
 			inactive: inactiveCount,
-			admins: roleCount("ADMIN"),
-			representatives: roleCount("REPRESENTATIVE"),
-			clients: roleCount("CLIENT"),
 		};
 
 		// pending = sem senha (primeiro acesso ainda não concluído). Nunca devolve o hash.
@@ -157,34 +139,55 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
 	try {
 		const user = await getCurrentUser();
-
-		if (user?.role !== "ADMIN") {
-			return NextResponse.json(
-				{
-					error: "Acesso negado. Apenas administradores podem criar usuários.",
-				},
-				{ status: 403 },
-			);
+		if (!user) {
+			return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
 		}
 
 		const body = await request.json();
-		const validationResult = createUserSchema.safeParse(body);
-
-		if (!validationResult.success) {
+		const parsed = baseUserSchema.safeParse(body);
+		if (!parsed.success) {
 			return NextResponse.json(
-				{ error: "Dados inválidos", details: validationResult.error.issues },
+				{ error: "Dados inválidos", details: parsed.error.issues },
 				{ status: 400 },
 			);
 		}
 
-		const { name, email, phone, role, companyId, companyName } =
-			validationResult.data;
+		const { searchParams } = new URL(request.url);
+		const scopeRole = parseScopeRole(searchParams.get("scopeRole"));
 
-		// Verificar se email já existe
-		const existingUser = await prisma.user.findUnique({
-			where: { email },
-		});
+		// Autorização: papel/empresa forçados p/ não-admin; escalonamento bloqueado.
+		const decision = sanitizeUserCreate(
+			user,
+			{
+				role: parsed.data.role,
+				companyId: parsed.data.companyId,
+				companyName: parsed.data.companyName,
+			},
+			scopeRole,
+		);
+		if (!decision.ok) {
+			return NextResponse.json(
+				{ error: "Acesso negado", reason: decision.reason },
+				{ status: 403 },
+			);
+		}
 
+		const { name, email, phone, companyName } = parsed.data;
+		const role = decision.role;
+
+		// Usuário não-admin precisa de empresa (própria, p/ self-service; ou informada p/ admin).
+		if (
+			role !== "ADMIN" &&
+			!decision.companyId &&
+			!(decision.allowCompanyAutoCreate && companyName)
+		) {
+			return NextResponse.json(
+				{ error: "Usuários não-admin devem ter uma empresa associada" },
+				{ status: 400 },
+			);
+		}
+
+		const existingUser = await prisma.user.findUnique({ where: { email } });
 		if (existingUser) {
 			return NextResponse.json(
 				{ error: "Email já está em uso" },
@@ -192,14 +195,18 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
-		let finalCompanyId = companyId;
+		let finalCompanyId = decision.companyId;
 
-		// Se não tem companyId mas tem companyName, criar/buscar empresa
-		if (!companyId && companyName && role !== "ADMIN") {
+		// Auto-criação de empresa por nome: SÓ admin (allowCompanyAutoCreate).
+		if (
+			decision.allowCompanyAutoCreate &&
+			!finalCompanyId &&
+			companyName &&
+			role !== "ADMIN"
+		) {
 			let company = await prisma.company.findFirst({
 				where: { name: companyName },
 			});
-
 			if (!company) {
 				company = await prisma.company.create({
 					data: {
@@ -208,7 +215,6 @@ export async function POST(request: NextRequest) {
 					},
 				});
 			}
-
 			finalCompanyId = company.id;
 		}
 
@@ -235,11 +241,7 @@ export async function POST(request: NextRequest) {
 				role: true,
 				createdAt: true,
 				company: {
-					select: {
-						id: true,
-						name: true,
-						type: true,
-					},
+					select: { id: true, name: true, type: true },
 				},
 			},
 		});
