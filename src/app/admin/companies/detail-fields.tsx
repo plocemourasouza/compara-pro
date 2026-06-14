@@ -19,8 +19,15 @@ export const companyDetailSections: DetailSection<Company>[] = [
 			{ label: "Nome Fantasia", value: (c) => c.name },
 			{ label: "Razão Social", value: (c) => c.legalName },
 			{
+				// CNPJ pode chegar anonimizado (LGPD) para representantes — nesse caso
+				// exibe como está; senão formata o valor completo.
 				label: "CNPJ",
-				value: (c) => (c.cnpj ? formatters.cnpj(c.cnpj) : ""),
+				value: (c) =>
+					c.cnpj
+						? c.cnpj.includes("*")
+							? c.cnpj
+							: formatters.cnpj(c.cnpj)
+						: "",
 			},
 			{
 				label: "Tipo",

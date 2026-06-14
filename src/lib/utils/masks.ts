@@ -131,6 +131,14 @@ export const formatters = {
 		);
 	},
 
+	// Anonimização LGPD: exibe só a raiz parcial (5 primeiros dígitos),
+	// ocultando filial e dígitos verificadores. Ex.: "12.345.***/****-**".
+	maskCnpj: (cnpj: string) => {
+		const cleaned = cnpj.replace(/\D/g, "");
+		if (cleaned.length !== 14) return "***";
+		return `${cleaned.slice(0, 2)}.${cleaned.slice(2, 5)}.***/****-**`;
+	},
+
 	cep: (cep: string) => {
 		const cleaned = cep.replace(/\D/g, "");
 		return cleaned.replace(/^(\d{5})(\d{3})$/, "$1-$2");

@@ -5,6 +5,8 @@ import { expect, test } from "@playwright/test";
 // pelo overlay de erro e o <h1> some — então a asserção do heading fica vermelha.
 const ADMIN_PAGES = [
 	"/admin",
+	"/admin/representatives",
+	"/admin/representatives/novo",
 	"/admin/users",
 	"/admin/companies",
 	"/admin/products",

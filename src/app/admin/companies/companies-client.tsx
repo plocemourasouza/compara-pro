@@ -51,7 +51,7 @@ export default function CompaniesClient({ user: _user }: CompaniesClientProps) {
 	const fetchCompanies = async () => {
 		try {
 			setLoading(true);
-			const response = await fetch("/api/companies");
+			const response = await fetch("/api/companies?type=CLIENT,SUPPLIER");
 
 			if (response.ok) {
 				const data = await response.json();

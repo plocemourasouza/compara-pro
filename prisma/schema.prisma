@@ -39,6 +39,7 @@ model Company {
   legalName String? // Razão social
   cnpj      String?     @unique
   type      CompanyType // SUPPLIER, CLIENT
+  status    CompanyStatus @default(ACTIVE) // Ativo, Bloqueado, Inativo
   taxRegime TaxRegime? // Enquadramento tributário
   email     String?
   phone     String?
@@ -202,6 +203,12 @@ enum CompanyType {
   SUPPLIER // empresa fornecedora (catálogo de produtos; sem login próprio)
   CLIENT // empresa compradora (conta com N usuários)
   REPRESENTATIVE // agência de representação (conta com N usuários; representa N fornecedores)
+}
+
+enum CompanyStatus {
+  ACTIVE // Ativo
+  BLOCKED // Bloqueado
+  INACTIVE // Inativo
 }
 
 enum TaxRegime {

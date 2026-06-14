@@ -6,6 +6,7 @@ import {
 	Building2,
 	LayoutDashboard as Dashboard,
 	FileText,
+	Handshake,
 	Home,
 	LogOut,
 	Package,
@@ -44,9 +45,9 @@ const navigation = [
 		current: true,
 	},
 	{
-		name: "Usuários",
-		href: "/admin/users",
-		icon: Users,
+		name: "Representantes",
+		href: "/admin/representatives",
+		icon: Handshake,
 		current: false,
 	},
 	{
@@ -68,15 +69,21 @@ const navigation = [
 		current: false,
 	},
 	{
-		name: "Histórico",
-		href: "/admin/history",
-		icon: FileText,
-		current: false,
-	},
-	{
 		name: "Relatórios",
 		href: "/admin/reports",
 		icon: BarChart3,
+		current: false,
+	},
+	{
+		name: "Usuários",
+		href: "/admin/users",
+		icon: Users,
+		current: false,
+	},
+	{
+		name: "Histórico",
+		href: "/admin/history",
+		icon: FileText,
 		current: false,
 	},
 	{

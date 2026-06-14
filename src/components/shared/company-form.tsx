@@ -102,6 +102,7 @@ const EMPTY_DEFAULTS: CreateCompanyData = {
 	legalName: "",
 	cnpj: "",
 	type: "SUPPLIER",
+	status: "ACTIVE",
 	taxRegime: "SIMPLES_NACIONAL",
 	email: "",
 	phone: "",
@@ -135,12 +136,18 @@ interface CompanyFormProps {
 	mode: "create" | "edit";
 	companyId?: string;
 	defaultValues?: Partial<CreateCompanyData>;
+	/** Oculta o seletor de Tipo (o tipo vem fixo de defaultValues.type, ex.: REPRESENTATIVE). */
+	hideType?: boolean;
+	/** Exibe o seletor de Status (Ativo/Bloqueado/Inativo). Usado para representantes. */
+	showStatus?: boolean;
 }
 
 export function CompanyForm({
 	mode,
 	companyId,
 	defaultValues,
+	hideType = false,
+	showStatus = false,
 }: CompanyFormProps) {
 	const router = useRouter();
 	const locked = mode === "edit";
@@ -248,7 +255,11 @@ export function CompanyForm({
 						? "Empresa atualizada com sucesso!"
 						: "Empresa criada com sucesso!",
 				);
-				router.push("/admin/companies");
+				router.push(
+					values.type === "REPRESENTATIVE"
+						? "/admin/representatives"
+						: "/admin/companies",
+				);
 				router.refresh();
 				return;
 			}
@@ -411,27 +422,59 @@ export function CompanyForm({
 									</FormItem>
 								)}
 							/>
-							<FormField
-								control={form.control}
-								name="type"
-								render={({ field }) => (
-									<FormItem className="sm:col-span-3">
-										<FormLabel>Tipo *</FormLabel>
-										<Select value={field.value} onValueChange={field.onChange}>
-											<FormControl>
-												<SelectTrigger className="w-full">
-													<SelectValue />
-												</SelectTrigger>
-											</FormControl>
-											<SelectContent>
-												<SelectItem value="SUPPLIER">Fornecedor</SelectItem>
-												<SelectItem value="CLIENT">Cliente</SelectItem>
-											</SelectContent>
-										</Select>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
+							{!hideType && (
+								<FormField
+									control={form.control}
+									name="type"
+									render={({ field }) => (
+										<FormItem className="sm:col-span-3">
+											<FormLabel>Tipo *</FormLabel>
+											<Select
+												value={field.value}
+												onValueChange={field.onChange}
+											>
+												<FormControl>
+													<SelectTrigger className="w-full">
+														<SelectValue />
+													</SelectTrigger>
+												</FormControl>
+												<SelectContent>
+													<SelectItem value="SUPPLIER">Fornecedor</SelectItem>
+													<SelectItem value="CLIENT">Cliente</SelectItem>
+												</SelectContent>
+											</Select>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+							)}
+							{showStatus && (
+								<FormField
+									control={form.control}
+									name="status"
+									render={({ field }) => (
+										<FormItem className="sm:col-span-3">
+											<FormLabel>Status *</FormLabel>
+											<Select
+												value={field.value ?? "ACTIVE"}
+												onValueChange={field.onChange}
+											>
+												<FormControl>
+													<SelectTrigger className="w-full">
+														<SelectValue />
+													</SelectTrigger>
+												</FormControl>
+												<SelectContent>
+													<SelectItem value="ACTIVE">Ativo</SelectItem>
+													<SelectItem value="BLOCKED">Bloqueado</SelectItem>
+													<SelectItem value="INACTIVE">Inativo</SelectItem>
+												</SelectContent>
+											</Select>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+							)}
 							<FormField
 								control={form.control}
 								name="taxRegime"

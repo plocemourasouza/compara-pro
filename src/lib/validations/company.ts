@@ -88,7 +88,8 @@ export const createCompanySchema = z.object({
 		.string()
 		.min(1, "CNPJ é obrigatório")
 		.refine(validateCNPJ, "CNPJ inválido"),
-	type: z.enum(["SUPPLIER", "CLIENT"]),
+	type: z.enum(["SUPPLIER", "CLIENT", "REPRESENTATIVE"]),
+	status: z.enum(["ACTIVE", "BLOCKED", "INACTIVE"]).optional(),
 	taxRegime: z.enum([
 		"MEI",
 		"SIMPLES_NACIONAL",
@@ -161,7 +162,8 @@ export const updateCompanySchema = z.object({
 		.string()
 		.min(1, "CNPJ é obrigatório")
 		.refine(validateCNPJ, "CNPJ inválido"),
-	type: z.enum(["SUPPLIER", "CLIENT"]),
+	type: z.enum(["SUPPLIER", "CLIENT", "REPRESENTATIVE"]),
+	status: z.enum(["ACTIVE", "BLOCKED", "INACTIVE"]).optional(),
 	taxRegime: z.enum([
 		"MEI",
 		"SIMPLES_NACIONAL",
@@ -226,7 +228,7 @@ export const companyListSchema = z.object({
 	name: z.string(),
 	legalName: z.string().nullable(),
 	cnpj: z.string().nullable(),
-	type: z.enum(["SUPPLIER", "CLIENT"]),
+	type: z.enum(["SUPPLIER", "CLIENT", "REPRESENTATIVE"]),
 	email: z.string().nullable(),
 	phone: z.string().nullable(),
 	city: z.string().nullable(),

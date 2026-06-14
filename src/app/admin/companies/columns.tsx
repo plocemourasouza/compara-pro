@@ -11,7 +11,8 @@ export interface Company {
 	name: string;
 	legalName?: string;
 	cnpj?: string;
-	type: "SUPPLIER" | "CLIENT";
+	type: "SUPPLIER" | "CLIENT" | "REPRESENTATIVE";
+	status?: "ACTIVE" | "BLOCKED" | "INACTIVE";
 	taxRegime?: "MEI" | "SIMPLES_NACIONAL" | "LUCRO_PRESUMIDO" | "LUCRO_REAL";
 	email?: string;
 	phone?: string;
@@ -29,6 +30,7 @@ export interface Company {
 	users?: Array<{ id: string; name: string; email: string; role: string }>;
 	products?: Array<{ id: string; name: string; sku?: string; code?: string }>;
 	_count?: { users: number; products: number };
+	preOrderCount?: number;
 	createdAt: string;
 	updatedAt: string;
 }
@@ -39,6 +41,8 @@ export function getTypeLabel(type: string): string {
 			return "Fornecedor";
 		case "CLIENT":
 			return "Cliente";
+		case "REPRESENTATIVE":
+			return "Representante";
 		default:
 			return type;
 	}
@@ -50,6 +54,8 @@ export function getTypeBadgeColor(type: string): string {
 			return "bg-primary/10 text-primary hover:bg-primary/20";
 		case "CLIENT":
 			return "bg-success/10 text-success hover:bg-success/20";
+		case "REPRESENTATIVE":
+			return "bg-accent text-accent-foreground hover:bg-accent/80";
 		default:
 			return "bg-muted text-muted-foreground hover:bg-secondary";
 	}
