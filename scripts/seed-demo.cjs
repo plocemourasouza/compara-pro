@@ -206,6 +206,27 @@ const daysAgo = (n) => new Date(Date.now() - n * 86_400_000);
 			skipDuplicates: true,
 		});
 
+		// Reps extras só p/ demonstrar status (Bloqueado/Inativo) e máscara LGPD
+		// de CNPJ na lista /admin/representatives. Sem login, sem fornecedores.
+		await prisma.company.create({
+			data: {
+				name: "Agência Bloqueada Demo",
+				type: "REPRESENTATIVE",
+				cnpj: "66666666000166",
+				email: "bloqueada@demo.com",
+				status: "BLOCKED",
+			},
+		});
+		await prisma.company.create({
+			data: {
+				name: "Agência Inativa Demo",
+				type: "REPRESENTATIVE",
+				cnpj: "77777777000177",
+				email: "inativa@demo.com",
+				status: "INACTIVE",
+			},
+		});
+
 		const buyer = await makeCompanyWithUser({
 			name: "Comprador Demo",
 			type: "CLIENT",
