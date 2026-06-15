@@ -63,7 +63,7 @@ node scripts/seed-demo.cjs     # senha demo1234
 npm run dev                    # http://localhost:3000
 ```
 
-**Logins de demonstração** (após o seed): `comprador@demo.com` (comprador) e
+**Logins de demonstração** (após o seed): `admin@demo.com` (admin), `comprador@demo.com` (comprador) e
 `representante@demo.com` (representante — representa os fornecedores Alfa e Beta) — senha `demo1234`.
 
 ## Scripts
