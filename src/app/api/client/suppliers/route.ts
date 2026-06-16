@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { AuthError, requireAuth } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
+import { formatters } from "@/lib/utils/masks";
 
 export async function GET() {
 	try {
@@ -43,7 +44,7 @@ export async function GET() {
 			linked: links.map((l) => ({
 				id: l.supplier.id,
 				name: l.supplier.name,
-				cnpj: l.supplier.cnpj,
+				cnpj: formatters.redactCnpj(l.supplier.cnpj),
 				city: l.supplier.city,
 				state: l.supplier.state,
 				productCount: l.supplier._count.products,
@@ -53,7 +54,7 @@ export async function GET() {
 				requestId: r.id,
 				id: r.supplier.id,
 				name: r.supplier.name,
-				cnpj: r.supplier.cnpj,
+				cnpj: formatters.redactCnpj(r.supplier.cnpj),
 				requestedAt: r.createdAt,
 			})),
 		});

@@ -118,7 +118,7 @@ export default function ClientDetailClient({ clientId }: { clientId: string }) {
 					<div>
 						<h1 className="font-bold text-2xl tracking-tight">{client.name}</h1>
 						<p className="text-muted-foreground">
-							{client.cnpj ? formatters.cnpj(client.cnpj) : "Sem CNPJ"}
+							{client.cnpj || "Sem CNPJ"}
 							{client.city ? ` · ${client.city}` : ""}
 							{client.state ? `/${client.state}` : ""}
 						</p>

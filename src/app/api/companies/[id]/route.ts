@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
+import { formatters } from "@/lib/utils/masks";
 import { updateCompanySchema } from "@/lib/validations/company";
 
 export async function GET(
@@ -82,7 +83,9 @@ export async function GET(
 			return NextResponse.json({ error: "Company not found" }, { status: 404 });
 		}
 
-		return NextResponse.json({ company });
+		return NextResponse.json({
+			company: { ...company, cnpj: formatters.redactCnpj(company.cnpj) },
+		});
 	} catch (error) {
 		console.error("GET /api/companies/[id] error:", error);
 		return NextResponse.json(

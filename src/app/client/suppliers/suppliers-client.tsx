@@ -3,6 +3,7 @@
 import { Building2, Clock, Plus } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { CnpjCell } from "@/components/shared/cnpj-cell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -145,7 +146,7 @@ export default function SuppliersClient() {
 												<p className="font-medium">{s.name}</p>
 												{s.cnpj && (
 													<p className="text-muted-foreground text-xs">
-														{formatters.cnpj(s.cnpj)}
+														{s.cnpj}
 													</p>
 												)}
 											</div>
@@ -214,11 +215,21 @@ export default function SuppliersClient() {
 								>
 									<div>
 										<p className="font-medium text-sm">{s.name}</p>
-										<p className="text-muted-foreground text-xs">
-											{s.cnpj ? formatters.cnpj(s.cnpj) : "Sem CNPJ"}
-											{s.city ? ` · ${s.city}` : ""}
-											{s.state ? `/${s.state}` : ""}
-										</p>
+										{s.cnpj ? (
+											<CnpjCell
+												masked={s.cnpj}
+												companyId={s.id}
+												className="text-muted-foreground text-xs"
+											/>
+										) : (
+											<p className="text-muted-foreground text-xs">Sem CNPJ</p>
+										)}
+										{(s.city || s.state) && (
+											<p className="text-muted-foreground text-xs">
+												{s.city ?? ""}
+												{s.state ? `/${s.state}` : ""}
+											</p>
+										)}
 									</div>
 									<Badge variant="outline">{s.productCount} produtos</Badge>
 								</li>

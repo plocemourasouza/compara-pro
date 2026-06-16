@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getRepresentedSupplierIds } from "@/lib/auth-scope";
 import { AuthError, requireAuth } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
+import { formatters } from "@/lib/utils/masks";
 
 // Solicitações de clientes pendentes para os fornecedores representados.
 export async function GET() {
@@ -31,7 +32,7 @@ export async function GET() {
 				requestedAt: r.createdAt,
 				clientId: r.client.id,
 				name: r.client.name,
-				cnpj: r.client.cnpj,
+				cnpj: formatters.redactCnpj(r.client.cnpj),
 				city: r.client.city,
 				state: r.client.state,
 				supplierId: r.supplier.id,

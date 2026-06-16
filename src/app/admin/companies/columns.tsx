@@ -2,6 +2,7 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 import { Package, Trash2, Users } from "lucide-react";
+import { CnpjCell } from "@/components/shared/cnpj-cell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatters } from "@/lib/utils/masks";
@@ -121,7 +122,11 @@ export function getCompaniesColumns({
 			accessorKey: "cnpj",
 			header: "CNPJ",
 			cell: ({ row }) =>
-				row.original.cnpj ? formatters.cnpj(row.original.cnpj) : "-",
+				row.original.cnpj ? (
+					<CnpjCell masked={row.original.cnpj} companyId={row.original.id} />
+				) : (
+					"-"
+				),
 		},
 		{
 			id: "responsible",

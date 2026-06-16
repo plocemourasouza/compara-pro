@@ -6,6 +6,7 @@ import { Building2, Pencil, Plus, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { CnpjCell } from "@/components/shared/cnpj-cell";
 import { HintTooltip } from "@/components/shared/hint-tooltip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,7 +29,7 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { formatters, masks } from "@/lib/utils/masks";
+import { masks } from "@/lib/utils/masks";
 import {
 	type SupplierCompanyValues,
 	supplierCompanySchema,
@@ -130,9 +131,11 @@ export default function FornecedoresClient() {
 				<div>
 					<p className="font-medium">{row.original.name}</p>
 					{row.original.cnpj && (
-						<p className="text-muted-foreground text-xs">
-							{formatters.cnpj(row.original.cnpj)}
-						</p>
+						<CnpjCell
+							masked={row.original.cnpj}
+							companyId={row.original.id}
+							className="text-muted-foreground text-xs"
+						/>
 					)}
 				</div>
 			),

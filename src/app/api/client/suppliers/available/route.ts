@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { AuthError, requireAuth } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
+import { formatters } from "@/lib/utils/masks";
 
 // Fornecedores que o cliente ainda pode solicitar (não vinculados nem pendentes).
 export async function GET() {
@@ -32,7 +33,12 @@ export async function GET() {
 			select: { id: true, name: true, cnpj: true, city: true, state: true },
 		});
 
-		return NextResponse.json({ suppliers });
+		return NextResponse.json({
+			suppliers: suppliers.map((s) => ({
+				...s,
+				cnpj: formatters.redactCnpj(s.cnpj),
+			})),
+		});
 	} catch (error) {
 		if (error instanceof AuthError) {
 			return NextResponse.json(

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getRepresentedSupplierIds } from "@/lib/auth-scope";
 import { AuthError, requireAuth } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
+import { formatters } from "@/lib/utils/masks";
 import { supplierCompanySchema } from "@/lib/validations/representative";
 
 // Lista os fornecedores que o representante representa, com contadores.
@@ -32,7 +33,7 @@ export async function GET() {
 			suppliers: suppliers.map((s) => ({
 				id: s.id,
 				name: s.name,
-				cnpj: s.cnpj,
+				cnpj: formatters.redactCnpj(s.cnpj),
 				city: s.city,
 				state: s.state,
 				productCount: s._count.products,

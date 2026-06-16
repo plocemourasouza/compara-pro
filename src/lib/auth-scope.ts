@@ -36,3 +36,60 @@ export async function scopedCompanyFilter(
 	if (user.area === "ADMIN") return undefined;
 	return { in: await getRepresentedSupplierIds(user) };
 }
+
+/**
+ * Pode o usuário revelar o CNPJ completo da empresa `targetCompanyId`? O CNPJ é
+ * exibido anonimizado por padrão (LGPD); a revelação sob demanda exige vínculo:
+ *
+ * - ADMIN: irrestrito (operador da plataforma).
+ * - REPRESENTATIVE: fornecedor que a agência representa (`RepresentativeSupplier`)
+ *   ou cliente na carteira de algum fornecedor representado (`SupplierClient`).
+ * - CLIENT: fornecedor com vínculo ativo (`SupplierClient`). Fornecedor apenas
+ *   pendente/avulso (sem link) → false.
+ *
+ * Fronteira de autorização: o handler de reveal traduz `false` em 403.
+ */
+export async function canRevealCnpj(
+	user: ScopeUser,
+	targetCompanyId: string,
+): Promise<boolean> {
+	if (user.area === "ADMIN") return true;
+
+	const myCompanyId = user.company?.id;
+	if (!myCompanyId) return false;
+
+	if (user.area === "REPRESENTATIVE") {
+		const represented = await prisma.representativeSupplier.findFirst({
+			where: {
+				representativeCompanyId: myCompanyId,
+				supplierCompanyId: targetCompanyId,
+			},
+			select: { representativeCompanyId: true },
+		});
+		if (represented) return true;
+
+		const supplierIds = await getRepresentedSupplierIds(user);
+		if (supplierIds.length === 0) return false;
+		const inCarteira = await prisma.supplierClient.findFirst({
+			where: {
+				supplierCompanyId: { in: supplierIds },
+				clientCompanyId: targetCompanyId,
+			},
+			select: { id: true },
+		});
+		return !!inCarteira;
+	}
+
+	if (user.area === "CLIENT") {
+		const link = await prisma.supplierClient.findFirst({
+			where: {
+				clientCompanyId: myCompanyId,
+				supplierCompanyId: targetCompanyId,
+			},
+			select: { id: true },
+		});
+		return !!link;
+	}
+
+	return false;
+}

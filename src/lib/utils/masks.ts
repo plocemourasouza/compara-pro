@@ -139,6 +139,12 @@ export const formatters = {
 		return `${cleaned.slice(0, 2)}.${cleaned.slice(2, 5)}.***/****-**`;
 	},
 
+	// Anonimização null-safe para uso no payload das APIs: passa null/vazio
+	// adiante (campo opcional) e mascara qualquer valor presente. Mantém o CNPJ
+	// cru fora da resposta sem espalhar o ternário pelos route handlers.
+	redactCnpj: (cnpj: string | null | undefined): string | null =>
+		cnpj ? formatters.maskCnpj(cnpj) : null,
+
 	cep: (cep: string) => {
 		const cleaned = cep.replace(/\D/g, "");
 		return cleaned.replace(/^(\d{5})(\d{3})$/, "$1-$2");

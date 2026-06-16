@@ -1,6 +1,7 @@
 "use client";
 
 import { Building2, MapPin, User } from "lucide-react";
+import { CnpjCell } from "@/components/shared/cnpj-cell";
 import type { DetailSection } from "@/components/shared/entity-detail-modal";
 import { Badge } from "@/components/ui/badge";
 import { formatters } from "@/lib/utils/masks";
@@ -19,15 +20,11 @@ export const companyDetailSections: DetailSection<Company>[] = [
 			{ label: "Nome Fantasia", value: (c) => c.name },
 			{ label: "Razão Social", value: (c) => c.legalName },
 			{
-				// CNPJ pode chegar anonimizado (LGPD) para representantes — nesse caso
-				// exibe como está; senão formata o valor completo.
+				// CNPJ chega anonimizado (LGPD); CnpjCell exibe o mascarado e revela
+				// o completo sob demanda (autorizado por vínculo).
 				label: "CNPJ",
 				value: (c) =>
-					c.cnpj
-						? c.cnpj.includes("*")
-							? c.cnpj
-							: formatters.cnpj(c.cnpj)
-						: "",
+					c.cnpj ? <CnpjCell masked={c.cnpj} companyId={c.id} /> : "",
 			},
 			{
 				label: "Tipo",

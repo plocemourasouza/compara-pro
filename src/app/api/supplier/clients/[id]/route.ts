@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getRepresentedSupplierIds } from "@/lib/auth-scope";
 import { AuthError, requireAuth } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
+import { formatters } from "@/lib/utils/masks";
 
 /** Vínculos do cliente com os fornecedores representados (carteira). */
 async function carteiraLinks(supplierIds: string[], clientId: string) {
@@ -74,7 +75,11 @@ export async function GET(
 			name: l.supplier.name,
 		}));
 
-		return NextResponse.json({ client, demands, suppliers });
+		return NextResponse.json({
+			client: { ...client, cnpj: formatters.redactCnpj(client.cnpj) },
+			demands,
+			suppliers,
+		});
 	} catch (error) {
 		if (error instanceof AuthError) {
 			return NextResponse.json(

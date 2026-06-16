@@ -5,6 +5,7 @@ import { Check, Clock, UserPlus, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { CnpjCell } from "@/components/shared/cnpj-cell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -48,9 +49,11 @@ const columns: ColumnDef<ClientRow>[] = [
 			<div>
 				<p className="font-medium">{row.original.name}</p>
 				{row.original.cnpj && (
-					<p className="text-muted-foreground text-xs">
-						{formatters.cnpj(row.original.cnpj)}
-					</p>
+					<CnpjCell
+						masked={row.original.cnpj}
+						companyId={row.original.id}
+						className="text-muted-foreground text-xs"
+					/>
 				)}
 			</div>
 		),
@@ -187,7 +190,7 @@ export default function ClientsClient() {
 									<div className="min-w-0">
 										<p className="truncate font-medium text-sm">{r.name}</p>
 										<p className="text-muted-foreground text-xs">
-											{r.cnpj ? formatters.cnpj(r.cnpj) : "Sem CNPJ"}
+											{r.cnpj || "Sem CNPJ"}
 											{r.city ? ` · ${r.city}` : ""}
 											{r.state ? `/${r.state}` : ""} ·{" "}
 											{formatters.date(r.requestedAt)} · → {r.supplierName}

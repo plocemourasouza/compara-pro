@@ -2,11 +2,11 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 import { ShoppingCart, Trash2, Users } from "lucide-react";
+import { CnpjCell } from "@/components/shared/cnpj-cell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatters } from "@/lib/utils/masks";
 import type { Company } from "../companies/columns";
-import { CnpjCell } from "./cnpj-cell";
 
 const STATUS_LABELS: Record<string, string> = {
 	ACTIVE: "Ativo",

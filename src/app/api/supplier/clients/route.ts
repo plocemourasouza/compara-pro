@@ -9,6 +9,7 @@ import {
 import { getRepresentedSupplierIds } from "@/lib/auth-scope";
 import { AuthError, requireAuth } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
+import { formatters } from "@/lib/utils/masks";
 
 const addClientSchema = z.object({
 	supplierCompanyId: z.string().min(1, "Selecione o fornecedor"),
@@ -85,7 +86,7 @@ export async function GET() {
 				row = {
 					id: l.client.id,
 					name: l.client.name,
-					cnpj: l.client.cnpj,
+					cnpj: formatters.redactCnpj(l.client.cnpj),
 					city: l.client.city,
 					state: l.client.state,
 					demandCount: d?._count._all ?? 0,

@@ -1,11 +1,13 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { canRevealCnpj } from "@/lib/auth-scope";
 import { getCurrentUser } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
 import { formatters } from "@/lib/utils/masks";
 
-// Revela o CNPJ completo (formatado) sob demanda — usado pela ação de copiar na
-// lista de representantes, onde o CNPJ é exibido anonimizado por LGPD.
-// Nunca devolve nada além do CNPJ; gate ADMIN.
+// Revela o CNPJ completo (formatado) sob demanda — o CNPJ é exibido anonimizado
+// por LGPD em todas as listas. A revelação exige vínculo (canRevealCnpj): admin
+// irrestrito; representante/cliente só de empresas que representam/atendem.
+// Nunca devolve nada além do CNPJ.
 export async function GET(
 	_request: NextRequest,
 	{ params }: { params: Promise<{ id: string }> },
@@ -17,11 +19,12 @@ export async function GET(
 			return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 		}
 
-		if (user.area !== "ADMIN") {
+		const { id } = await params;
+
+		if (!(await canRevealCnpj(user, id))) {
 			return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 		}
 
-		const { id } = await params;
 		const company = await prisma.company.findFirst({
 			where: { id, deletedAt: null },
 			select: { cnpj: true },
