@@ -10,7 +10,11 @@ recomendação de fornecedor). Na mesma tela o comprador ajusta as escolhas por 
 
 - **RBAC** — três papéis: `ADMIN`, `REPRESENTATIVE` (representante comercial), `CLIENT` (comprador).
 - **Representante → N fornecedores** — cada representante representa vários fornecedores; cada lista de
-  preços é enviada em nome de um fornecedor de origem. Telas em visão agregada com coluna/filtro Fornecedor.
+  preços é enviada em nome de um fornecedor de origem. A lista de fornecedores representados mostra
+  também quantas listas de preço cada um enviou.
+- **Pré-pedido com representante vinculado** — todo pré-pedido tem exatamente **1 cliente e 1
+  representante** (a agência que cadastrou o cliente na carteira daquele fornecedor); a lista
+  administrativa de pré-pedidos traz o Representante na primeira coluna.
 - **Upload + parsing** de planilhas (XLSX/CSV) de necessidades e de catálogos de preço.
 - **Motor de matching** em 4 níveis: SKU → código → nome exato → nome fuzzy (Fuse.js + Jaccard).
 - **Parecer por IA (híbrido)** — números calculados de forma determinística + narrativa escrita pela IA.
@@ -22,8 +26,9 @@ recomendação de fornecedor). Na mesma tela o comprador ajusta as escolhas por 
   item e total no momento da decisão.
 - **Fluxo do representante** — fornecedores representados, lista de pré-pedidos recebidos, aprovar/rejeitar
   (com motivo).
-- **Área administrativa** — usuários, empresas, produtos, histórico de uploads, relatórios (métricas
-  reais + export CSV), configurações (perfil/senha/preferências + IA).
+- **Área administrativa** — usuários, empresas, produtos (suporte: edita/exclui, sem cadastrar),
+  histórico de uploads, relatórios (métricas reais + export CSV), configurações (perfil/senha/
+  preferências + IA).
 - **Padrão único de listas** — toda lista usa **data-table** (ordenação/busca/paginação); clicar na
   linha abre uma **modal de detalhe**, e o cadastro (criar/editar) acontece em **rota dedicada**
   (`/novo`, `/[id]/editar`) com formulários react-hook-form + Zod.
@@ -53,7 +58,7 @@ cp .env.example .env.local
 
 # 3. Banco (Postgres via docker-compose) + schema
 docker compose up -d
-npx prisma migrate deploy        # aplica a migration baseline (prisma/migrations/0_init)
+npx prisma migrate deploy        # aplica as migrations (baseline 0_init + versionadas)
 npx prisma generate
 
 # 4. Dados de demonstração (opcional)
@@ -100,8 +105,8 @@ nunca exposta. Advisories de dependência aceitas estão documentadas em [SECURI
 
 ## Deploy (Vercel)
 
-O `npm run build` roda `prisma generate && prisma migrate deploy && next build` — a migration baseline
-(`prisma/migrations/0_init`) é aplicada automaticamente no primeiro deploy contra um banco vazio.
+O `npm run build` roda `prisma generate && prisma migrate deploy && next build` — as migrations
+(`prisma/migrations/*`, baseline `0_init` + versionadas) são aplicadas automaticamente no deploy.
 
 Variáveis de ambiente em produção:
 
