@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
 import { formatters } from "@/lib/utils/masks";
+import { normalizeCompanyData } from "@/lib/utils/normalize";
 import { createCompanySchema } from "@/lib/validations/company";
 
 export async function GET(request: NextRequest) {
@@ -98,6 +99,7 @@ export async function GET(request: NextRequest) {
 			.map((c) => c.id);
 
 		const preOrderCountByRep = new Map<string, number>();
+		const productListCountByRep = new Map<string, number>();
 		if (repIds.length > 0) {
 			const links = await prisma.representativeSupplier.findMany({
 				where: { representativeCompanyId: { in: repIds } },
@@ -124,6 +126,32 @@ export async function GET(request: NextRequest) {
 					prev + (countBySupplier.get(link.supplierCompanyId) ?? 0),
 				);
 			}
+
+			// Listas de produtos enviadas (uploads SUPPLIER_PRODUCTS) pelos
+			// fornecedores que cada agência representa — total de envios.
+			const uploadsGrouped =
+				supplierIds.length > 0
+					? await prisma.uploadHistory.groupBy({
+							by: ["companyId"],
+							where: {
+								companyId: { in: supplierIds },
+								uploadType: "SUPPLIER_PRODUCTS",
+							},
+							_count: { _all: true },
+						})
+					: [];
+			const uploadsBySupplier = new Map(
+				uploadsGrouped.map((g) => [g.companyId, g._count._all]),
+			);
+
+			for (const link of links) {
+				const prev =
+					productListCountByRep.get(link.representativeCompanyId) ?? 0;
+				productListCountByRep.set(
+					link.representativeCompanyId,
+					prev + (uploadsBySupplier.get(link.supplierCompanyId) ?? 0),
+				);
+			}
 		}
 
 		// CNPJ anonimizado por padrão (LGPD) p/ TODOS os tipos e SEMPRE (mesmo sem
@@ -132,7 +160,10 @@ export async function GET(request: NextRequest) {
 			...c,
 			cnpj: formatters.redactCnpj(c.cnpj),
 			...(c.type === "REPRESENTATIVE"
-				? { preOrderCount: preOrderCountByRep.get(c.id) ?? 0 }
+				? {
+						preOrderCount: preOrderCountByRep.get(c.id) ?? 0,
+						productListCount: productListCountByRep.get(c.id) ?? 0,
+					}
 				: {}),
 		}));
 
@@ -188,7 +219,7 @@ export async function POST(request: NextRequest) {
 			state,
 			zipCode,
 			addressReference,
-		} = validation.data;
+		} = normalizeCompanyData(validation.data);
 
 		// Check if company with same CNPJ already exists
 		const existingCompany = await prisma.company.findFirst({

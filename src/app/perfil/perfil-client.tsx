@@ -5,6 +5,7 @@ import { ArrowLeft, Camera, Loader2, Lock, Trash2, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
+import { MaskedInput } from "@/components/shared/masked-input";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -21,7 +22,6 @@ import {
 	changePasswordAction,
 	updateProfileAction,
 } from "@/lib/actions/profile";
-import { masks } from "@/lib/utils/masks";
 
 type ProfileUser = {
 	id: string;
@@ -236,17 +236,12 @@ export default function PerfilClient({ user }: { user: ProfileUser }) {
 						</div>
 						<div className="space-y-2">
 							<Label htmlFor="phone">Telefone</Label>
-							<Input
+							<MaskedInput
 								id="phone"
-								inputMode="numeric"
+								mask="phone"
 								placeholder="(00) 00000-0000"
 								value={profile.phone}
-								onChange={(e) =>
-									setProfile((p) => ({
-										...p,
-										phone: masks.phone(e.target.value),
-									}))
-								}
+								onChange={(v) => setProfile((p) => ({ ...p, phone: v }))}
 							/>
 						</div>
 						<div className="space-y-2">

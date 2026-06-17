@@ -16,6 +16,7 @@ import {
 	resolveUserListScope,
 	sanitizeUserCreate,
 } from "@/lib/services/user-access";
+import { normalizeUserData } from "@/lib/utils/normalize";
 
 // Campos base (papel/empresa NÃO vêm do body para não-admin — são forçados
 // pela camada de autorização). companyName/companyId só são honrados p/ ADMIN.
@@ -186,7 +187,7 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
-		const { name, email, phone, companyName } = parsed.data;
+		const { name, email, phone, companyName } = normalizeUserData(parsed.data);
 		const role = decision.role;
 
 		// Usuário não-admin precisa de empresa (própria, p/ self-service; ou informada p/ admin).

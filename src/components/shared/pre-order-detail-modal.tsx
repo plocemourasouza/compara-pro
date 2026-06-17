@@ -72,7 +72,7 @@ export function PreOrderDetailModal({
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent className="flex max-h-[60vh] w-[40vw] max-w-[40vw] flex-col gap-0 overflow-hidden p-0 sm:max-w-[40vw]">
+			<DialogContent className="flex max-h-[85vh] w-[calc(100vw-2rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-5xl">
 				<DialogHeader className="border-b px-6 py-4">
 					<DialogTitle>
 						Pré-pedido {preOrder ? `#${preOrder.id.slice(-8)}` : ""}

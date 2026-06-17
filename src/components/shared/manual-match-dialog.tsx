@@ -117,7 +117,7 @@ export default function ManualMatchDialog({
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+			<DialogContent className="flex max-h-[85vh] w-[calc(100vw-2rem)] flex-col overflow-hidden sm:max-w-3xl">
 				<DialogHeader>
 					<DialogTitle className="flex items-center gap-2">
 						<Search className="h-5 w-5" />

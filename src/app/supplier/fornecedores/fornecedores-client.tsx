@@ -8,6 +8,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { CnpjCell } from "@/components/shared/cnpj-cell";
 import { HintTooltip } from "@/components/shared/hint-tooltip";
+import { MaskedInput } from "@/components/shared/masked-input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,7 +30,6 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { masks } from "@/lib/utils/masks";
 import {
 	type SupplierCompanyValues,
 	supplierCompanySchema,
@@ -279,13 +279,10 @@ export default function FornecedoresClient() {
 									<FormItem className="sm:col-span-2">
 										<FormLabel>CNPJ</FormLabel>
 										<FormControl>
-											<Input
+											<MaskedInput
+												mask="cnpj"
 												placeholder="00.000.000/0000-00"
-												inputMode="numeric"
 												{...field}
-												onChange={(e) =>
-													field.onChange(masks.cnpj(e.target.value))
-												}
 											/>
 										</FormControl>
 										<FormMessage />

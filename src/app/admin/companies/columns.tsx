@@ -1,8 +1,9 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
-import { Package, Trash2, Users } from "lucide-react";
+import { Trash2, Users } from "lucide-react";
 import { CnpjCell } from "@/components/shared/cnpj-cell";
+import { StatusBadge } from "@/components/shared/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatters } from "@/lib/utils/masks";
@@ -32,6 +33,7 @@ export interface Company {
 	products?: Array<{ id: string; name: string; sku?: string; code?: string }>;
 	_count?: { users: number; products: number };
 	preOrderCount?: number;
+	productListCount?: number;
 	createdAt: string;
 	updatedAt: string;
 }
@@ -87,35 +89,12 @@ export function getCompaniesColumns({
 			filterFn: (row, _id, value) => {
 				const c = row.original;
 				const q = String(value).toLowerCase();
-				return [c.name, c.legalName, c.cnpj, c.city].some((f) =>
+				return [c.name, c.legalName, c.cnpj].some((f) =>
 					f?.toLowerCase().includes(q),
 				);
 			},
 			cell: ({ row }) => (
-				<div>
-					<div className="font-medium">{row.original.name}</div>
-					{row.original.legalName && (
-						<div className="text-sm text-muted-foreground">
-							{row.original.legalName}
-						</div>
-					)}
-				</div>
-			),
-		},
-		{
-			accessorKey: "type",
-			header: "Tipo",
-			cell: ({ row }) => (
-				<div>
-					<Badge className={getTypeBadgeColor(row.original.type)}>
-						{getTypeLabel(row.original.type)}
-					</Badge>
-					{row.original.taxRegime && (
-						<div className="mt-1 text-xs text-muted-foreground">
-							{getTaxRegimeLabel(row.original.taxRegime)}
-						</div>
-					)}
-				</div>
+				<div className="font-medium">{row.original.name}</div>
 			),
 		},
 		{
@@ -129,10 +108,13 @@ export function getCompaniesColumns({
 				),
 		},
 		{
-			id: "responsible",
-			header: "Responsável",
-			enableSorting: false,
-			cell: ({ row }) => row.original.responsibleName || "-",
+			accessorKey: "type",
+			header: "Tipo",
+			cell: ({ row }) => (
+				<Badge className={getTypeBadgeColor(row.original.type)}>
+					{getTypeLabel(row.original.type)}
+				</Badge>
+			),
 		},
 		{
 			id: "location",
@@ -155,15 +137,10 @@ export function getCompaniesColumns({
 			),
 		},
 		{
-			id: "products",
-			header: "Produtos",
+			id: "status",
+			header: "Status",
 			enableSorting: false,
-			cell: ({ row }) => (
-				<div className="flex items-center gap-1 text-sm">
-					<Package className="h-4 w-4" />
-					{row.original._count?.products ?? row.original.products?.length ?? 0}
-				</div>
-			),
+			cell: ({ row }) => <StatusBadge status={row.original.status} />,
 		},
 		{
 			accessorKey: "createdAt",

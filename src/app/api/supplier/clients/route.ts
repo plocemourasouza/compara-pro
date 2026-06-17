@@ -9,7 +9,7 @@ import {
 import { getRepresentedSupplierIds } from "@/lib/auth-scope";
 import { AuthError, requireAuth } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
-import { formatters } from "@/lib/utils/masks";
+import { formatters, masks } from "@/lib/utils/masks";
 
 const addClientSchema = z.object({
 	supplierCompanyId: z.string().min(1, "Selecione o fornecedor"),
@@ -142,7 +142,12 @@ export async function POST(request: Request) {
 			);
 		}
 		const supplierCompanyId = data.supplierCompanyId;
-		const cnpj = data.cnpj && data.cnpj.length === 14 ? data.cnpj : null;
+		const cnpjDigits = data.cnpj ? masks.removeNonDigits(data.cnpj) : "";
+		const cnpj = cnpjDigits.length === 14 ? cnpjDigits : null;
+		const userEmail = data.userEmail.trim().toLowerCase();
+		const userPhone = data.userPhone
+			? masks.removeNonDigits(data.userPhone) || null
+			: null;
 
 		// Acha empresa CLIENT existente (por CNPJ, senão por nome) ou cria.
 		let client = cnpj
@@ -184,22 +189,34 @@ export async function POST(request: Request) {
 				{ status: 409 },
 			);
 		}
+		// Agência (representante logado) que cadastra o cliente — dono do vínculo.
+		const representativeCompanyId = user.company?.id;
+		if (!representativeCompanyId) {
+			return NextResponse.json(
+				{ error: "Representante sem empresa vinculada" },
+				{ status: 403 },
+			);
+		}
 		await prisma.supplierClient.create({
-			data: { supplierCompanyId, clientCompanyId: client.id },
+			data: {
+				supplierCompanyId,
+				clientCompanyId: client.id,
+				representativeCompanyId,
+			},
 		});
 
 		// Convida o usuário do cliente (primeiro acesso por código), se novo.
 		let activation: { code: string; link: string } | null = null;
 		const existingUser = await prisma.user.findUnique({
-			where: { email: data.userEmail },
+			where: { email: userEmail },
 		});
 		if (!existingUser) {
 			const code = generateActivationCode();
 			await prisma.user.create({
 				data: {
-					email: data.userEmail,
+					email: userEmail,
 					name: data.userName,
-					phone: data.userPhone?.trim() || null,
+					phone: userPhone,
 					companyId: client.id,
 					password: null,
 					activationCodeHash: await hashActivationCode(code),

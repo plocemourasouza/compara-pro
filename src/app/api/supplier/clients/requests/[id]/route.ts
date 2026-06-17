@@ -14,6 +14,14 @@ export async function PATCH(
 		const { id } = await params;
 		const user = await requireAuth(["REPRESENTATIVE"]);
 		const supplierIds = await getRepresentedSupplierIds(user);
+		// Agência que aprova o pedido — dona do vínculo de carteira.
+		const representativeCompanyId = user.company?.id;
+		if (!representativeCompanyId) {
+			return NextResponse.json(
+				{ error: "Representante sem empresa vinculada" },
+				{ status: 403 },
+			);
+		}
 
 		const parsed = schema.safeParse(await request.json());
 		if (!parsed.success) {
@@ -64,6 +72,7 @@ export async function PATCH(
 						data: {
 							supplierCompanyId,
 							clientCompanyId: req.clientCompanyId,
+							representativeCompanyId,
 						},
 					});
 				}

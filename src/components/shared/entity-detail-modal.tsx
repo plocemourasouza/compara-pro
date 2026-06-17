@@ -28,6 +28,8 @@ export interface DetailSection<T> {
 	title?: string;
 	icon?: React.ReactNode;
 	fields: DetailField<T>[];
+	/** Columns in the field grid. Default 2. */
+	cols?: 2 | 3;
 }
 
 export interface EntityDetailModalProps<T> {
@@ -66,7 +68,7 @@ export function EntityDetailModal<T>({
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent className="flex max-h-[60vh] w-[40vw] max-w-[40vw] flex-col gap-0 overflow-hidden p-0 sm:max-w-[40vw]">
+			<DialogContent className="flex max-h-[85vh] w-[calc(100vw-2rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-3xl">
 				<DialogHeader className="border-b px-6 py-4">
 					<DialogTitle>{title}</DialogTitle>
 					<DialogDescription className={description ? undefined : "sr-only"}>
@@ -83,6 +85,12 @@ export function EntityDetailModal<T>({
 									return !isEmpty(field.value(record));
 								});
 								if (visibleFields.length === 0) return null;
+								const cols = section.cols ?? 2;
+								const gridClass =
+									cols === 3
+										? "grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-3"
+										: "grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2";
+								const fullSpan = cols === 3 ? "sm:col-span-3" : "sm:col-span-2";
 								return (
 									<section
 										key={section.title ?? `section-${sectionIndex}`}
@@ -98,11 +106,11 @@ export function EntityDetailModal<T>({
 												{section.title}
 											</h3>
 										)}
-										<dl className="grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2">
+										<dl className={gridClass}>
 											{visibleFields.map((field) => (
 												<div
 													key={field.label}
-													className={field.full ? "sm:col-span-2" : undefined}
+													className={field.full ? fullSpan : undefined}
 												>
 													<dt className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
 														{field.label}

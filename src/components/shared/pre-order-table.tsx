@@ -17,6 +17,7 @@ export interface PreOrder {
 	notes?: string;
 	client: { id: string; name: string };
 	supplier: { id: string; name: string };
+	representative?: { name: string } | null;
 }
 
 export interface PreOrderItem {
@@ -42,63 +43,78 @@ export const PRE_ORDER_STATUS: Record<
 	EXPIRED: { label: "Expirado", className: "bg-muted text-muted-foreground" },
 };
 
-export function getPreOrderColumns(): ColumnDef<PreOrder>[] {
-	return [
-		{
-			id: "ref",
-			header: "Pré-pedido",
-			accessorFn: (row) => row.id,
-			filterFn: (row, _id, value) => {
-				const o = row.original;
-				const q = String(value).toLowerCase();
-				return [o.id, o.client.name, o.supplier.name].some((f) =>
-					f.toLowerCase().includes(q),
-				);
-			},
-			cell: ({ row }) => (
-				<span className="font-medium">#{row.original.id.slice(-8)}</span>
-			),
+export function getPreOrderColumns(opts?: {
+	representative?: boolean;
+}): ColumnDef<PreOrder>[] {
+	const ref: ColumnDef<PreOrder> = {
+		id: "ref",
+		header: "Pré-pedido",
+		accessorFn: (row) => row.id,
+		filterFn: (row, _id, value) => {
+			const o = row.original;
+			const q = String(value).toLowerCase();
+			return [
+				o.id,
+				o.client.name,
+				o.supplier.name,
+				o.representative?.name ?? "",
+			].some((f) => f.toLowerCase().includes(q));
 		},
-		{
-			id: "client",
-			header: "Cliente",
-			enableSorting: false,
-			cell: ({ row }) => row.original.client.name,
-		},
-		{
-			id: "supplier",
-			header: "Fornecedor",
-			enableSorting: false,
-			cell: ({ row }) => row.original.supplier.name,
-		},
-		{
-			id: "items",
-			header: "Itens",
-			enableSorting: false,
-			cell: ({ row }) =>
-				`${row.original.itemCount} item(ns) · ${row.original.totalQuantity} un`,
-		},
-		{
-			accessorKey: "totalAmount",
-			header: "Valor",
-			cell: ({ row }) =>
-				row.original.totalAmount
-					? formatters.currency(row.original.totalAmount)
-					: "-",
-		},
-		{
-			accessorKey: "status",
-			header: "Status",
-			cell: ({ row }) => (
-				<Badge className={PRE_ORDER_STATUS[row.original.status].className}>
-					{PRE_ORDER_STATUS[row.original.status].label}
-				</Badge>
-			),
-		},
-		{
-			accessorKey: "createdAt",
-			header: "Criado em",
-			cell: ({ row }) => formatters.date(row.original.createdAt),
-		},
-	];
+		cell: ({ row }) => (
+			<span className="font-medium">#{row.original.id.slice(-8)}</span>
+		),
+	};
+	const client: ColumnDef<PreOrder> = {
+		id: "client",
+		header: "Cliente",
+		enableSorting: false,
+		cell: ({ row }) => row.original.client.name,
+	};
+	const supplier: ColumnDef<PreOrder> = {
+		id: "supplier",
+		header: "Fornecedor",
+		enableSorting: false,
+		cell: ({ row }) => row.original.supplier.name,
+	};
+	const representative: ColumnDef<PreOrder> = {
+		id: "representative",
+		header: "Representante",
+		enableSorting: false,
+		cell: ({ row }) => row.original.representative?.name ?? "—",
+	};
+	const items: ColumnDef<PreOrder> = {
+		id: "items",
+		header: opts?.representative ? "Qtd. Itens" : "Itens",
+		enableSorting: false,
+		cell: ({ row }) =>
+			`${row.original.itemCount} item(ns) · ${row.original.totalQuantity} un`,
+	};
+	const amount: ColumnDef<PreOrder> = {
+		accessorKey: "totalAmount",
+		header: "Valor",
+		cell: ({ row }) =>
+			row.original.totalAmount
+				? formatters.currency(row.original.totalAmount)
+				: "-",
+	};
+	const status: ColumnDef<PreOrder> = {
+		accessorKey: "status",
+		header: "Status",
+		cell: ({ row }) => (
+			<Badge className={PRE_ORDER_STATUS[row.original.status].className}>
+				{PRE_ORDER_STATUS[row.original.status].label}
+			</Badge>
+		),
+	};
+	const createdAt: ColumnDef<PreOrder> = {
+		accessorKey: "createdAt",
+		header: "Criado em",
+		cell: ({ row }) => formatters.date(row.original.createdAt),
+	};
+
+	// Admin: Representante na frente, sem Fornecedor, Criado em antes de Status.
+	if (opts?.representative) {
+		return [representative, ref, client, items, amount, createdAt, status];
+	}
+	return [ref, client, supplier, items, amount, status, createdAt];
 }

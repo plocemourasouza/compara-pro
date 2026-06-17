@@ -44,7 +44,7 @@ export default function PreOrderModal({
 }: PreOrderModalProps) {
 	return (
 		<Dialog open={isOpen} onOpenChange={onClose}>
-			<DialogContent className="max-w-4xl">
+			<DialogContent className="w-[calc(100vw-2rem)] sm:max-w-5xl">
 				<DialogHeader>
 					<DialogTitle className="flex items-center justify-between">
 						Itens do Pré-pedido

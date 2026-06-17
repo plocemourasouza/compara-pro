@@ -66,7 +66,10 @@ export default function PreOrdersClient({ user: _user }: PreOrdersClientProps) {
 		setDetailOpen(true);
 	};
 
-	const columns = useMemo(() => getPreOrderColumns(), []);
+	const columns = useMemo(
+		() => getPreOrderColumns({ representative: true }),
+		[],
+	);
 
 	const filteredOrders = useMemo(
 		() =>
@@ -126,7 +129,7 @@ export default function PreOrdersClient({ user: _user }: PreOrdersClientProps) {
 						columns={columns}
 						data={filteredOrders}
 						searchKey="ref"
-						searchPlaceholder="Buscar por cliente, fornecedor ou nº..."
+						searchPlaceholder="Buscar por cliente, representante ou nº..."
 						onRowClick={openDetail}
 						isLoading={loading}
 						emptyState="Nenhum pré-pedido encontrado."

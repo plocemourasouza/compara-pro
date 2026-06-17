@@ -5,6 +5,7 @@ import { ArrowLeft, Save } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type Resolver, useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { MaskedInput } from "@/components/shared/masked-input";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -24,7 +25,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import type { AccessRole } from "@/lib/services/user-access";
-import { masks } from "@/lib/utils/masks";
 import {
 	createUserFormSchema,
 	type UserFormValues,
@@ -216,12 +216,10 @@ export function UserForm({
 									<FormItem>
 										<FormLabel>Telefone *</FormLabel>
 										<FormControl>
-											<Input
+											<MaskedInput
+												mask="phone"
 												placeholder="(11) 99999-9999"
 												{...field}
-												onChange={(e) =>
-													field.onChange(masks.phone(e.target.value))
-												}
 											/>
 										</FormControl>
 										<FormMessage />

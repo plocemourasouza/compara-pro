@@ -4,14 +4,18 @@ import { Handshake, Plus, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import {
+	CompanyFilterControls,
+	useCompanyFilters,
+} from "@/components/shared/company-filters";
 import { EntityDetailModal } from "@/components/shared/entity-detail-modal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
 import { StatCard } from "../_dashboard/stat-card";
 import type { Company } from "../companies/columns";
-import { companyDetailSections } from "../companies/detail-fields";
 import { getRepresentativesColumns } from "./columns";
+import { representativeDetailSections } from "./detail-fields";
 
 interface UserType {
 	id: string;
@@ -96,6 +100,12 @@ export default function RepresentativesClient({
 		[],
 	);
 
+	const filters = useCompanyFilters(representatives);
+	const filteredReps = useMemo(
+		() => representatives.filter(filters.predicate),
+		[representatives, filters.predicate],
+	);
+
 	const stats = useMemo(
 		() => ({
 			total: representatives.length,
@@ -142,18 +152,19 @@ export default function RepresentativesClient({
 				<CardHeader>
 					<CardTitle className="flex items-center gap-2 text-lg">
 						<Handshake className="h-5 w-5" />
-						Representantes Cadastrados ({representatives.length})
+						Representantes Cadastrados ({filteredReps.length})
 					</CardTitle>
 				</CardHeader>
 				<CardContent>
 					<DataTable
 						columns={columns}
-						data={representatives}
+						data={filteredReps}
 						searchKey="name"
-						searchPlaceholder="Buscar por nome, razão social, CNPJ ou cidade..."
+						searchPlaceholder="Buscar por CNPJ ou nome..."
 						onRowClick={openDetail}
 						isLoading={loading}
 						emptyState="Nenhum representante encontrado."
+						toolbar={<CompanyFilterControls {...filters} />}
 					/>
 				</CardContent>
 			</Card>
@@ -164,7 +175,7 @@ export default function RepresentativesClient({
 				onOpenChange={setDetailOpen}
 				record={selected}
 				title="Detalhes do Representante"
-				sections={companyDetailSections}
+				sections={representativeDetailSections}
 				editHref={(company) => `/admin/representatives/${company.id}/editar`}
 			/>
 		</div>

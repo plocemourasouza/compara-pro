@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
 import { formatters } from "@/lib/utils/masks";
+import { normalizeCompanyData } from "@/lib/utils/normalize";
 import { updateCompanySchema } from "@/lib/validations/company";
 
 export async function GET(
@@ -141,7 +142,7 @@ export async function PUT(
 			state,
 			zipCode,
 			addressReference,
-		} = validation.data;
+		} = normalizeCompanyData(validation.data);
 
 		// Check if company exists
 		const existingCompany = await prisma.company.findFirst({

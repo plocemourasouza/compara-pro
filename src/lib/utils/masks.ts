@@ -13,6 +13,14 @@ export const masks = {
 		return value;
 	},
 
+	cpf: (value: string) => {
+		const cleaned = value.replace(/\D/g, "").slice(0, 11);
+		return cleaned
+			.replace(/(\d{3})(\d)/, "$1.$2")
+			.replace(/(\d{3})(\d)/, "$1.$2")
+			.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+	},
+
 	cep: (value: string) => {
 		const cleaned = value.replace(/\D/g, "");
 		if (cleaned.length <= 8) {
@@ -106,6 +114,25 @@ export const validations = {
 		return Number.parseInt(cleaned[13] ?? "0", 10) === digito2;
 	},
 
+	cpf: (cpf: string): boolean => {
+		const cleaned = cpf.replace(/\D/g, "");
+
+		if (cleaned.length !== 11) return false;
+		if (/^(\d)\1+$/.test(cleaned)) return false;
+
+		const calc = (count: number): number => {
+			let soma = 0;
+			for (let i = 0; i < count; i++) {
+				soma += Number.parseInt(cleaned[i] ?? "0", 10) * (count + 1 - i);
+			}
+			const resto = (soma * 10) % 11;
+			return resto === 10 ? 0 : resto;
+		};
+
+		if (calc(9) !== Number.parseInt(cleaned[9] ?? "0", 10)) return false;
+		return calc(10) === Number.parseInt(cleaned[10] ?? "0", 10);
+	},
+
 	cep: (cep: string): boolean => {
 		const cleaned = cep.replace(/\D/g, "");
 		return cleaned.length === 8;
@@ -129,6 +156,11 @@ export const formatters = {
 			/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/,
 			"$1.$2.$3/$4-$5",
 		);
+	},
+
+	cpf: (cpf: string) => {
+		const cleaned = cpf.replace(/\D/g, "");
+		return cleaned.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4");
 	},
 
 	// Anonimização LGPD: exibe só a raiz parcial (5 primeiros dígitos),

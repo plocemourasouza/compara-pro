@@ -74,6 +74,9 @@ model Company {
   representedSuppliers RepresentativeSupplier[] @relation("AgencyRepresents")
   // Esta empresa É o fornecedor (type SUPPLIER) representado por N agências:
   representedByAgencies RepresentativeSupplier[] @relation("SupplierRepresentedBy")
+  // Esta empresa É a agência dona de vínculos de carteira e de pré-pedidos:
+  carteiraAsAgency        SupplierClient[] @relation("CarteiraAgency")
+  representativePreOrders PreOrder[]       @relation("RepresentativePreOrders")
   createdAt          DateTime         @default(now())
   updatedAt          DateTime         @updatedAt
   deletedAt          DateTime?
@@ -105,10 +108,15 @@ model SupplierClient {
   supplier          Company  @relation("SupplierCarteira", fields: [supplierCompanyId], references: [id])
   clientCompanyId   String
   client            Company  @relation("ClientCarteira", fields: [clientCompanyId], references: [id])
+  // Agência que cadastrou este cliente na carteira do fornecedor.
+  // É o representante "dono" do par (fornecedor, cliente) — herdado pelos pré-pedidos.
+  representativeCompanyId String
+  representativeCompany   Company @relation("CarteiraAgency", fields: [representativeCompanyId], references: [id])
   createdAt         DateTime @default(now())
 
   @@unique([supplierCompanyId, clientCompanyId])
   @@index([supplierCompanyId])
+  @@index([representativeCompanyId])
   @@map("supplier_clients")
 }
 
@@ -167,6 +175,10 @@ model PreOrder {
   client       Company        @relation("ClientPreOrders", fields: [clientId], references: [id])
   supplierId   String
   supplier     Company        @relation("SupplierPreOrders", fields: [supplierId], references: [id])
+  // Representante (agência) vinculado ao pré-pedido — obrigatório (regra de negócio).
+  // Herdado da carteira do par (fornecedor, cliente) no momento da criação.
+  representativeId String
+  representative   Company    @relation("RepresentativePreOrders", fields: [representativeId], references: [id])
   status       PreOrderStatus // ACTIVE, FINALIZED, REJECTED
   totalAmount  Float?
   notes        String?

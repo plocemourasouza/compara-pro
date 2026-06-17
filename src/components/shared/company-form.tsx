@@ -14,6 +14,7 @@ import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { MaskedInput } from "@/components/shared/masked-input";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -329,20 +330,20 @@ export function CompanyForm({
 										<div className="relative">
 											<FormControl>
 												{locked ? (
-													<Input
+													<MaskedInput
+														mask="cnpj"
 														{...field}
 														readOnly
 														aria-readonly
 														className="border-primary/60 bg-primary/5 font-semibold text-foreground"
 													/>
 												) : (
-													<Input
+													<MaskedInput
+														mask="cnpj"
 														placeholder="00.000.000/0000-00"
-														inputMode="numeric"
 														className={cnpjLoading ? "pr-9" : undefined}
 														{...field}
-														onChange={(e) => {
-															const m = masks.cnpj(e.target.value);
+														onChange={(m) => {
 															field.onChange(m);
 															runCnpjLookup(m);
 														}}
@@ -410,12 +411,10 @@ export function CompanyForm({
 									<FormItem className="sm:col-span-3">
 										<FormLabel>Telefone da Empresa</FormLabel>
 										<FormControl>
-											<Input
+											<MaskedInput
+												mask="phone"
 												placeholder="(11) 99999-9999"
 												{...field}
-												onChange={(e) =>
-													field.onChange(masks.phone(e.target.value))
-												}
 											/>
 										</FormControl>
 										<FormMessage />
@@ -550,12 +549,10 @@ export function CompanyForm({
 									<FormItem className="sm:col-span-2">
 										<FormLabel>Telefone do Responsável *</FormLabel>
 										<FormControl>
-											<Input
+											<MaskedInput
+												mask="phone"
 												placeholder="(11) 99999-9999"
 												{...field}
-												onChange={(e) =>
-													field.onChange(masks.phone(e.target.value))
-												}
 											/>
 										</FormControl>
 										<FormMessage />
@@ -584,13 +581,12 @@ export function CompanyForm({
 										<FormLabel>CEP *</FormLabel>
 										<div className="relative">
 											<FormControl>
-												<Input
+												<MaskedInput
+													mask="cep"
 													placeholder="00000-000"
-													inputMode="numeric"
 													className={cepLoading ? "pr-9" : undefined}
 													{...field}
-													onChange={(e) => {
-														const m = masks.cep(e.target.value);
+													onChange={(m) => {
 														field.onChange(m);
 														runCepLookup(m);
 													}}

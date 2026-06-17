@@ -1,7 +1,6 @@
 "use client";
 
-import { Building2, DollarSign, Package, Plus, Tags } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { Building2, DollarSign, Package, Tags } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { EntityDetailModal } from "@/components/shared/entity-detail-modal";
 import {
@@ -9,7 +8,6 @@ import {
 	type Product,
 	productDetailSections,
 } from "@/components/shared/product-table";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
 import {
@@ -41,7 +39,6 @@ interface Company {
 }
 
 export default function ProductsClient({ user: _user }: ProductsClientProps) {
-	const router = useRouter();
 	const [products, setProducts] = useState<Product[]>([]);
 	const [companies, setCompanies] = useState<Company[]>([]);
 	const [loading, setLoading] = useState(true);
@@ -149,10 +146,6 @@ export default function ProductsClient({ user: _user }: ProductsClientProps) {
 						Gerencie os produtos de todas as empresas
 					</p>
 				</div>
-				<Button onClick={() => router.push("/admin/products/novo")}>
-					<Plus className="mr-2 h-4 w-4" />
-					Novo Produto
-				</Button>
 			</div>
 
 			{/* Indicadores */}

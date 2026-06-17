@@ -1,9 +1,13 @@
 "use client";
 
-import { Building2, Factory, Package, Plus, Store } from "lucide-react";
+import { Building2, Factory, MapPin, Plus, Store } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import {
+	CompanyFilterControls,
+	useCompanyFilters,
+} from "@/components/shared/company-filters";
 import { EntityDetailModal } from "@/components/shared/entity-detail-modal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -40,6 +44,7 @@ export default function CompaniesClient({ user: _user }: CompaniesClientProps) {
 	const [companies, setCompanies] = useState<Company[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [typeFilter, setTypeFilter] = useState<string>("all");
+	const filters = useCompanyFilters(companies);
 	const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
 	const [detailOpen, setDetailOpen] = useState(false);
 
@@ -101,13 +106,12 @@ export default function CompaniesClient({ user: _user }: CompaniesClientProps) {
 		[],
 	);
 
-	const filteredCompanies = useMemo(
-		() =>
-			typeFilter === "all"
-				? companies
-				: companies.filter((c) => c.type === typeFilter),
-		[companies, typeFilter],
-	);
+	const filteredCompanies = useMemo(() => {
+		return companies.filter((c) => {
+			if (typeFilter !== "all" && c.type !== typeFilter) return false;
+			return filters.predicate(c);
+		});
+	}, [companies, typeFilter, filters.predicate]);
 
 	// Indicadores: totais globais (não reagem ao filtro de tipo)
 	const stats = useMemo(
@@ -115,10 +119,12 @@ export default function CompaniesClient({ user: _user }: CompaniesClientProps) {
 			total: companies.length,
 			suppliers: companies.filter((c) => c.type === "SUPPLIER").length,
 			clients: companies.filter((c) => c.type === "CLIENT").length,
-			products: companies.reduce(
-				(sum, c) => sum + (c._count?.products ?? 0),
-				0,
-			),
+			states: new Set(companies.map((c) => c.state).filter(Boolean)).size,
+			cities: new Set(
+				companies
+					.filter((c) => c.city)
+					.map((c) => `${c.state ?? ""}|${c.city}`),
+			).size,
 		}),
 		[companies],
 	);
@@ -150,9 +156,9 @@ export default function CompaniesClient({ user: _user }: CompaniesClientProps) {
 				<StatCard title="Fornecedores" icon={Factory} value={stats.suppliers} />
 				<StatCard title="Clientes" icon={Store} value={stats.clients} />
 				<StatCard
-					title="Produtos cadastrados"
-					icon={Package}
-					value={stats.products}
+					title="Regiões atendidas"
+					icon={MapPin}
+					value={`${stats.states} ${stats.states === 1 ? "estado" : "estados"} · ${stats.cities} ${stats.cities === 1 ? "cidade" : "cidades"}`}
 				/>
 			</div>
 
@@ -169,21 +175,26 @@ export default function CompaniesClient({ user: _user }: CompaniesClientProps) {
 						columns={columns}
 						data={filteredCompanies}
 						searchKey="name"
-						searchPlaceholder="Buscar por nome, razão social, CNPJ ou cidade..."
+						searchPlaceholder="Buscar por CNPJ ou nome..."
 						onRowClick={openDetail}
 						isLoading={loading}
 						emptyState="Nenhuma empresa encontrada."
 						toolbar={
-							<Select value={typeFilter} onValueChange={setTypeFilter}>
-								<SelectTrigger className="w-full sm:w-[180px]">
-									<SelectValue placeholder="Tipo" />
-								</SelectTrigger>
-								<SelectContent>
-									<SelectItem value="all">Todos os tipos</SelectItem>
-									<SelectItem value="SUPPLIER">Fornecedores</SelectItem>
-									<SelectItem value="CLIENT">Clientes</SelectItem>
-								</SelectContent>
-							</Select>
+							<CompanyFilterControls
+								{...filters}
+								leadingFilter={
+									<Select value={typeFilter} onValueChange={setTypeFilter}>
+										<SelectTrigger className="w-full sm:w-[150px]">
+											<SelectValue placeholder="Tipo" />
+										</SelectTrigger>
+										<SelectContent>
+											<SelectItem value="all">Todos os tipos</SelectItem>
+											<SelectItem value="SUPPLIER">Fornecedores</SelectItem>
+											<SelectItem value="CLIENT">Clientes</SelectItem>
+										</SelectContent>
+									</Select>
+								}
+							/>
 						}
 					/>
 				</CardContent>

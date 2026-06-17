@@ -7,6 +7,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import { MaskedInput } from "@/components/shared/masked-input";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -31,7 +32,6 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { masks } from "@/lib/utils/masks";
 
 const schema = z.object({
 	supplierCompanyId: z.string().min(1, "Selecione o fornecedor"),
@@ -212,13 +212,10 @@ export default function AddClientForm({ suppliers }: AddClientFormProps) {
 									<FormItem className="sm:col-span-2">
 										<FormLabel>CNPJ</FormLabel>
 										<FormControl>
-											<Input
+											<MaskedInput
+												mask="cnpj"
 												placeholder="00.000.000/0000-00"
-												inputMode="numeric"
 												{...field}
-												onChange={(e) =>
-													field.onChange(masks.cnpj(e.target.value))
-												}
 											/>
 										</FormControl>
 										<FormMessage />
@@ -308,13 +305,10 @@ export default function AddClientForm({ suppliers }: AddClientFormProps) {
 									<FormItem className="sm:col-span-3">
 										<FormLabel>Telefone</FormLabel>
 										<FormControl>
-											<Input
+											<MaskedInput
+												mask="phone"
 												placeholder="(00) 00000-0000"
-												inputMode="numeric"
 												{...field}
-												onChange={(e) =>
-													field.onChange(masks.phone(e.target.value))
-												}
 											/>
 										</FormControl>
 										<FormMessage />

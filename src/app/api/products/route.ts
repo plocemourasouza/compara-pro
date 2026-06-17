@@ -120,6 +120,12 @@ export async function POST(request: NextRequest) {
 				{ error: "Clients cannot create products" },
 				{ status: 403 },
 			);
+		} else if (user.area === "ADMIN") {
+			// Admin é suporte: pode editar/excluir, mas não cadastrar produtos.
+			return NextResponse.json(
+				{ error: "Administradores não cadastram produtos" },
+				{ status: 403 },
+			);
 		}
 
 		if (!finalCompanyId) {

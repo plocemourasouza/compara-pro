@@ -8,6 +8,7 @@ import {
 	lockUpdateFields,
 	type MutationTarget,
 } from "@/lib/services/user-access";
+import { normalizeUserData } from "@/lib/utils/normalize";
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -115,7 +116,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 			return notFound();
 
 		// Não-admin não altera papel nem empresa do alvo.
-		const data = lockUpdateFields(actor, parsed.data);
+		const data = lockUpdateFields(actor, normalizeUserData(parsed.data));
 
 		if (data.email && data.email !== existing.email) {
 			const emailExists = await prisma.user.findUnique({

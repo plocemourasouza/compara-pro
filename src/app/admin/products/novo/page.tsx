@@ -1,31 +1,10 @@
 import { redirect } from "next/navigation";
-import { ProductForm } from "@/components/shared/product-form";
-import { getCurrentUser } from "@/lib/auth-server";
-import { prisma } from "@/lib/db";
 
-export default async function NewProductPage() {
-	const user = await getCurrentUser();
-
-	if (!user) {
-		redirect("/auth/login");
-	}
-
-	if (user.area !== "ADMIN") {
-		redirect("/dashboard");
-	}
-
-	const companies = await prisma.company.findMany({
-		where: { deletedAt: null },
-		select: { id: true, name: true, type: true },
-		orderBy: { name: "asc" },
-	});
-
-	return (
-		<ProductForm
-			mode="create"
-			showCompanySelect
-			companies={companies}
-			listHref="/admin/products"
-		/>
-	);
+/**
+ * Cadastro de produto pelo admin foi desativado.
+ * Admin é suporte: apenas visualiza, edita e exclui — nunca cadastra.
+ * A rota é mantida só para redirecionar quem acessar a URL antiga.
+ */
+export default function NewProductPage() {
+	redirect("/admin/products");
 }

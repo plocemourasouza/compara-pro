@@ -2,6 +2,7 @@
 
 import type { DetailSection } from "@/components/shared/entity-detail-modal";
 import { Badge } from "@/components/ui/badge";
+import { formatters } from "@/lib/utils/masks";
 import {
 	formatDateTime,
 	getRoleBadgeColor,
@@ -15,7 +16,10 @@ export const userDetailSections: DetailSection<UserData>[] = [
 		fields: [
 			{ label: "Nome", value: (u) => u.name },
 			{ label: "Email", value: (u) => u.email },
-			{ label: "Telefone", value: (u) => u.phone || "-" },
+			{
+				label: "Telefone",
+				value: (u) => (u.phone ? formatters.phone(u.phone) : "-"),
+			},
 			{
 				label: "Papel",
 				value: (u) => (

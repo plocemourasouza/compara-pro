@@ -78,12 +78,30 @@ export class PreOrderService {
 				totalAmount += totalPrice;
 			}
 
+			// Representante (regra de negócio): herdado da carteira do par
+			// (fornecedor, cliente). Sem carteira não há representante → não cria.
+			const carteira = await prisma.supplierClient.findUnique({
+				where: {
+					supplierCompanyId_clientCompanyId: {
+						supplierCompanyId: data.supplierId,
+						clientCompanyId: clientId,
+					},
+				},
+				select: { representativeCompanyId: true },
+			});
+			if (!carteira) {
+				throw new Error(
+					"Fornecedor sem vínculo de carteira com o cliente — pré-pedido exige representante",
+				);
+			}
+
 			// Create pre-order
 			const preOrder = await prisma.preOrder.create({
 				data: {
 					comparisonId: data.comparisonId,
 					clientId,
 					supplierId: data.supplierId,
+					representativeId: carteira.representativeCompanyId,
 					status: "ACTIVE",
 					totalAmount,
 					notes: data.notes,
@@ -208,11 +226,28 @@ export class PreOrderService {
 
 				if (items.length === 0) continue;
 
+				// Representante herdado da carteira (fornecedor, cliente).
+				const carteira = await tx.supplierClient.findUnique({
+					where: {
+						supplierCompanyId_clientCompanyId: {
+							supplierCompanyId: group.supplierId,
+							clientCompanyId: clientId,
+						},
+					},
+					select: { representativeCompanyId: true },
+				});
+				if (!carteira) {
+					throw new Error(
+						"Fornecedor sem vínculo de carteira com o cliente — pré-pedido exige representante",
+					);
+				}
+
 				const preOrder = await tx.preOrder.create({
 					data: {
 						comparisonId: data.comparisonId,
 						clientId,
 						supplierId: group.supplierId,
+						representativeId: carteira.representativeCompanyId,
 						status: "ACTIVE",
 						totalAmount,
 						notes: data.notes,
@@ -378,6 +413,7 @@ export class PreOrderService {
 					include: {
 						client: { select: { id: true, name: true } },
 						supplier: { select: { id: true, name: true } },
+						representative: { select: { id: true, name: true } },
 						items: { select: { id: true, quantity: true, totalPrice: true } },
 					},
 				}),
@@ -395,6 +431,8 @@ export class PreOrderService {
 					respondedAt: po.respondedAt,
 					client: po.client,
 					supplier: po.supplier,
+					// Representante único vinculado ao pré-pedido (regra de negócio).
+					representative: po.representative,
 				})),
 				pagination: {
 					page,

@@ -5,6 +5,7 @@
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+/.playwright-mcp/
 
 # dependencies
 /node_modules

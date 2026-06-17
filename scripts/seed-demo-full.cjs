@@ -33,16 +33,93 @@ const SKUS = [
 ];
 const skuOf = (key) => SKUS.find((s) => s.key === key);
 
-let cnpjSeq = 50000000;
-const nextCnpj = () => `${String(cnpjSeq++).padStart(8, "0")}000100`;
+// CNPJ válido (dígitos verificadores) a partir de uma raiz de 8 dígitos.
+function makeCnpj(root8) {
+	const base = `${root8}0001`;
+	const digit = (nums, pesoStart) => {
+		let soma = 0;
+		let peso = pesoStart;
+		for (const n of nums) {
+			soma += n * peso;
+			peso = peso === 2 ? 9 : peso - 1;
+		}
+		const r = soma % 11;
+		return r < 2 ? 0 : 11 - r;
+	};
+	const arr = base.split("").map(Number);
+	const d1 = digit(arr, 5);
+	const d2 = digit([...arr, d1], 6);
+	return `${base}${d1}${d2}`;
+}
 
-async function makeSupplier({ name, factor, keys, uploadedAt }) {
+let cnpjSeq = 50000000;
+const nextCnpj = () => makeCnpj(String(cnpjSeq++).padStart(8, "0"));
+
+const slugify = (s) =>
+	s
+		.normalize("NFD")
+		.replace(/[^a-zA-Z0-9]/g, "")
+		.toLowerCase() || "empresa";
+
+const TAX_REGIMES = [
+	"SIMPLES_NACIONAL",
+	"LUCRO_PRESUMIDO",
+	"LUCRO_REAL",
+	"MEI",
+];
+let taxSeq = 0;
+
+const CATEGORIES = [
+	"Ferramentas",
+	"Material de Escritório",
+	"Limpeza",
+	"Elétrica",
+	"Hidráulica",
+];
+
+// Campos não-endereço exigidos/úteis em toda empresa (passam no createCompanySchema).
+function companyExtras(name) {
+	const slug = slugify(name);
+	return {
+		legalName: `${name} LTDA`.slice(0, 200),
+		taxRegime: TAX_REGIMES[taxSeq++ % TAX_REGIMES.length],
+		email: `contato@${slug}.com.br`,
+		phone: "(11) 3000-0000",
+		responsibleName: `Responsável ${name}`.slice(0, 100),
+		responsibleEmail: `responsavel@${slug}.com.br`,
+		responsiblePhone: "(11) 99999-0000",
+	};
+}
+
+let userPhoneSeq = 0;
+// Telefone válido (11 dígitos) p/ usuários.
+const userPhone = () => {
+	const n = String(userPhoneSeq++).padStart(8, "0");
+	return `(11) 9${n.slice(0, 4)}-${n.slice(4)}`;
+};
+
+// Endereço completo (UF + cidade + logradouro/bairro/CEP) p/ todos os cadastros.
+function makeAddress(state, city, opts = {}) {
+	return {
+		addressType: opts.addressType ?? "Rua",
+		street: opts.street ?? "das Indústrias",
+		number: opts.number ?? "100",
+		neighborhood: opts.neighborhood ?? "Centro",
+		city,
+		state,
+		zipCode: opts.zipCode ?? "01000-000",
+	};
+}
+
+async function makeSupplier({ name, factor, keys, uploadedAt, address }) {
 	const company = await prisma.company.create({
 		data: {
 			name,
 			type: "SUPPLIER",
 			cnpj: nextCnpj(),
+			...companyExtras(name),
 			email: `${name.replace(/\s+/g, "").toLowerCase()}@demo.com`,
+			...address,
 		},
 	});
 	const upload = await prisma.uploadHistory.create({
@@ -74,6 +151,12 @@ async function makeSupplier({ name, factor, keys, uploadedAt }) {
 				price,
 				quantity: 1000,
 				unit: "UN",
+				category:
+					CATEGORIES[
+						[...key].reduce((a, c) => a + c.charCodeAt(0), 0) %
+							CATEGORIES.length
+					],
+				description: `${s.name} — fornecido por ${name}.`,
 				isActive: true,
 				lastUploadId: upload.id,
 			},
@@ -111,24 +194,28 @@ async function main() {
 		factor: 0.95,
 		keys: allKeys,
 		uploadedAt: daysAgo(26),
+		address: makeAddress("MG", "Belo Horizonte"),
 	});
 	const delta = await makeSupplier({
 		name: "Fornecedor Delta",
 		factor: 1.08,
 		keys: allKeys.slice(0, 6),
 		uploadedAt: daysAgo(20),
+		address: makeAddress("SP", "Santos"),
 	});
 	const epsilon = await makeSupplier({
 		name: "Fornecedor Epsilon",
 		factor: 0.88,
 		keys: allKeys.slice(2),
 		uploadedAt: daysAgo(14),
+		address: makeAddress("RJ", "Niterói"),
 	});
 	const zeta = await makeSupplier({
 		name: "Fornecedor Zeta",
 		factor: 1.0,
 		keys: allKeys.slice(0, 5),
 		uploadedAt: daysAgo(7),
+		address: makeAddress("BA", "Salvador"),
 	});
 
 	// Mapa de ofertas por key (fornecedor → {companyId, price, productId}).
@@ -166,29 +253,42 @@ async function main() {
 			name: "Rep Gama",
 			primary: gama.company,
 			also: [delta.company],
+			state: "GO",
+			city: "Goiânia",
 		},
 		{
 			email: "rep.epsilon@demo.com",
 			name: "Rep Epsilon",
 			primary: epsilon.company,
 			also: [],
+			state: "CE",
+			city: "Fortaleza",
 		},
 		{
 			email: "rep.zeta@demo.com",
 			name: "Rep Zeta",
 			primary: zeta.company,
 			also: [gama.company],
+			state: "PE",
+			city: "Recife",
 		},
 	];
 	for (const r of repSpecs) {
 		// Cada representante é uma agência (conta) que representa N fornecedores.
 		const agency = await prisma.company.create({
-			data: { name: `${r.name} (Agência)`, type: "REPRESENTATIVE" },
+			data: {
+				name: `${r.name} (Agência)`,
+				type: "REPRESENTATIVE",
+				cnpj: nextCnpj(),
+				...companyExtras(`${r.name} (Agência)`),
+				...makeAddress(r.state, r.city),
+			},
 		});
 		await prisma.user.create({
 			data: {
 				email: r.email,
 				name: r.name,
+				phone: userPhone(),
 				password: repPass,
 				companyId: agency.id,
 			},
@@ -201,6 +301,18 @@ async function main() {
 			data: links,
 			skipDuplicates: true,
 		});
+	}
+
+	// Mapa fornecedor -> agência (mais antiga) p/ herdar o representante na
+	// carteira e nos pré-pedidos. Cobre links de demo + full já criados.
+	const repLinks = await prisma.representativeSupplier.findMany({
+		orderBy: [{ supplierCompanyId: "asc" }, { createdAt: "asc" }, { id: "asc" }],
+	});
+	const supplierAgency = new Map();
+	for (const l of repLinks) {
+		if (!supplierAgency.has(l.supplierCompanyId)) {
+			supplierAgency.set(l.supplierCompanyId, l.representativeCompanyId);
+		}
 	}
 
 	// --- Clientes novos + comparação + matches ---
@@ -245,14 +357,15 @@ async function main() {
 				name: spec.name,
 				type: "CLIENT",
 				cnpj: nextCnpj(),
-				city: "São Paulo",
-				state: "SP",
+				...companyExtras(spec.name),
+				...makeAddress("SP", "São Paulo"),
 			},
 		});
 		await prisma.user.create({
 			data: {
 				email: `${spec.name.replace(/\s+/g, "").toLowerCase()}@demo.com`,
 				name: `Comprador ${spec.name}`,
+				phone: userPhone(),
 				password: clientPass,
 				companyId: company.id,
 			},
@@ -377,10 +490,18 @@ async function main() {
 			...new Set(matchInfos.flatMap((m) => m.offers.map((o) => o.companyId))),
 		].slice(0, 3);
 		await prisma.supplierClient.createMany({
-			data: supplierIds.map((sid) => ({
-				supplierCompanyId: sid,
-				clientCompanyId: company.id,
-			})),
+			data: supplierIds
+				.map((sid) => {
+					const rep = supplierAgency.get(sid);
+					return rep
+						? {
+								supplierCompanyId: sid,
+								clientCompanyId: company.id,
+								representativeCompanyId: rep,
+							}
+						: null;
+				})
+				.filter(Boolean),
 			skipDuplicates: true,
 		});
 
@@ -427,6 +548,9 @@ async function main() {
 				.filter(Boolean);
 			if (items.length === 0) continue;
 
+			const representativeId = supplierAgency.get(supplierId);
+			if (!representativeId) continue;
+
 			const status = STATUS_CYCLE[statusIdx % STATUS_CYCLE.length];
 			statusIdx++;
 			const createdAt = daysAgo((poCount * 29) % 30);
@@ -436,6 +560,7 @@ async function main() {
 					comparisonId: cl.comparison.id,
 					clientId: cl.company.id,
 					supplierId,
+					representativeId,
 					status,
 					totalAmount: round2(items.reduce((s, it) => s + it.totalPrice, 0)),
 					notes: `Pré-pedido ${status.toLowerCase()} (demo rico).`,
@@ -506,8 +631,8 @@ async function main() {
 			name: "Atacadão Sul",
 			type: "CLIENT",
 			cnpj: nextCnpj(),
-			city: "Porto Alegre",
-			state: "RS",
+			...companyExtras("Atacadão Sul"),
+			...makeAddress("RS", "Porto Alegre"),
 		},
 	});
 	const lojaB = await prisma.company.create({
@@ -515,9 +640,27 @@ async function main() {
 			name: "Distribuidora Norte",
 			type: "CLIENT",
 			cnpj: nextCnpj(),
-			city: "Belém",
-			state: "PA",
+			...companyExtras("Distribuidora Norte"),
+			...makeAddress("PA", "Belém"),
 		},
+	});
+	await prisma.user.createMany({
+		data: [
+			{
+				email: "atacadaosul@demo.com",
+				name: "Comprador Atacadão Sul",
+				phone: userPhone(),
+				password: clientPass,
+				companyId: lojaA.id,
+			},
+			{
+				email: "distribuidoranorte@demo.com",
+				name: "Comprador Distribuidora Norte",
+				phone: userPhone(),
+				password: clientPass,
+				companyId: lojaB.id,
+			},
+		],
 	});
 	await prisma.supplierLinkRequest.createMany({
 		data: [
@@ -560,16 +703,35 @@ async function main() {
 	// empresa do tipo correto (agência p/ rep, cliente p/ cliente) — coerente com
 	// o modelo "área = company.type".
 	const inativaAgency = await prisma.company.create({
-		data: { name: "Agência Inativa", type: "REPRESENTATIVE" },
+		data: {
+			name: "Agência Inativa",
+			type: "REPRESENTATIVE",
+			cnpj: nextCnpj(),
+			...companyExtras("Agência Inativa"),
+			...makeAddress("DF", "Brasília"),
+		},
 	});
 	const inativaClient = await prisma.company.create({
-		data: { name: "Cliente Inativo Ltda", type: "CLIENT" },
+		data: {
+			name: "Cliente Inativo Ltda",
+			type: "CLIENT",
+			cnpj: nextCnpj(),
+			...companyExtras("Cliente Inativo Ltda"),
+			...makeAddress("ES", "Vitória"),
+		},
+	});
+	await prisma.representativeSupplier.create({
+		data: {
+			representativeCompanyId: inativaAgency.id,
+			supplierCompanyId: gama.company.id,
+		},
 	});
 	await prisma.user.createMany({
 		data: [
 			{
 				email: "rep.inativo@demo.com",
 				name: "Rep Inativo",
+				phone: userPhone(),
 				password: repPass,
 				companyId: inativaAgency.id,
 				deletedAt: daysAgo(3),
@@ -577,6 +739,7 @@ async function main() {
 			{
 				email: "cliente.inativo@demo.com",
 				name: "Cliente Inativo",
+				phone: userPhone(),
 				password: clientPass,
 				companyId: inativaClient.id,
 				deletedAt: daysAgo(5),
