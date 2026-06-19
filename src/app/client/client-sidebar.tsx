@@ -3,7 +3,6 @@
 import { motion } from "framer-motion";
 import {
 	BarChart3,
-	Bell,
 	Building2,
 	LayoutDashboard as Dashboard,
 	FileText,
@@ -39,7 +38,7 @@ interface ClientSidebarProps {
 	user: User;
 }
 
-type BadgeKey = "pending" | "unread";
+type BadgeKey = "pending";
 
 const navigation: Array<{
 	name: string;
@@ -58,37 +57,25 @@ const navigation: Array<{
 		badgeKey: "pending",
 	},
 	{ name: "Histórico", href: "/client/history", icon: FileText },
-	{
-		name: "Notificações",
-		href: "/client/notifications",
-		icon: Bell,
-		badgeKey: "unread",
-	},
 	{ name: "Usuários", href: "/client/usuarios", icon: UserCog },
 	{ name: "Configurações", href: "/client/settings", icon: Settings },
 ];
 
 export default function ClientSidebar({ user }: ClientSidebarProps) {
 	const pathname = usePathname();
-	const [counts, setCounts] = useState<{ pending: number; unread: number }>({
+	const [counts, setCounts] = useState<{ pending: number }>({
 		pending: 0,
-		unread: 0,
 	});
 
 	useEffect(() => {
 		let active = true;
-		Promise.all([
-			fetch("/api/client/dashboard")
-				.then((r) => (r.ok ? r.json() : null))
-				.then((d) => d?.metrics?.preOrders?.pending ?? 0)
-				.catch(() => 0),
-			fetch("/api/notifications?unreadOnly=true&limit=1")
-				.then((r) => (r.ok ? r.json() : null))
-				.then((d) => d?.unreadCount ?? 0)
-				.catch(() => 0),
-		]).then(([pending, unread]) => {
-			if (active) setCounts({ pending, unread });
-		});
+		fetch("/api/client/dashboard")
+			.then((r) => (r.ok ? r.json() : null))
+			.then((d) => d?.metrics?.preOrders?.pending ?? 0)
+			.catch(() => 0)
+			.then((pending) => {
+				if (active) setCounts({ pending });
+			});
 		return () => {
 			active = false;
 		};

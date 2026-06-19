@@ -1,7 +1,7 @@
 "use client";
 
 import { CheckCircle2, Clock, Package, XCircle } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
 	PRE_ORDER_STATUS,
 	type PreOrder,
@@ -53,6 +53,16 @@ export function PreOrderDetailModal({
 	const [notes, setNotes] = useState("");
 	const [items, setItems] = useState<PreOrderItem[]>([]);
 	const [itemsLoading, setItemsLoading] = useState(false);
+
+	const savings = useMemo(() => {
+		let total = 0;
+		for (const it of items) {
+			if (it.baselinePrice == null) continue;
+			const delta = it.baselinePrice - it.price;
+			if (delta > 0) total += delta * it.quantity;
+		}
+		return total;
+	}, [items]);
 
 	useEffect(() => {
 		setRejecting(false);
@@ -114,6 +124,16 @@ export function PreOrderDetailModal({
 									)
 								}
 							/>
+							{savings > 0 && (
+								<Field
+									label="Economia"
+									value={
+										<span className="font-semibold text-emerald-600">
+											{formatters.currency(savings)}
+										</span>
+									}
+								/>
+							)}
 							<Field
 								label="Criado em"
 								value={formatters.datetime(preOrder.createdAt)}

@@ -3,7 +3,7 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { Check, Clock, UserPlus, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { CnpjCell } from "@/components/shared/cnpj-cell";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +16,13 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import { formatters } from "@/lib/utils/masks";
 
 interface PendingRequest {
@@ -113,6 +120,8 @@ export default function ClientsClient() {
 	const [clients, setClients] = useState<ClientRow[]>([]);
 	const [requests, setRequests] = useState<PendingRequest[]>([]);
 	const [loading, setLoading] = useState(true);
+	const [stateFilter, setStateFilter] = useState("all");
+	const [cityFilter, setCityFilter] = useState("all");
 
 	const load = useCallback(() => {
 		setLoading(true);
@@ -152,8 +161,37 @@ export default function ClientsClient() {
 		}
 	};
 
+	const stateOptions = useMemo(
+		() =>
+			[
+				...new Set(clients.map((c) => c.state).filter(Boolean)),
+			].sort() as string[],
+		[clients],
+	);
+	const cityOptions = useMemo(
+		() =>
+			[
+				...new Set(
+					clients
+						.filter((c) => stateFilter === "all" || c.state === stateFilter)
+						.map((c) => c.city)
+						.filter(Boolean),
+				),
+			].sort() as string[],
+		[clients, stateFilter],
+	);
+	const filtered = useMemo(
+		() =>
+			clients.filter(
+				(c) =>
+					(stateFilter === "all" || c.state === stateFilter) &&
+					(cityFilter === "all" || c.city === cityFilter),
+			),
+		[clients, stateFilter, cityFilter],
+	);
+
 	return (
-		<div className="space-y-6">
+		<div className="flex min-h-0 flex-1 flex-col gap-6">
 			<div className="flex items-center justify-between">
 				<div>
 					<h1 className="font-bold text-2xl tracking-tight">
@@ -217,19 +255,55 @@ export default function ClientsClient() {
 				</Card>
 			)}
 
-			<Card>
+			<Card className="flex min-h-0 flex-1 flex-col">
 				<CardHeader>
 					<CardTitle>Clientes</CardTitle>
 				</CardHeader>
-				<CardContent>
+				<CardContent className="flex min-h-0 flex-1 flex-col pt-6">
 					<DataTable
 						columns={columns}
-						data={clients}
+						data={filtered}
 						searchKey="name"
 						searchPlaceholder="Buscar cliente..."
 						onRowClick={(c) => router.push(`/supplier/clients/${c.id}`)}
 						isLoading={loading}
 						emptyState="Nenhum cliente na carteira. Adicione o primeiro."
+						toolbar={
+							<div className="flex gap-2">
+								<Select
+									value={stateFilter}
+									onValueChange={(v) => {
+										setStateFilter(v);
+										setCityFilter("all");
+									}}
+								>
+									<SelectTrigger className="w-28">
+										<SelectValue placeholder="UF" />
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value="all">Todas UF</SelectItem>
+										{stateOptions.map((uf) => (
+											<SelectItem key={uf} value={uf}>
+												{uf}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+								<Select value={cityFilter} onValueChange={setCityFilter}>
+									<SelectTrigger className="w-40">
+										<SelectValue placeholder="Cidade" />
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value="all">Todas cidades</SelectItem>
+										{cityOptions.map((city) => (
+											<SelectItem key={city} value={city}>
+												{city}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+							</div>
+						}
 					/>
 				</CardContent>
 			</Card>

@@ -3,12 +3,15 @@ import { getRepresentedSupplierIds } from "@/lib/auth-scope";
 import { AuthError, requireAuth } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
 import { FileProcessor } from "@/lib/services/file-processor";
-import { uploadFileSchema } from "@/lib/validations/upload";
+import {
+	columnMappingSchema,
+	uploadFileSchema,
+} from "@/lib/validations/upload";
 
 export async function POST(request: NextRequest) {
 	try {
 		// Verificar autenticação
-		const user = await requireAuth(["REPRESENTATIVE", "CLIENT"]);
+		const user = await requireAuth(["REPRESENTATIVE", "CLIENT", "ADMIN"]);
 
 		// Parse form data
 		const formData = await request.formData();
@@ -23,18 +26,42 @@ export async function POST(request: NextRequest) {
 		let validUploadType: "SUPPLIER_PRODUCTS" | "CLIENT_REQUIREMENTS";
 		let ownerCompanyId: string;
 
-		if (user.area === "REPRESENTATIVE" && uploadType === "SUPPLIER_PRODUCTS") {
+		if (
+			uploadType === "SUPPLIER_PRODUCTS" &&
+			(user.area === "REPRESENTATIVE" || user.area === "ADMIN")
+		) {
 			validUploadType = "SUPPLIER_PRODUCTS";
-			// O representante escolhe de qual fornecedor é a lista de preços.
+			// Quem envia escolhe de qual fornecedor é a lista de preços.
 			const supplierCompanyId = formData.get("supplierCompanyId") as
 				| string
 				| null;
-			const ids = await getRepresentedSupplierIds(user);
-			if (!supplierCompanyId || !ids.includes(supplierCompanyId)) {
+			if (!supplierCompanyId) {
 				return NextResponse.json(
-					{ error: "Selecione um fornecedor que você representa" },
+					{ error: "Selecione um fornecedor" },
 					{ status: 403 },
 				);
+			}
+			if (user.area === "REPRESENTATIVE") {
+				// Representante só pode enviar para fornecedores que representa.
+				const ids = await getRepresentedSupplierIds(user);
+				if (!ids.includes(supplierCompanyId)) {
+					return NextResponse.json(
+						{ error: "Selecione um fornecedor que você representa" },
+						{ status: 403 },
+					);
+				}
+			} else {
+				// Admin pode enviar a lista de qualquer fornecedor existente.
+				const supplier = await prisma.company.findFirst({
+					where: { id: supplierCompanyId, type: "SUPPLIER", deletedAt: null },
+					select: { id: true },
+				});
+				if (!supplier) {
+					return NextResponse.json(
+						{ error: "Fornecedor inválido" },
+						{ status: 403 },
+					);
+				}
 			}
 			ownerCompanyId = supplierCompanyId;
 		} else if (user.area === "CLIENT" && uploadType === "CLIENT_REQUIREMENTS") {
@@ -69,12 +96,28 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
+		// Parse optional column mapping — bad JSON or invalid shape falls back to auto
+		let columnMapping: ReturnType<typeof columnMappingSchema.parse> | undefined;
+		const rawMapping = formData.get("columnMapping");
+		if (typeof rawMapping === "string" && rawMapping.trim() !== "") {
+			try {
+				const parsed: unknown = JSON.parse(rawMapping);
+				const result = columnMappingSchema.safeParse(parsed);
+				if (result.success) {
+					columnMapping = result.data;
+				}
+			} catch {
+				// invalid JSON — silently ignore, fall back to auto mapping
+			}
+		}
+
 		// Process file
 		const result = await FileProcessor.processFile(
 			file,
 			validUploadType,
 			ownerCompanyId,
 			user.id,
+			columnMapping,
 		);
 
 		return NextResponse.json({

@@ -21,25 +21,27 @@ export const uploadFileSchema = z.object({
 	uploadType: z.enum(["SUPPLIER_PRODUCTS", "CLIENT_REQUIREMENTS"]),
 });
 
-// Product data validation for suppliers
+// Product data validation for suppliers.
+// Optional string fields use .nullish() because empty spreadsheet cells / unmapped
+// columns arrive as null (or undefined) — .optional() alone would reject null.
 export const supplierProductSchema = z.object({
-	sku: z.string().optional(),
-	code: z.string().optional(),
+	sku: z.string().nullish(),
+	code: z.string().nullish(),
 	name: z.string().min(1, "Product name is required"),
 	price: z.number().positive("Price must be positive").optional(),
-	description: z.string().optional(),
-	category: z.string().optional(),
-	unit: z.string().optional(),
+	description: z.string().nullish(),
+	category: z.string().nullish(),
+	unit: z.string().nullish(),
 });
 
 // Product data validation for clients (requirements)
 export const clientRequirementSchema = z.object({
-	sku: z.string().optional(),
-	code: z.string().optional(),
+	sku: z.string().nullish(),
+	code: z.string().nullish(),
 	name: z.string().min(1, "Product name is required"),
-	description: z.string().optional(),
-	category: z.string().optional(),
-	unit: z.string().optional(),
+	description: z.string().nullish(),
+	category: z.string().nullish(),
+	unit: z.string().nullish(),
 	targetPrice: z.number().positive().optional(),
 	quantity: z.number().positive().optional(),
 });

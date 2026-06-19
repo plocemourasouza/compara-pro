@@ -1,9 +1,16 @@
 "use client";
 
-import { Building2, DollarSign, Package, Plus } from "lucide-react";
+import {
+	Building2,
+	ChevronDown,
+	DollarSign,
+	Package,
+	Plus,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { EntityDetailModal } from "@/components/shared/entity-detail-modal";
+import { ProductImportDialog } from "@/components/shared/product-import-dialog";
 import {
 	getProductColumns,
 	type Product,
@@ -12,6 +19,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
 	Select,
 	SelectContent,
@@ -31,9 +44,13 @@ type User = {
 
 interface ProductsClientProps {
 	user: User;
+	suppliers: { id: string; name: string }[];
 }
 
-export default function ProductsClient({ user }: ProductsClientProps) {
+export default function ProductsClient({
+	user,
+	suppliers,
+}: ProductsClientProps) {
 	const router = useRouter();
 	const isAdmin = user.area === "ADMIN";
 	const isRepresentative = user.area === "REPRESENTATIVE";
@@ -47,6 +64,7 @@ export default function ProductsClient({ user }: ProductsClientProps) {
 	const [companyFilter, setCompanyFilter] = useState<string>("all");
 	const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 	const [detailOpen, setDetailOpen] = useState(false);
+	const [importOpen, setImportOpen] = useState(false);
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: re-fetch when role changes
 	useEffect(() => {
@@ -146,16 +164,38 @@ export default function ProductsClient({ user }: ProductsClientProps) {
 	const uniqueCompanies = new Set(products.map((p) => p.company.id)).size;
 
 	return (
-		<div className="space-y-6">
+		<div className="flex min-h-0 flex-1 flex-col gap-6">
 			{/* Header */}
 			<div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
 				<div>
 					<h1 className="text-2xl font-bold tracking-tight">Produtos</h1>
 				</div>
-				<Button onClick={() => router.push("/supplier/products/novo")}>
-					<Plus className="mr-2 h-4 w-4" />
-					Novo Produto
-				</Button>
+				<DropdownMenu>
+					<DropdownMenuTrigger asChild>
+						<Button>
+							<Plus className="mr-2 h-4 w-4" />
+							Novo Produto
+							<ChevronDown className="ml-2 h-4 w-4" />
+						</Button>
+					</DropdownMenuTrigger>
+					<DropdownMenuContent
+						align="end"
+						className="w-(--radix-dropdown-menu-trigger-width) min-w-(--radix-dropdown-menu-trigger-width)"
+					>
+						<DropdownMenuItem
+							className="justify-center"
+							onClick={() => router.push("/supplier/products/novo")}
+						>
+							Individual
+						</DropdownMenuItem>
+						<DropdownMenuItem
+							className="justify-center"
+							onClick={() => setImportOpen(true)}
+						>
+							Importar
+						</DropdownMenuItem>
+					</DropdownMenuContent>
+				</DropdownMenu>
 			</div>
 
 			{/* Stats */}
@@ -194,11 +234,11 @@ export default function ProductsClient({ user }: ProductsClientProps) {
 			</div>
 
 			{/* Tabela */}
-			<Card>
+			<Card className="flex min-h-0 flex-1 flex-col">
 				<CardHeader>
 					<CardTitle>Lista de Produtos</CardTitle>
 				</CardHeader>
-				<CardContent>
+				<CardContent className="flex min-h-0 flex-1 flex-col pt-6">
 					<DataTable
 						columns={columns}
 						data={filteredProducts}
@@ -265,6 +305,17 @@ export default function ProductsClient({ user }: ProductsClientProps) {
 				title="Detalhes do Produto"
 				sections={productDetailSections}
 				editHref={(p) => `/supplier/products/${p.id}/editar`}
+			/>
+
+			{/* Modal de Importação */}
+			<ProductImportDialog
+				open={importOpen}
+				onOpenChange={setImportOpen}
+				suppliers={suppliers}
+				user={user}
+				onImported={() => {
+					fetchProducts();
+				}}
 			/>
 		</div>
 	);

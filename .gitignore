@@ -64,3 +64,6 @@ next-env.d.ts
 
 # Uploads de avatar (runtime)
 /public/uploads/
+
+# Documentos de projeto/edital (Alavanca Digital etc.) — não versionar
+/docs/

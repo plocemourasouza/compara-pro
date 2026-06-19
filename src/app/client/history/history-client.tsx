@@ -76,7 +76,7 @@ export default function HistoryClient({ user: _user }: HistoryClientProps) {
 	);
 
 	return (
-		<div className="space-y-6">
+		<div className="flex min-h-0 flex-1 flex-col gap-6">
 			<div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
 				<div>
 					<h1 className="text-2xl font-bold tracking-tight">
@@ -99,11 +99,11 @@ export default function HistoryClient({ user: _user }: HistoryClientProps) {
 				</Button>
 			</div>
 
-			<Card>
+			<Card className="flex min-h-0 flex-1 flex-col">
 				<CardHeader>
 					<CardTitle>Uploads</CardTitle>
 				</CardHeader>
-				<CardContent>
+				<CardContent className="flex min-h-0 flex-1 flex-col pt-6">
 					<DataTable
 						columns={columns}
 						data={filteredUploads}

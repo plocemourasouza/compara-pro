@@ -122,6 +122,16 @@ export default function ClientDetailClient({ clientId }: { clientId: string }) {
 							{client.city ? ` · ${client.city}` : ""}
 							{client.state ? `/${client.state}` : ""}
 						</p>
+						{(client.email || client.phone) && (
+							<p className="text-muted-foreground text-sm">
+								{[
+									client.email,
+									client.phone ? formatters.phone(client.phone) : null,
+								]
+									.filter(Boolean)
+									.join(" · ")}
+							</p>
+						)}
 					</div>
 				</div>
 				<Button variant="outline" onClick={remove} disabled={removing}>

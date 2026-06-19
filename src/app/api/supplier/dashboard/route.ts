@@ -19,6 +19,8 @@ export async function GET() {
 					uploads: { total: 0, failed: 0 },
 					clients: 0,
 					suppliers: 0,
+					pendingRequests: 0,
+					savings: 0,
 					recentPreOrders: [],
 				},
 			});
@@ -35,6 +37,8 @@ export async function GET() {
 			uploadsFailed,
 			clientsCount,
 			recent,
+			pendingRequests,
+			savingsItems,
 		] = await Promise.all([
 			prisma.product.count({
 				where: { companyId, isActive: true, deletedAt: null },
@@ -42,7 +46,11 @@ export async function GET() {
 			prisma.product.count({ where: { companyId, deletedAt: null } }),
 			prisma.uploadHistory.findFirst({
 				where: { companyId, uploadType: "SUPPLIER_PRODUCTS", isActive: true },
-				select: { fileName: true, uploadedAt: true },
+				select: {
+					fileName: true,
+					uploadedAt: true,
+					company: { select: { name: true } },
+				},
 				orderBy: { uploadedAt: "desc" },
 			}),
 			prisma.preOrder.groupBy({
@@ -70,16 +78,39 @@ export async function GET() {
 					supplier: { select: { name: true } },
 				},
 			}),
+			prisma.supplierLinkRequest.count({
+				where: { supplierCompanyId: companyId, status: "PENDING" },
+			}),
+			prisma.preOrderItem.findMany({
+				where: {
+					preOrder: { supplierId: companyId, status: "FINALIZED" },
+					baselinePrice: { not: null },
+					deletedAt: null,
+				},
+				select: { baselinePrice: true, price: true, quantity: true },
+			}),
 		]);
 
 		const count = (s: string) =>
 			preOrdersByStatus.find((p) => p.status === s)?._count.status ?? 0;
 
+		let savings = 0;
+		for (const item of savingsItems) {
+			const delta = (item.baselinePrice ?? 0) - item.price;
+			if (delta > 0) savings += delta * item.quantity;
+		}
+
 		return NextResponse.json({
 			success: true,
 			metrics: {
 				products: { active: productsActive, total: productsTotal },
-				activeCatalog,
+				activeCatalog: activeCatalog
+					? {
+							fileName: activeCatalog.fileName,
+							uploadedAt: activeCatalog.uploadedAt,
+							supplierName: activeCatalog.company.name,
+						}
+					: null,
 				preOrders: {
 					pending: count("ACTIVE"),
 					approved: count("FINALIZED"),
@@ -89,6 +120,8 @@ export async function GET() {
 				uploads: { total: uploadsTotal, failed: uploadsFailed },
 				clients: clientsCount,
 				suppliers: companyIds.length,
+				pendingRequests,
+				savings,
 				recentPreOrders: recent.map((p) => ({
 					id: p.id,
 					clientName: p.client.name,

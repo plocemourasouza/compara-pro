@@ -118,7 +118,7 @@ export default function RepresentativesClient({
 	);
 
 	return (
-		<div className="space-y-6">
+		<div className="flex min-h-0 flex-1 flex-col gap-6">
 			{/* Header */}
 			<div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
 				<div>
@@ -148,14 +148,14 @@ export default function RepresentativesClient({
 			</div>
 
 			{/* Tabela */}
-			<Card>
+			<Card className="flex min-h-0 flex-1 flex-col">
 				<CardHeader>
 					<CardTitle className="flex items-center gap-2 text-lg">
 						<Handshake className="h-5 w-5" />
 						Representantes Cadastrados ({filteredReps.length})
 					</CardTitle>
 				</CardHeader>
-				<CardContent>
+				<CardContent className="flex min-h-0 flex-1 flex-col">
 					<DataTable
 						columns={columns}
 						data={filteredReps}

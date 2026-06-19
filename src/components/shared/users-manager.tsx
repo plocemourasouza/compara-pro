@@ -194,7 +194,7 @@ export function UsersManager({
 	};
 
 	return (
-		<div className="space-y-6">
+		<div className="flex min-h-0 flex-1 flex-col gap-6">
 			<div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
 				<div>
 					<h1 className="text-2xl font-bold tracking-tight">{title}</h1>
@@ -215,8 +215,8 @@ export function UsersManager({
 				/>
 			</div>
 
-			<Card>
-				<CardContent className="pt-6">
+			<Card className="flex min-h-0 flex-1 flex-col">
+				<CardContent className="flex min-h-0 flex-1 flex-col pt-6">
 					<DataTable
 						columns={columns}
 						data={users}
@@ -225,6 +225,7 @@ export function UsersManager({
 						emptyState="Nenhum usuário encontrado."
 						manualPagination
 						pageCount={totalPages}
+						totalRows={stats.total}
 						pagination={{ pageIndex: page - 1, pageSize: ITEMS_PER_PAGE }}
 						onPaginationChange={handlePaginationChange}
 						toolbar={

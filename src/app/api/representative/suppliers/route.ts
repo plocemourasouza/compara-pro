@@ -14,20 +14,34 @@ export async function GET() {
 			return NextResponse.json({ suppliers: [] });
 		}
 
-		const suppliers = await prisma.company.findMany({
-			where: { id: { in: ids }, deletedAt: null },
-			orderBy: { name: "asc" },
-			select: {
-				id: true,
-				name: true,
-				cnpj: true,
-				city: true,
-				state: true,
-				_count: {
-					select: { products: true, carteiraClientes: true },
+		const [suppliers, catalogs] = await Promise.all([
+			prisma.company.findMany({
+				where: { id: { in: ids }, deletedAt: null },
+				orderBy: { name: "asc" },
+				select: {
+					id: true,
+					name: true,
+					cnpj: true,
+					city: true,
+					state: true,
+					_count: {
+						select: { products: true, carteiraClientes: true },
+					},
 				},
-			},
-		});
+			}),
+			prisma.uploadHistory.findMany({
+				where: {
+					companyId: { in: ids },
+					uploadType: "SUPPLIER_PRODUCTS",
+					isActive: true,
+				},
+				select: { companyId: true, uploadedAt: true },
+			}),
+		]);
+
+		const catalogMap = new Map(
+			catalogs.map((c) => [c.companyId, c.uploadedAt]),
+		);
 
 		return NextResponse.json({
 			suppliers: suppliers.map((s) => ({
@@ -38,6 +52,7 @@ export async function GET() {
 				state: s.state,
 				productCount: s._count.products,
 				clientCount: s._count.carteiraClientes,
+				lastCatalogAt: catalogMap.get(s.id) ?? null,
 			})),
 		});
 	} catch (error) {

@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
+import AppHeader from "@/components/shared/app-header";
 import { getCurrentUser } from "@/lib/auth-server";
-import DashboardHeader from "./header";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +20,7 @@ export default async function DashboardLayout({
 
 	return (
 		<div className="min-h-screen bg-muted">
-			<DashboardHeader user={user} />
+			<AppHeader user={user} />
 			<div className="flex">
 				<main className="flex-1 p-6">{children}</main>
 			</div>

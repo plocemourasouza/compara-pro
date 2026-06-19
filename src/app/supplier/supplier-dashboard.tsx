@@ -7,7 +7,9 @@ import {
 	Package,
 	ShoppingCart,
 	Upload,
+	UserPlus,
 	Users,
+	Wallet,
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -24,7 +26,11 @@ import { formatters } from "@/lib/utils/masks";
 
 interface DashboardMetrics {
 	products: { active: number; total: number };
-	activeCatalog: { fileName: string; uploadedAt: string } | null;
+	activeCatalog: {
+		fileName: string;
+		uploadedAt: string;
+		supplierName: string;
+	} | null;
 	preOrders: {
 		pending: number;
 		approved: number;
@@ -34,6 +40,8 @@ interface DashboardMetrics {
 	uploads: { total: number; failed: number };
 	clients: number;
 	suppliers: number;
+	pendingRequests: number;
+	savings: number;
 	recentPreOrders: Array<{
 		id: string;
 		clientName: string;
@@ -104,8 +112,17 @@ export default function SupplierDashboard({
 		{
 			label: "Valor aprovado",
 			value: metrics ? formatters.currency(metrics.preOrders.totalValue) : "—",
-			hint: metrics ? `${metrics.uploads.failed} uploads com erro` : "",
+			hint: metrics
+				? `${metrics.preOrders.approved} pré-pedidos aprovados`
+				: "",
 			icon: ArrowUpRight,
+			href: "/supplier/pre-orders",
+		},
+		{
+			label: "Economia gerada",
+			value: metrics ? formatters.currency(metrics.savings) : "—",
+			hint: "Em pré-pedidos aprovados",
+			icon: Wallet,
 			href: "/supplier/pre-orders",
 		},
 	];
@@ -129,8 +146,29 @@ export default function SupplierDashboard({
 				</Button>
 			</div>
 
+			{metrics && metrics.pendingRequests > 0 && (
+				<Link href="/supplier/clients">
+					<Card className="border-primary/40 bg-primary/5 transition-colors hover:border-primary/60">
+						<CardContent className="flex items-center gap-3 py-4">
+							<UserPlus className="h-5 w-5 text-primary" />
+							<div>
+								<p className="font-medium text-sm">
+									{metrics.pendingRequests}{" "}
+									{metrics.pendingRequests === 1
+										? "solicitação pendente"
+										: "solicitações pendentes"}
+								</p>
+								<p className="text-muted-foreground text-xs">
+									Clientes aguardando aprovação na carteira.
+								</p>
+							</div>
+						</CardContent>
+					</Card>
+				</Link>
+			)}
+
 			<motion.div
-				className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
+				className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
 				initial="hidden"
 				animate="show"
 				variants={{
@@ -230,7 +268,8 @@ export default function SupplierDashboard({
 									{metrics.activeCatalog.fileName}
 								</p>
 								<p className="text-muted-foreground text-xs">
-									Enviado em {formatters.date(metrics.activeCatalog.uploadedAt)}
+									{metrics.activeCatalog.supplierName} · enviado em{" "}
+									{formatters.date(metrics.activeCatalog.uploadedAt)}
 								</p>
 							</div>
 						) : (

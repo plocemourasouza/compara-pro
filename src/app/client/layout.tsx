@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import AppHeader from "@/components/shared/app-header";
 import { PageTransition } from "@/components/shared/page-transition";
 import { getCurrentUser } from "@/lib/auth-server";
 import ClientSidebar from "./client-sidebar";
@@ -22,10 +23,15 @@ export default async function ClientLayout({
 
 	return (
 		<div className="min-h-screen bg-muted">
-			<div className="flex">
+			<div className="flex min-h-screen">
 				<ClientSidebar user={user} />
-				<main className="flex-1 ml-64">
-					<div className="p-8">
+				<main className="flex flex-1 flex-col ml-64">
+					<AppHeader
+						user={user}
+						notificationsHref="/client/notifications"
+						settingsHref="/client/settings"
+					/>
+					<div className="flex min-h-0 flex-1 flex-col p-8">
 						<PageTransition>{children}</PageTransition>
 					</div>
 				</main>

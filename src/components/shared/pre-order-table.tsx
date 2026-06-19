@@ -28,6 +28,7 @@ export interface PreOrderItem {
 	quantity: number;
 	price: number;
 	totalPrice: number;
+	baselinePrice?: number | null;
 }
 
 export const PRE_ORDER_STATUS: Record<

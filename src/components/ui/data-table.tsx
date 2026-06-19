@@ -53,6 +53,8 @@ interface DataTableProps<TData, TValue> {
 	pageCount?: number;
 	pagination?: PaginationState;
 	onPaginationChange?: OnChangeFn<PaginationState>;
+	/** Total row count for server-side pagination counter. */
+	totalRows?: number;
 }
 
 export function DataTable<TData, TValue>({
@@ -73,6 +75,7 @@ export function DataTable<TData, TValue>({
 	pageCount,
 	pagination,
 	onPaginationChange,
+	totalRows,
 }: DataTableProps<TData, TValue>) {
 	const [sorting, setSorting] = useState<SortingState>([]);
 	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -111,8 +114,19 @@ export function DataTable<TData, TValue>({
 	const rows = table.getRowModel().rows;
 	const colSpan = columns.length;
 
+	const ps = table.getState().pagination.pageSize;
+	const pi = table.getState().pagination.pageIndex;
+	const rowsOnPage = table.getRowModel().rows.length;
+	const total = manualPagination
+		? (totalRows ?? rowsOnPage)
+		: table.getFilteredRowModel().rows.length;
+	const start = total === 0 ? 0 : pi * ps + 1;
+	const end = manualPagination
+		? pi * ps + rowsOnPage
+		: Math.min((pi + 1) * ps, total);
+
 	return (
-		<div className="space-y-4">
+		<div className="flex h-full min-h-0 flex-col gap-4">
 			{(searchColumn || toolbar) && (
 				<div className="flex flex-col gap-2 sm:flex-row sm:items-center">
 					{searchColumn ? (
@@ -134,7 +148,7 @@ export function DataTable<TData, TValue>({
 				</div>
 			)}
 
-			<div className="overflow-x-auto rounded-md border">
+			<div className="min-h-0 flex-1 overflow-auto rounded-md border">
 				<Table>
 					<TableHeader>
 						{table.getHeaderGroups().map((headerGroup) => (
@@ -221,12 +235,9 @@ export function DataTable<TData, TValue>({
 
 			<div className="flex items-center justify-between gap-2">
 				<p className="text-sm text-muted-foreground">
-					{manualPagination
-						? `Página ${table.getState().pagination.pageIndex + 1} de ${Math.max(
-								table.getPageCount(),
-								1,
-							)}`
-						: `${table.getFilteredRowModel().rows.length} registro(s)`}
+					{total === 0
+						? "Nenhum registro"
+						: `Exibindo ${start}-${end} de ${total} registro(s)`}
 				</p>
 				<div className="flex items-center gap-2">
 					<Button

@@ -64,6 +64,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
 					quantity: i.quantity,
 					price: i.price,
 					totalPrice: i.totalPrice,
+					baselinePrice: i.baselinePrice,
 				})),
 			},
 		});

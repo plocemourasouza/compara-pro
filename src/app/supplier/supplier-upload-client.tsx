@@ -1,11 +1,20 @@
 "use client";
 
-import { AlertCircle, CheckCircle, FileText, Upload } from "lucide-react";
+import {
+	AlertCircle,
+	CheckCircle,
+	Download,
+	FileText,
+	Upload,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useDropzone } from "react-dropzone";
+import * as XLSX from "xlsx";
+import { ImportPreview } from "@/components/shared/import-preview";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import {
@@ -15,6 +24,9 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import type { HeaderMapping } from "@/lib/file-mapping";
+import { autoMapHeaders, buildRows, SUPPLIER_FIELDS } from "@/lib/file-mapping";
+import { cn } from "@/lib/utils";
 
 type User = {
 	id: string;
@@ -31,17 +43,34 @@ type User = {
 interface SupplierUploadClientProps {
 	user: User;
 	suppliers: { id: string; name: string }[];
+	onSuccess?: () => void;
+	onClose?: () => void;
+	/** Reports the current modal step so a parent (dialog) can adjust width. */
+	onStageChange?: (stage: "upload" | "mapping") => void;
 }
 
 export default function SupplierUploadClient({
 	user: _user,
 	suppliers,
+	onSuccess,
+	onClose,
+	onStageChange,
 }: SupplierUploadClientProps) {
 	const router = useRouter();
+
 	const [supplierCompanyId, setSupplierCompanyId] = useState<string>(
 		suppliers.length === 1 ? (suppliers[0]?.id ?? "") : "",
 	);
+
+	// File + parsed state
 	const [selectedFile, setSelectedFile] = useState<File | null>(null);
+	const [parsedRows, setParsedRows] = useState<Record<string, unknown>[]>([]);
+	const [fileHeaders, setFileHeaders] = useState<string[]>([]);
+	const [mapping, setMapping] = useState<HeaderMapping>({});
+	const [parseError, setParseError] = useState<string | null>(null);
+	const [parsing, setParsing] = useState(false);
+
+	// Upload state
 	const [uploading, setUploading] = useState(false);
 	const [uploadProgress, setUploadProgress] = useState(0);
 	const [uploadResult, setUploadResult] = useState<{
@@ -50,36 +79,149 @@ export default function SupplierUploadClient({
 		uploadId?: string;
 	} | null>(null);
 
-	const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-		const file = event.target.files?.[0];
-		if (file) {
-			// Validate file type
-			const allowedTypes = [
-				"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-				"application/vnd.ms-excel",
-				"text/csv",
-			];
+	// ---------------------------------------------------------------------------
+	// Parse file in the browser
+	// ---------------------------------------------------------------------------
+	const parseFile = useCallback(async (file: File) => {
+		setParseError(null);
+		setParsedRows([]);
+		setFileHeaders([]);
+		setMapping({});
+		setParsing(true);
 
-			if (!allowedTypes.includes(file.type)) {
-				alert(
-					"Tipo de arquivo não suportado. Use arquivos Excel (.xlsx, .xls) ou CSV.",
-				);
+		try {
+			// Yield once so the "lendo arquivo" state paints before the
+			// synchronous XLSX work briefly blocks the main thread.
+			await new Promise((resolve) => setTimeout(resolve, 0));
+			const buf = await file.arrayBuffer();
+			const wb = XLSX.read(buf, { type: "array" });
+			const firstSheetName = wb.SheetNames[0];
+			const ws =
+				firstSheetName !== undefined ? wb.Sheets[firstSheetName] : undefined;
+			if (!ws) {
+				setParseError("Arquivo vazio ou sem planilhas.");
 				return;
 			}
-
-			// Validate file size (max 10MB)
-			if (file.size > 10 * 1024 * 1024) {
-				alert("Arquivo muito grande. O tamanho máximo é 10MB.");
+			const aoa = XLSX.utils.sheet_to_json<unknown[]>(ws, {
+				header: 1,
+				defval: "",
+			});
+			// Auto-detect the header row (skips leading title/blank rows).
+			const { headers, rows } = buildRows(aoa);
+			if (rows.length === 0) {
+				setParseError("O arquivo não contém linhas de dados.");
 				return;
 			}
+			setParsedRows(rows);
+			setFileHeaders(headers);
+			setMapping(autoMapHeaders(headers));
+		} catch {
+			setParseError(
+				"Não foi possível ler o arquivo. Verifique se é um Excel ou CSV válido.",
+			);
+		} finally {
+			setParsing(false);
+		}
+	}, []);
 
+	// ---------------------------------------------------------------------------
+	// Dropzone
+	// ---------------------------------------------------------------------------
+	const onDrop = useCallback(
+		(accepted: File[]) => {
+			const file = accepted[0];
+			if (!file) return;
 			setSelectedFile(file);
 			setUploadResult(null);
-		}
+			void parseFile(file);
+		},
+		[parseFile],
+	);
+
+	const { getRootProps, getInputProps, isDragActive } = useDropzone({
+		onDrop,
+		accept: {
+			"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [
+				".xlsx",
+			],
+			"application/vnd.ms-excel": [".xls"],
+			"text/csv": [".csv"],
+		},
+		multiple: false,
+		disabled: uploading || !supplierCompanyId,
+		maxSize: 10 * 1024 * 1024,
+		onDropRejected: (rejections) => {
+			const reason = rejections[0]?.errors[0];
+			if (reason?.code === "file-too-large") {
+				setParseError("Arquivo muito grande. O tamanho máximo é 10MB.");
+			} else {
+				setParseError(
+					"Tipo de arquivo não suportado. Use arquivos Excel (.xlsx, .xls) ou CSV.",
+				);
+			}
+		},
+	});
+
+	// ---------------------------------------------------------------------------
+	// Mapping editor change
+	// ---------------------------------------------------------------------------
+	const handleMappingChange = (
+		fieldKey: keyof HeaderMapping,
+		value: string,
+	) => {
+		setMapping((prev) => {
+			const next = { ...prev };
+			if (value === "__ignore__") {
+				delete next[fieldKey];
+			} else {
+				next[fieldKey] = value;
+			}
+			return next;
+		});
 	};
 
+	// ---------------------------------------------------------------------------
+	// Download template
+	// ---------------------------------------------------------------------------
+	const downloadTemplate = () => {
+		const sampleData = [
+			{
+				SKU: "PROD001",
+				Código: "ABC123",
+				Nome: "Produto Exemplo",
+				Preço: "10.50",
+				Descrição: "Descrição do produto",
+				Categoria: "Categoria A",
+				Unidade: "UN",
+			},
+		];
+
+		const headers = Object.keys(sampleData[0] ?? {});
+		const csvContent = [
+			headers.join(","),
+			...sampleData.map((row) =>
+				Object.values(row)
+					.map((v) => `"${String(v).replace(/"/g, '""')}"`)
+					.join(","),
+			),
+		].join("\n");
+
+		const blob = new Blob([csvContent], { type: "text/csv" });
+		const url = window.URL.createObjectURL(blob);
+		const a = document.createElement("a");
+		a.href = url;
+		a.download = "modelo_produtos.csv";
+		document.body.appendChild(a);
+		a.click();
+		document.body.removeChild(a);
+		window.URL.revokeObjectURL(url);
+	};
+
+	// ---------------------------------------------------------------------------
+	// Upload
+	// ---------------------------------------------------------------------------
 	const handleUpload = async () => {
-		if (!selectedFile || !supplierCompanyId) return;
+		if (!selectedFile || !supplierCompanyId || !mapping.name) return;
 
 		setUploading(true);
 		setUploadProgress(0);
@@ -89,8 +231,8 @@ export default function SupplierUploadClient({
 			formData.append("file", selectedFile);
 			formData.append("uploadType", "SUPPLIER_PRODUCTS");
 			formData.append("supplierCompanyId", supplierCompanyId);
+			formData.append("columnMapping", JSON.stringify(mapping));
 
-			// Simulate progress
 			const progressInterval = setInterval(() => {
 				setUploadProgress((prev) => {
 					if (prev >= 90) {
@@ -114,15 +256,14 @@ export default function SupplierUploadClient({
 			if (response.ok) {
 				setUploadResult({
 					success: true,
-					message: `Upload realizado com sucesso! ${result.processedCount} produtos processados.`,
-					uploadId: result.uploadId,
+					message: `Upload realizado com sucesso! ${result.data?.processedRows ?? 0} produtos processados.`,
+					uploadId: result.data?.uploadId,
 				});
 				setSelectedFile(null);
-				// Reset file input
-				const fileInput = document.getElementById(
-					"file-input",
-				) as HTMLInputElement;
-				if (fileInput) fileInput.value = "";
+				setParsedRows([]);
+				setFileHeaders([]);
+				setMapping({});
+				onSuccess?.();
 			} else {
 				setUploadResult({
 					success: false,
@@ -149,82 +290,222 @@ export default function SupplierUploadClient({
 		return `${parseFloat((bytes / k ** i).toFixed(2))} ${sizes[i]}`;
 	};
 
+	const nameIsMapped = Boolean(mapping.name);
+	const canUpload =
+		Boolean(selectedFile) &&
+		Boolean(supplierCompanyId) &&
+		nameIsMapped &&
+		!uploading &&
+		!parsing;
+
+	// Etapa 2 (mapeamento) começa quando há linhas lidas do arquivo.
+	const hasData = parsedRows.length > 0;
+	// Etapa final: upload concluído com sucesso.
+	const done = uploadResult?.success === true;
+
+	// Avisa o pai (dialog) da etapa atual para ajustar a largura do modal.
+	useEffect(() => {
+		onStageChange?.(hasData ? "mapping" : "upload");
+	}, [hasData, onStageChange]);
+
+	const handleBack = () => {
+		if (hasData) {
+			// Volta para a etapa de upload limpando o arquivo carregado.
+			setSelectedFile(null);
+			setParsedRows([]);
+			setFileHeaders([]);
+			setMapping({});
+			setParseError(null);
+			setUploadResult(null);
+			return;
+		}
+		if (onClose) {
+			onClose();
+		} else {
+			router.push("/dashboard");
+		}
+	};
+
 	return (
 		<div className="space-y-6">
 			<div>
-				<h1 className="text-2xl font-bold tracking-tight">
-					Upload de Lista de Preços
-				</h1>
 				<p className="text-muted-foreground">
 					Envie sua lista de produtos e preços em formato Excel ou CSV
 				</p>
 			</div>
 
 			<Card>
-				<CardHeader>
-					<CardTitle className="flex items-center gap-2">
-						<Upload className="h-5 w-5" />
-						Enviar Arquivo
-					</CardTitle>
-				</CardHeader>
 				<CardContent className="space-y-4">
-					<div>
-						<Label htmlFor="supplier-select">Fornecedor de origem</Label>
-						<Select
-							value={supplierCompanyId}
-							onValueChange={setSupplierCompanyId}
-							disabled={uploading}
-						>
-							<SelectTrigger id="supplier-select" className="mt-2">
-								<SelectValue placeholder="Selecione o fornecedor desta lista" />
-							</SelectTrigger>
-							<SelectContent>
-								{suppliers.map((s) => (
-									<SelectItem key={s.id} value={s.id}>
-										{s.name}
-									</SelectItem>
-								))}
-							</SelectContent>
-						</Select>
-						{suppliers.length === 0 && (
-							<p className="text-sm text-destructive mt-1">
-								Você ainda não representa nenhum fornecedor. Cadastre um em
-								Fornecedores Representados.
-							</p>
-						)}
-					</div>
-
-					<div>
-						<Label htmlFor="file-input">
-							Selecione um arquivo Excel (.xlsx, .xls) ou CSV
-						</Label>
-						<Input
-							id="file-input"
-							type="file"
-							accept=".xlsx,.xls,.csv"
-							onChange={handleFileSelect}
-							disabled={uploading}
-							className="mt-2"
-						/>
-						<p className="text-sm text-muted-foreground mt-1">
-							Tamanho máximo: 10MB
-						</p>
-					</div>
-
-					{selectedFile && (
-						<div className="p-4 bg-muted rounded-lg">
-							<div className="flex items-center gap-3">
-								<FileText className="h-8 w-8 text-primary" />
-								<div className="flex-1">
-									<p className="font-medium">{selectedFile.name}</p>
-									<p className="text-sm text-muted-foreground">
-										{formatFileSize(selectedFile.size)}
+					{!hasData && (
+						<>
+							{/* Supplier select */}
+							<div>
+								<Label htmlFor="supplier-select">Fornecedor</Label>
+								<Select
+									value={supplierCompanyId}
+									onValueChange={setSupplierCompanyId}
+									disabled={uploading || done}
+								>
+									<SelectTrigger id="supplier-select" className="mt-2 w-full">
+										<SelectValue placeholder="Selecione o fornecedor desta lista" />
+									</SelectTrigger>
+									<SelectContent>
+										{suppliers.map((s) => (
+											<SelectItem key={s.id} value={s.id}>
+												{s.name}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+								{suppliers.length === 0 && (
+									<p className="text-sm text-destructive mt-1">
+										Você ainda não representa nenhum fornecedor. Cadastre um em
+										Fornecedores Representados.
 									</p>
+								)}
+							</div>
+
+							{/* Dropzone */}
+							{!done && (
+								<div>
+									<div
+										{...getRootProps()}
+										aria-describedby="dropzone-hint"
+										className={cn(
+											"mt-2 flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-6 py-12 text-center transition-colors cursor-pointer",
+											isDragActive
+												? "border-primary bg-primary/5 text-primary"
+												: "border-muted-foreground/30 hover:border-primary/50 hover:bg-muted/40",
+											(uploading || !supplierCompanyId) &&
+												"pointer-events-none opacity-50",
+										)}
+									>
+										<input {...getInputProps()} />
+										<Upload className="h-8 w-8 text-muted-foreground" />
+										{isDragActive ? (
+											<p className="text-sm font-medium">
+												Solte o arquivo aqui
+											</p>
+										) : (
+											<>
+												<p className="text-sm font-medium">
+													{supplierCompanyId
+														? "Arraste um arquivo ou clique para selecionar"
+														: "Selecione o fornecedor primeiro"}
+												</p>
+												<p
+													id="dropzone-hint"
+													className="text-xs text-muted-foreground"
+												>
+													Excel (.xlsx, .xls) ou CSV — máximo 10MB
+												</p>
+											</>
+										)}
+									</div>
 								</div>
+							)}
+						</>
+					)}
+
+					{/* Selected file info */}
+					{selectedFile && !parseError && (
+						<div className="flex items-center gap-3 rounded-lg bg-muted p-3">
+							<FileText className="h-6 w-6 shrink-0 text-primary" />
+							<div className="min-w-0 flex-1">
+								<p className="truncate font-medium text-sm">
+									{selectedFile.name}
+								</p>
+								<p className="text-xs text-muted-foreground">
+									{formatFileSize(selectedFile.size)}
+									{parsedRows.length > 0 &&
+										` · ${parsedRows.length} linhas lidas`}
+								</p>
 							</div>
 						</div>
 					)}
 
+					{parsing && (
+						<p className="text-xs text-muted-foreground">Lendo arquivo…</p>
+					)}
+
+					{/* Parse error */}
+					{parseError && (
+						<Alert variant="destructive">
+							<AlertCircle className="h-4 w-4" />
+							<AlertDescription>{parseError}</AlertDescription>
+						</Alert>
+					)}
+
+					{/* Mapping editor */}
+					{fileHeaders.length > 0 && !parseError && (
+						<div className="space-y-3">
+							<div>
+								<p className="text-sm font-medium">Mapeamento de Colunas</p>
+								<p className="text-xs text-muted-foreground">
+									Associe cada campo ao cabeçalho correspondente do seu arquivo.
+								</p>
+							</div>
+							<div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
+								{SUPPLIER_FIELDS.map((field) => (
+									<div key={field.key} className="flex flex-col gap-1">
+										<Label
+											htmlFor={`map-${field.key}`}
+											className="text-xs flex items-center gap-1"
+										>
+											{field.label}
+											{field.required && (
+												<span className="text-destructive">*</span>
+											)}
+										</Label>
+										<Select
+											value={mapping[field.key] ?? "__ignore__"}
+											onValueChange={(v) => handleMappingChange(field.key, v)}
+											disabled={uploading}
+										>
+											<SelectTrigger
+												id={`map-${field.key}`}
+												className="h-8 text-xs"
+											>
+												<SelectValue placeholder="— ignorar —" />
+											</SelectTrigger>
+											<SelectContent>
+												<SelectItem
+													value="__ignore__"
+													className="text-xs text-muted-foreground"
+												>
+													— ignorar —
+												</SelectItem>
+												{fileHeaders.map((h) => (
+													<SelectItem key={h} value={h} className="text-xs">
+														{h}
+													</SelectItem>
+												))}
+											</SelectContent>
+										</Select>
+									</div>
+								))}
+							</div>
+							{!nameIsMapped && (
+								<Alert variant="destructive">
+									<AlertCircle className="h-4 w-4" />
+									<AlertDescription>
+										O campo <strong>Nome</strong> é obrigatório. Selecione a
+										coluna correspondente ao nome do produto.
+									</AlertDescription>
+								</Alert>
+							)}
+						</div>
+					)}
+
+					{/* Preview */}
+					{parsedRows.length > 0 && !parseError && (
+						<div className="space-y-2">
+							<p className="text-sm font-medium">Pré-visualização</p>
+							<ImportPreview rows={parsedRows} mapping={mapping} />
+						</div>
+					)}
+
+					{/* Upload progress */}
 					{uploading && (
 						<div className="space-y-2">
 							<div className="flex justify-between text-sm">
@@ -235,18 +516,20 @@ export default function SupplierUploadClient({
 						</div>
 					)}
 
+					{/* Upload result */}
 					{uploadResult && (
 						<div
-							className={`p-4 rounded-lg flex items-start gap-3 ${
+							className={cn(
+								"flex items-start gap-3 rounded-lg p-4",
 								uploadResult.success
 									? "bg-success/10 text-success"
-									: "bg-destructive/10 text-destructive"
-							}`}
+									: "bg-destructive/10 text-destructive",
+							)}
 						>
 							{uploadResult.success ? (
-								<CheckCircle className="h-5 w-5 mt-0.5 text-success" />
+								<CheckCircle className="h-5 w-5 mt-0.5 shrink-0" />
 							) : (
-								<AlertCircle className="h-5 w-5 mt-0.5 text-destructive" />
+								<AlertCircle className="h-5 w-5 mt-0.5 shrink-0" />
 							)}
 							<div>
 								<p className="font-medium">
@@ -257,45 +540,35 @@ export default function SupplierUploadClient({
 						</div>
 					)}
 
-					<div className="flex gap-3">
-						<Button
-							onClick={handleUpload}
-							disabled={!selectedFile || !supplierCompanyId || uploading}
-							className="flex-1"
-						>
-							{uploading ? "Processando..." : "Fazer Upload"}
-						</Button>
-						<Button variant="outline" onClick={() => router.push("/dashboard")}>
-							Voltar
-						</Button>
-					</div>
-				</CardContent>
-			</Card>
-
-			<Card>
-				<CardHeader>
-					<CardTitle>Formato do Arquivo</CardTitle>
-				</CardHeader>
-				<CardContent>
-					<p className="text-sm text-muted-foreground mb-3">
-						Seu arquivo deve conter as seguintes colunas:
-					</p>
-					<div className="bg-muted p-4 rounded-lg">
-						<div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-							<div>
-								<strong>SKU ou Código:</strong> Código único do produto
-							</div>
-							<div>
-								<strong>Nome:</strong> Nome/descrição do produto
-							</div>
-							<div>
-								<strong>Preço:</strong> Preço unitário (ex: 10.50)
-							</div>
-							<div>
-								<strong>Categoria:</strong> Categoria do produto (opcional)
-							</div>
+					{/* Actions */}
+					{!done && (
+						<div className="flex gap-3 flex-wrap">
+							{hasData ? (
+								<>
+									<Button variant="outline" onClick={handleBack}>
+										Voltar
+									</Button>
+									<Button
+										onClick={handleUpload}
+										disabled={!canUpload}
+										className="flex-1"
+									>
+										{uploading ? "Processando..." : "Confirmar"}
+									</Button>
+								</>
+							) : (
+								<Button
+									variant="outline"
+									onClick={downloadTemplate}
+									type="button"
+									className="w-full"
+								>
+									<Download className="h-4 w-4 mr-2" />
+									Baixar modelo
+								</Button>
+							)}
 						</div>
-					</div>
+					)}
 				</CardContent>
 			</Card>
 		</div>

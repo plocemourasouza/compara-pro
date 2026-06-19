@@ -108,7 +108,7 @@ export default function PreOrdersClient({ user }: PreOrdersClientProps) {
 	);
 
 	return (
-		<div className="space-y-6">
+		<div className="flex min-h-0 flex-1 flex-col gap-6">
 			<div>
 				<h1 className="text-2xl font-bold tracking-tight">
 					Pré-pedidos recebidos
@@ -118,11 +118,11 @@ export default function PreOrdersClient({ user }: PreOrdersClientProps) {
 				</p>
 			</div>
 
-			<Card>
+			<Card className="flex min-h-0 flex-1 flex-col">
 				<CardHeader>
 					<CardTitle>Pré-pedidos</CardTitle>
 				</CardHeader>
-				<CardContent>
+				<CardContent className="flex min-h-0 flex-1 flex-col pt-6">
 					<DataTable
 						columns={columns}
 						data={filteredOrders}

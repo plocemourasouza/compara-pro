@@ -3,7 +3,6 @@
 import { motion } from "framer-motion";
 import {
 	BarChart3,
-	Bell,
 	Building2,
 	FileText,
 	Home,
@@ -11,7 +10,6 @@ import {
 	Package,
 	Settings,
 	ShoppingCart,
-	Upload,
 	UserCog,
 	Users,
 } from "lucide-react";
@@ -40,7 +38,7 @@ interface SupplierSidebarProps {
 	user: User;
 }
 
-type BadgeKey = "pending" | "unread";
+type BadgeKey = "pending";
 
 const navigation: Array<{
 	name: string;
@@ -50,12 +48,11 @@ const navigation: Array<{
 }> = [
 	{ name: "Dashboard", href: "/supplier", icon: Home },
 	{
-		name: "Fornecedores Representados",
+		name: "Representantes",
 		href: "/supplier/fornecedores",
 		icon: Building2,
 	},
-	{ name: "Upload de Produtos", href: "/supplier/upload", icon: Upload },
-	{ name: "Meus Produtos", href: "/supplier/products", icon: Package },
+	{ name: "Produtos", href: "/supplier/products", icon: Package },
 	{ name: "Clientes", href: "/supplier/clients", icon: Users },
 	{
 		name: "Pré-pedidos",
@@ -64,37 +61,26 @@ const navigation: Array<{
 		badgeKey: "pending",
 	},
 	{ name: "Histórico", href: "/supplier/history", icon: FileText },
-	{
-		name: "Notificações",
-		href: "/supplier/notifications",
-		icon: Bell,
-		badgeKey: "unread",
-	},
 	{ name: "Usuários", href: "/supplier/usuarios", icon: UserCog },
 	{ name: "Configurações", href: "/supplier/settings", icon: Settings },
 ];
 
 export default function SupplierSidebar({ user }: SupplierSidebarProps) {
 	const pathname = usePathname();
-	const [counts, setCounts] = useState<{ pending: number; unread: number }>({
+	const [counts, setCounts] = useState<{ pending: number }>({
 		pending: 0,
-		unread: 0,
 	});
 
 	useEffect(() => {
 		let active = true;
-		Promise.all([
-			fetch("/api/supplier/dashboard")
-				.then((r) => (r.ok ? r.json() : null))
-				.then((d) => d?.metrics?.preOrders?.pending ?? 0)
-				.catch(() => 0),
-			fetch("/api/notifications?unreadOnly=true&limit=1")
-				.then((r) => (r.ok ? r.json() : null))
-				.then((d) => d?.unreadCount ?? 0)
-				.catch(() => 0),
-		]).then(([pending, unread]) => {
-			if (active) setCounts({ pending, unread });
-		});
+		fetch("/api/supplier/dashboard")
+			.then((r) => (r.ok ? r.json() : null))
+			.then((d) => {
+				if (active) setCounts({ pending: d?.metrics?.preOrders?.pending ?? 0 });
+			})
+			.catch(() => {
+				if (active) setCounts({ pending: 0 });
+			});
 		return () => {
 			active = false;
 		};

@@ -1,7 +1,9 @@
 import * as XLSX from "xlsx";
 import { prisma } from "@/lib/db";
+import { applyMapping, buildRows } from "@/lib/file-mapping";
 import {
 	type ClientRequirement,
+	type ColumnMapping,
 	clientRequirementSchema,
 	type SupplierProduct,
 	supplierProductSchema,
@@ -34,6 +36,7 @@ export class FileProcessor {
 		uploadType: "SUPPLIER_PRODUCTS" | "CLIENT_REQUIREMENTS",
 		companyId: string,
 		_userId: string,
+		columnMapping?: ColumnMapping,
 	): Promise<ProcessingResult> {
 		try {
 			// Create upload history record
@@ -75,6 +78,7 @@ export class FileProcessor {
 				uploadHistory.id,
 				uploadType,
 				companyId,
+				columnMapping,
 			);
 
 			// Calculate price change indicator
@@ -140,7 +144,14 @@ export class FileProcessor {
 				throw new Error("Invalid file format or corrupted file");
 			}
 
-			return XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+			// Parse as array-of-arrays and auto-detect the header row so files
+			// with a leading title/blank row are handled the same way the
+			// browser preview handles them (keeps the column mapping aligned).
+			const aoa = XLSX.utils.sheet_to_json<unknown[]>(worksheet, {
+				header: 1,
+				defval: "",
+			});
+			return buildRows(aoa).rows;
 		} catch (_error) {
 			throw new Error("Invalid file format or corrupted file");
 		}
@@ -191,6 +202,7 @@ export class FileProcessor {
 		uploadId: string,
 		uploadType: "SUPPLIER_PRODUCTS" | "CLIENT_REQUIREMENTS",
 		companyId: string,
+		columnMapping?: ColumnMapping,
 	) {
 		const errors: ProcessingError[] = [];
 		const processedProducts: (SupplierProduct | ClientRequirement)[] = [];
@@ -203,23 +215,53 @@ export class FileProcessor {
 			const rowNumber = i + 2; // Excel rows start at 1, plus header
 
 			try {
-				// Normalize column names (remove spaces, convert to lowercase)
-				const normalizedRow = FileProcessor.normalizeRow(row);
-
 				// Validate and process based on upload type
 				let validatedData: SupplierProduct | ClientRequirement;
 
 				if (uploadType === "SUPPLIER_PRODUCTS") {
-					validatedData = supplierProductSchema.parse({
-						sku: normalizedRow.sku || null,
-						code: normalizedRow.code || null,
-						name: normalizedRow.name,
-						price: FileProcessor.parseNumber(normalizedRow.price),
-						description: normalizedRow.description || null,
-						category: normalizedRow.category || null,
-						unit: normalizedRow.unit || null,
-					});
+					if (columnMapping) {
+						// Use explicit column mapping supplied by the caller
+						const mapped = applyMapping(row, columnMapping);
+						validatedData = supplierProductSchema.parse({
+							sku:
+								mapped.sku != null && mapped.sku !== ""
+									? String(mapped.sku)
+									: null,
+							code:
+								mapped.code != null && mapped.code !== ""
+									? String(mapped.code)
+									: null,
+							name: mapped.name,
+							price: FileProcessor.parseNumber(mapped.price),
+							description:
+								mapped.description != null && mapped.description !== ""
+									? String(mapped.description)
+									: null,
+							category:
+								mapped.category != null && mapped.category !== ""
+									? String(mapped.category)
+									: null,
+							unit:
+								mapped.unit != null && mapped.unit !== ""
+									? String(mapped.unit)
+									: null,
+						});
+					} else {
+						// Auto-normalize path (existing behavior — unchanged)
+						const normalizedRow = FileProcessor.normalizeRow(row);
+						validatedData = supplierProductSchema.parse({
+							sku: normalizedRow.sku || null,
+							code: normalizedRow.code || null,
+							name: normalizedRow.name,
+							price: FileProcessor.parseNumber(normalizedRow.price),
+							description: normalizedRow.description || null,
+							category: normalizedRow.category || null,
+							unit: normalizedRow.unit || null,
+						});
+					}
 				} else {
+					// CLIENT_REQUIREMENTS — mapping support not required; keep auto path
+					const normalizedRow = FileProcessor.normalizeRow(row);
 					validatedData = clientRequirementSchema.parse({
 						sku: normalizedRow.sku || null,
 						code: normalizedRow.code || null,
