@@ -4,9 +4,13 @@ import { buildDashboardInsights } from "@/lib/services/dashboard-insights";
 
 export async function GET() {
 	try {
-		await requireAuth(["ADMIN"]);
+		const user = await requireAuth(["CLIENT", "ADMIN"]);
+		const clientCompanyId = user.company?.id ?? "";
 
-		const insights = await buildDashboardInsights({ kind: "admin" });
+		const insights = await buildDashboardInsights({
+			kind: "client",
+			clientCompanyId,
+		});
 
 		return NextResponse.json({
 			success: true,
@@ -20,7 +24,7 @@ export async function GET() {
 				{ status: error.status },
 			);
 		}
-		console.error("Admin dashboard insights error:", error);
+		console.error("Client dashboard insights error:", error);
 		return NextResponse.json(
 			{ error: "Erro interno do servidor" },
 			{ status: 500 },

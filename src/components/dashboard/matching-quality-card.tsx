@@ -7,13 +7,13 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { formatPct } from "@/lib/format";
-import type { Insights } from "./types";
+import type { MatchingData } from "./types";
 
 interface MatchingQualityCardProps {
-	matching: Insights["matching"];
+	matching: MatchingData;
 }
 
-const TYPE_LABELS: Record<keyof Insights["matching"]["byType"], string> = {
+const TYPE_LABELS: Record<keyof MatchingData["byType"], string> = {
 	SKU: "SKU",
 	CODE: "Código",
 	NAME: "Nome",
@@ -28,7 +28,7 @@ const TYPE_COLORS = [
 
 export function MatchingQualityCard({ matching }: MatchingQualityCardProps) {
 	const types = Object.entries(matching.byType) as Array<
-		[keyof Insights["matching"]["byType"], number]
+		[keyof MatchingData["byType"], number]
 	>;
 	const totalMatches = types.reduce((sum, [, n]) => sum + n, 0);
 

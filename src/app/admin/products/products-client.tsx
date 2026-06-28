@@ -2,6 +2,7 @@
 
 import { Building2, DollarSign, Package, Tags } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { StatCard } from "@/components/dashboard/stat-card";
 import { EntityDetailModal } from "@/components/shared/entity-detail-modal";
 import {
 	getProductColumns,
@@ -18,7 +19,6 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { formatters } from "@/lib/utils/masks";
-import { StatCard } from "../_dashboard/stat-card";
 
 type User = {
 	id: string;

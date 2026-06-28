@@ -1,11 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import {
-	ChevronRight,
-	ClipboardList,
-	Clock,
-	Link2,
-	ShoppingCart,
-} from "lucide-react";
+import { ChevronRight, Clock } from "lucide-react";
 import Link from "next/link";
 import {
 	Card,
@@ -14,15 +8,8 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { formatCurrency } from "@/lib/format";
-import type { Insights } from "./types";
 
-interface AttentionQueueProps {
-	attention: Insights["attention"];
-	activeLists: number;
-}
-
-interface QueueRow {
+export interface QueueRow {
 	icon: LucideIcon;
 	label: string;
 	subtitle?: string;
@@ -32,40 +19,21 @@ interface QueueRow {
 	warn?: boolean;
 }
 
+interface AttentionQueueProps {
+	rows: QueueRow[];
+	title?: string;
+	description?: string;
+	allClearLabel?: string;
+}
+
+/** Fila de atenção 100% apresentacional. Cada dashboard monta `rows` com seus
+ * próprios hrefs e textos — sem acoplamento a área. */
 export function AttentionQueue({
-	attention,
-	activeLists,
+	rows,
+	title = "Precisa de atenção",
+	description = "Itens pendentes de ação",
+	allClearLabel = "Tudo em dia. Nenhuma pendência.",
 }: AttentionQueueProps) {
-	const { listsBreakdown: lb, preOrdersBreakdown: pb } = attention;
-
-	const rows: QueueRow[] = [
-		{
-			icon: ClipboardList,
-			label: "Listas ativas",
-			subtitle: `${lb.representatives} representantes · ${lb.suppliers} fornecedores · ${lb.products} produtos · ${formatCurrency(lb.totalValue)}`,
-			count: activeLists,
-			href: "/admin/history",
-		},
-		{
-			icon: ShoppingCart,
-			label: "Pré-pedidos aguardando resposta",
-			subtitle: `${pb.clients} clientes · ${pb.suppliers} fornecedores · ${pb.products} produtos · ${formatCurrency(pb.totalValue)}`,
-			count: attention.activePreOrders,
-			href: "/admin/pre-orders",
-		},
-		{
-			icon: Link2,
-			label: "Solicitações de carteira pendentes",
-			detail:
-				attention.agingLinkRequests > 0
-					? `${attention.agingLinkRequests} há mais de 7 dias`
-					: undefined,
-			count: attention.pendingLinkRequests,
-			href: "/admin/companies",
-			warn: attention.agingLinkRequests > 0,
-		},
-	];
-
 	const allClear = rows.every((r) => r.count === 0);
 
 	return (
@@ -73,14 +41,14 @@ export function AttentionQueue({
 			<CardHeader>
 				<CardTitle className="flex items-center gap-2">
 					<Clock className="h-5 w-5" />
-					Precisa de atenção
+					{title}
 				</CardTitle>
-				<CardDescription>Itens pendentes de ação</CardDescription>
+				<CardDescription>{description}</CardDescription>
 			</CardHeader>
 			<CardContent>
 				{allClear ? (
 					<div className="py-8 text-center text-muted-foreground">
-						Tudo em dia. Nenhuma pendência.
+						{allClearLabel}
 					</div>
 				) : (
 					<div className="space-y-2">

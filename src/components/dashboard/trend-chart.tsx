@@ -17,10 +17,10 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import type { Insights } from "./types";
+import type { TrendPoint } from "./types";
 
 interface TrendChartProps {
-	trend: Insights["trend"];
+	trend: TrendPoint[];
 }
 
 const TREND_COLORS = {

@@ -4,7 +4,12 @@ import { motion } from "framer-motion";
 import {
 	ArrowUpRight,
 	Building2,
+	CheckCircle,
+	ClipboardList,
+	Link2,
 	Package,
+	Percent,
+	PiggyBank,
 	ShoppingCart,
 	Upload,
 	UserPlus,
@@ -13,6 +18,17 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import {
+	AttentionQueue,
+	type QueueRow,
+} from "@/components/dashboard/attention-queue";
+import { FunnelCard } from "@/components/dashboard/funnel-card";
+import { LeaderboardCard } from "@/components/dashboard/leaderboard-card";
+import { MatchingQualityCard } from "@/components/dashboard/matching-quality-card";
+import { StatCard } from "@/components/dashboard/stat-card";
+import { SupplierBars } from "@/components/dashboard/supplier-bars";
+import { TrendChart } from "@/components/dashboard/trend-chart";
+import type { DashboardInsights } from "@/components/dashboard/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,6 +38,8 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { formatCurrency, formatPct } from "@/lib/format";
 import { formatters } from "@/lib/utils/masks";
 
 interface DashboardMetrics {
@@ -62,6 +80,9 @@ const PRE_ORDER_STATUS: Record<
 	EXPIRED: { label: "Expirado", variant: "secondary" },
 };
 
+const KPI_REFRESH_MS = 30_000;
+const INSIGHTS_REFRESH_MS = 60_000;
+
 export default function SupplierDashboard({
 	user,
 }: {
@@ -69,13 +90,45 @@ export default function SupplierDashboard({
 }) {
 	const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
 	const [loading, setLoading] = useState(true);
+	const [insights, setInsights] = useState<DashboardInsights | null>(null);
+	const [insightsLoading, setInsightsLoading] = useState(true);
+	const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
 
 	useEffect(() => {
-		fetch("/api/supplier/dashboard")
-			.then((r) => (r.ok ? r.json() : Promise.reject(r)))
-			.then((d) => setMetrics(d.metrics))
-			.catch(() => setMetrics(null))
-			.finally(() => setLoading(false));
+		const fetchMetrics = async () => {
+			try {
+				const r = await fetch("/api/supplier/dashboard");
+				if (!r.ok) throw new Error();
+				const d = await r.json();
+				setMetrics(d.metrics);
+				setLastUpdate(new Date());
+			} catch {
+				setMetrics(null);
+			} finally {
+				setLoading(false);
+			}
+		};
+		fetchMetrics();
+		const id = setInterval(fetchMetrics, KPI_REFRESH_MS);
+		return () => clearInterval(id);
+	}, []);
+
+	useEffect(() => {
+		const fetchInsights = async () => {
+			try {
+				const r = await fetch("/api/supplier/dashboard/insights");
+				if (!r.ok) throw new Error();
+				const d = await r.json();
+				setInsights(d.insights);
+			} catch {
+				setInsights(null);
+			} finally {
+				setInsightsLoading(false);
+			}
+		};
+		fetchInsights();
+		const id = setInterval(fetchInsights, INSIGHTS_REFRESH_MS);
+		return () => clearInterval(id);
 	}, []);
 
 	const cards = [
@@ -127,15 +180,47 @@ export default function SupplierDashboard({
 		},
 	];
 
+	const attentionRows: QueueRow[] = insights
+		? [
+				{
+					icon: ClipboardList,
+					label: "Catálogos ativos",
+					subtitle: `${insights.attention.listsBreakdown.suppliers} fornecedores · ${insights.attention.listsBreakdown.products} produtos · ${formatCurrency(insights.attention.listsBreakdown.totalValue)}`,
+					count: insights.attention.listsBreakdown.suppliers,
+					href: "/supplier/products",
+				},
+				{
+					icon: ShoppingCart,
+					label: "Pré-pedidos aguardando resposta",
+					subtitle: `${insights.attention.preOrdersBreakdown.clients} clientes · ${insights.attention.preOrdersBreakdown.products} produtos · ${formatCurrency(insights.attention.preOrdersBreakdown.totalValue)}`,
+					count: insights.attention.activePreOrders,
+					href: "/supplier/pre-orders",
+				},
+				{
+					icon: Link2,
+					label: "Solicitações de carteira pendentes",
+					detail:
+						insights.attention.agingLinkRequests > 0
+							? `${insights.attention.agingLinkRequests} aguardando há mais de 7 dias`
+							: undefined,
+					count: insights.attention.pendingLinkRequests,
+					href: "/supplier/clients",
+					warn: insights.attention.agingLinkRequests > 0,
+				},
+			]
+		: [];
+
 	return (
 		<div className="space-y-6">
-			<div className="flex items-center justify-between">
+			<div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
 				<div>
 					<h1 className="font-bold text-2xl tracking-tight">
 						Olá, {user.name}
 					</h1>
 					<p className="text-muted-foreground">
 						Resumo do seu catálogo, carteira e pré-pedidos.
+						{lastUpdate &&
+							` · Atualizado às ${lastUpdate.toLocaleTimeString("pt-BR")}`}
 					</p>
 				</div>
 				<Button asChild>
@@ -208,6 +293,99 @@ export default function SupplierDashboard({
 					</motion.div>
 				))}
 			</motion.div>
+
+			{/* Insights KPIs */}
+			{insightsLoading ? (
+				<div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+					{[0, 1, 2, 3].map((i) => (
+						<Skeleton key={i} className="h-28 w-full" />
+					))}
+				</div>
+			) : insights ? (
+				<div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+					<StatCard
+						title="Pré-pedidos em aberto"
+						icon={ShoppingCart}
+						value={formatCurrency(insights.gmv.openValue)}
+						hint={`${insights.attention.activePreOrders} aguardando resposta`}
+					/>
+					<StatCard
+						title="Valor finalizado"
+						icon={CheckCircle}
+						value={formatCurrency(insights.gmv.finalizedValue)}
+						hint="Pré-pedidos aprovados"
+					/>
+					<StatCard
+						title="Taxa de aprovação"
+						icon={Percent}
+						value={formatPct(insights.gmv.approvalRatePct)}
+						hint="Finalizados / (finalizados + rejeitados)"
+					/>
+					<StatCard
+						title="Economia gerada"
+						icon={PiggyBank}
+						value={formatCurrency(insights.savings.finalizedSavings)}
+						hint={`${insights.savings.itemsWithBaseline} itens com preço-base`}
+					/>
+				</div>
+			) : null}
+
+			{/* Funil + Matching + Atenção */}
+			{insights && (
+				<div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+					<FunnelCard funnel={insights.funnel} />
+					<MatchingQualityCard matching={insights.matching} />
+					<AttentionQueue rows={attentionRows} />
+				</div>
+			)}
+
+			{/* Tendência */}
+			{insights && <TrendChart trend={insights.trend} />}
+
+			{/* Leaderboards */}
+			{insights && (
+				<div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+					<LeaderboardCard
+						title="Top fornecedores"
+						description="Por valor de pré-pedidos finalizados"
+						items={insights.leaderboards.topSuppliers.map((s) => ({
+							id: s.supplierId,
+							name: s.name,
+							value: s.finalizedValue,
+						}))}
+						valueFormatter={formatCurrency}
+						emptyLabel="Nenhum pré-pedido finalizado."
+					/>
+					<LeaderboardCard
+						title="Top clientes"
+						description="Por gasto finalizado na carteira"
+						items={insights.leaderboards.topClients.map((c) => ({
+							id: c.companyId,
+							name: c.name,
+							value: c.spend,
+						}))}
+						valueFormatter={formatCurrency}
+						emptyLabel="Nenhum pré-pedido finalizado."
+					/>
+				</div>
+			)}
+
+			{/* Barras de fornecedor */}
+			{insights && insights.supplierBars.length > 0 && (
+				<Card>
+					<CardHeader>
+						<CardTitle className="text-lg">
+							Top fornecedores por produto
+						</CardTitle>
+						<CardDescription>
+							Valor finalizado, empilhado pelos principais produtos.
+						</CardDescription>
+					</CardHeader>
+					<CardContent>
+						<SupplierBars data={insights.supplierBars} />
+					</CardContent>
+				</Card>
+			)}
 
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
 				<Card className="lg:col-span-2">
