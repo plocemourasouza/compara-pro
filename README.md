@@ -101,7 +101,7 @@ scripts              seed e verificação ponta a ponta
 ## Segurança
 
 Auth em toda rota/Server Action, validação Zod em toda entrada externa, chave de IA criptografada e
-nunca exposta. Advisories de dependência aceitas estão documentadas em [SECURITY.md](SECURITY.md).
+nunca exposta. Advisories de dependência aceitas estão documentadas em [SECURITY.md](docs/SECURITY.md).
 
 ## Deploy (Vercel)
 
