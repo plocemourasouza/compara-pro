@@ -3,6 +3,7 @@
 import { CheckCircle2, ClipboardList, Clock, DollarSign } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { StatCard } from "@/components/dashboard/stat-card";
 import { PreOrderDetailModal } from "@/components/shared/pre-order-detail-modal";
 import {
 	getPreOrderColumns,
@@ -18,7 +19,6 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { formatters } from "@/lib/utils/masks";
-import { StatCard } from "../_dashboard/stat-card";
 
 type User = {
 	id: string;

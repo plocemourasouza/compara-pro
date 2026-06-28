@@ -7,10 +7,10 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { formatPct } from "@/lib/format";
-import type { Insights } from "./types";
+import type { FunnelData } from "./types";
 
 interface FunnelCardProps {
-	funnel: Insights["funnel"];
+	funnel: FunnelData;
 }
 
 // Gradiente de progresso: chart-1 (entrada) → success (finalizado).

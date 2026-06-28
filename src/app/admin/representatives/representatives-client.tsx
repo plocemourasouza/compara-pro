@@ -4,6 +4,7 @@ import { Handshake, Plus, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { StatCard } from "@/components/dashboard/stat-card";
 import {
 	CompanyFilterControls,
 	useCompanyFilters,
@@ -12,7 +13,6 @@ import { EntityDetailModal } from "@/components/shared/entity-detail-modal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
-import { StatCard } from "../_dashboard/stat-card";
 import type { Company } from "../companies/columns";
 import { getRepresentativesColumns } from "./columns";
 import { representativeDetailSections } from "./detail-fields";

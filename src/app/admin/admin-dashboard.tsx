@@ -3,6 +3,8 @@
 import {
 	AlertTriangle,
 	CheckCircle,
+	ClipboardList,
+	Link2,
 	Percent,
 	PiggyBank,
 	ShoppingCart,
@@ -14,6 +16,17 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
+	AttentionQueue,
+	type QueueRow,
+} from "@/components/dashboard/attention-queue";
+import { FunnelCard } from "@/components/dashboard/funnel-card";
+import { LeaderboardCard } from "@/components/dashboard/leaderboard-card";
+import { MatchingQualityCard } from "@/components/dashboard/matching-quality-card";
+import { StatCard } from "@/components/dashboard/stat-card";
+import { SupplierBars } from "@/components/dashboard/supplier-bars";
+import { TrendChart } from "@/components/dashboard/trend-chart";
+import type { DashboardInsights } from "@/components/dashboard/types";
+import {
 	Card,
 	CardContent,
 	CardDescription,
@@ -22,15 +35,7 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatCurrency, formatPct } from "@/lib/format";
-import { AttentionQueue } from "./_dashboard/attention-queue";
-import { FunnelCard } from "./_dashboard/funnel-card";
-import { LeaderboardCard } from "./_dashboard/leaderboard-card";
-import { MatchingQualityCard } from "./_dashboard/matching-quality-card";
 import { RoleDonut } from "./_dashboard/role-donut";
-import { StatCard } from "./_dashboard/stat-card";
-import { SupplierBars } from "./_dashboard/supplier-bars";
-import { TrendChart } from "./_dashboard/trend-chart";
-import type { Insights } from "./_dashboard/types";
 
 type User = {
 	id: string;
@@ -131,7 +136,7 @@ const INSIGHTS_REFRESH_MS = 60_000;
 export default function AdminDashboard({ user: _user }: AdminDashboardProps) {
 	const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
 	const [loading, setLoading] = useState(true);
-	const [insights, setInsights] = useState<Insights | null>(null);
+	const [insights, setInsights] = useState<DashboardInsights | null>(null);
 	const [insightsLoading, setInsightsLoading] = useState(true);
 	// null no SSR — evita hydration mismatch no relógio (preenchido no 1º fetch).
 	const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
@@ -344,8 +349,35 @@ export default function AdminDashboard({ user: _user }: AdminDashboardProps) {
 						<FunnelCard funnel={insights.funnel} />
 						<MatchingQualityCard matching={insights.matching} />
 						<AttentionQueue
-							attention={insights.attention}
-							activeLists={metrics?.uploads.activeLists ?? 0}
+							rows={
+								[
+									{
+										icon: ClipboardList,
+										label: "Listas ativas",
+										subtitle: `${insights.attention.listsBreakdown.representatives} representantes · ${insights.attention.listsBreakdown.suppliers} fornecedores · ${insights.attention.listsBreakdown.products} produtos · ${formatCurrency(insights.attention.listsBreakdown.totalValue)}`,
+										count: metrics?.uploads.activeLists ?? 0,
+										href: "/admin/history",
+									},
+									{
+										icon: ShoppingCart,
+										label: "Pré-pedidos aguardando resposta",
+										subtitle: `${insights.attention.preOrdersBreakdown.clients} clientes · ${insights.attention.preOrdersBreakdown.suppliers} fornecedores · ${insights.attention.preOrdersBreakdown.products} produtos · ${formatCurrency(insights.attention.preOrdersBreakdown.totalValue)}`,
+										count: insights.attention.activePreOrders,
+										href: "/admin/pre-orders",
+									},
+									{
+										icon: Link2,
+										label: "Solicitações de carteira pendentes",
+										detail:
+											insights.attention.agingLinkRequests > 0
+												? `${insights.attention.agingLinkRequests} aguardando há mais de 7 dias`
+												: undefined,
+										count: insights.attention.pendingLinkRequests,
+										href: "/admin/companies",
+										warn: insights.attention.agingLinkRequests > 0,
+									},
+								] satisfies QueueRow[]
+							}
 						/>
 					</div>
 

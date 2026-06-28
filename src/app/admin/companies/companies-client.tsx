@@ -4,6 +4,7 @@ import { Building2, Factory, MapPin, Plus, Store } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { StatCard } from "@/components/dashboard/stat-card";
 import {
 	CompanyFilterControls,
 	useCompanyFilters,
@@ -19,7 +20,6 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { StatCard } from "../_dashboard/stat-card";
 import { type Company, getCompaniesColumns } from "./columns";
 import { companyDetailSections } from "./detail-fields";
 
