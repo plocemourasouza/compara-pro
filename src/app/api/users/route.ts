@@ -53,7 +53,10 @@ export async function GET(request: NextRequest) {
 		}
 
 		const page = parseInt(searchParams.get("page") || "1", 10);
-		const limit = parseInt(searchParams.get("limit") || "10", 10);
+		const limit = Math.min(
+			parseInt(searchParams.get("limit") || "10", 10) || 10,
+			1000,
+		);
 		const search = searchParams.get("search") || "";
 		const status = searchParams.get("status") || "all"; // active, inactive, all
 		const skip = (page - 1) * limit;

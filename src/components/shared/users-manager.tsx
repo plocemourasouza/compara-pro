@@ -46,7 +46,7 @@ interface UserStats {
 
 const INITIAL_STATS: UserStats = { total: 0, active: 0, inactive: 0 };
 
-const ITEMS_PER_PAGE = 10;
+const DEFAULT_PAGE_SIZE = 10;
 
 export function UsersManager({
 	scopeRole,
@@ -59,16 +59,17 @@ export function UsersManager({
 	const [loading, setLoading] = useState(true);
 	const [actionLoading, setActionLoading] = useState(false);
 	const [page, setPage] = useState(1);
+	const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 	const [totalPages, setTotalPages] = useState(1);
 	const [stats, setStats] = useState<UserStats>(INITIAL_STATS);
 	const [filters, setFilters] = useState<UserFilters>(INITIAL_FILTERS);
 	const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
 	const [detailOpen, setDetailOpen] = useState(false);
 
-	// biome-ignore lint/correctness/useExhaustiveDependencies: refetch on page/filters change
+	// biome-ignore lint/correctness/useExhaustiveDependencies: refetch on page/filters/pageSize change
 	useEffect(() => {
 		fetchUsers();
-	}, [page, filters]);
+	}, [page, filters, pageSize]);
 
 	const fetchUsers = async () => {
 		try {
@@ -76,7 +77,7 @@ export function UsersManager({
 			const params = new URLSearchParams({
 				scopeRole,
 				page: page.toString(),
-				limit: ITEMS_PER_PAGE.toString(),
+				limit: pageSize.toString(),
 				search: filters.search,
 				status: filters.status,
 			});
@@ -187,9 +188,14 @@ export function UsersManager({
 	const handlePaginationChange: OnChangeFn<PaginationState> = (updater) => {
 		const current: PaginationState = {
 			pageIndex: page - 1,
-			pageSize: ITEMS_PER_PAGE,
+			pageSize,
 		};
 		const next = typeof updater === "function" ? updater(current) : updater;
+		if (next.pageSize !== pageSize) {
+			setPageSize(next.pageSize);
+			setPage(1);
+			return;
+		}
 		setPage(next.pageIndex + 1);
 	};
 
@@ -226,7 +232,7 @@ export function UsersManager({
 						manualPagination
 						pageCount={totalPages}
 						totalRows={stats.total}
-						pagination={{ pageIndex: page - 1, pageSize: ITEMS_PER_PAGE }}
+						pagination={{ pageIndex: page - 1, pageSize }}
 						onPaginationChange={handlePaginationChange}
 						toolbar={
 							<>

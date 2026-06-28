@@ -16,9 +16,16 @@ import {
 } from "@tanstack/react-table";
 import { ArrowDown, ArrowUp, ChevronsUpDown, Search } from "lucide-react";
 import type * as React from "react";
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import {
 	Table,
 	TableBody,
@@ -28,6 +35,10 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 
+/** Minimum rows kept when auto-filling the full-height table box. */
+const MIN_ROWS = 5;
+const PAGE_SIZE_OPTIONS = [10, 25, 50, 100, 500, 1000] as const;
+
 interface DataTableProps<TData, TValue> {
 	columns: ColumnDef<TData, TValue>[];
 	data: TData[];
@@ -36,8 +47,13 @@ interface DataTableProps<TData, TValue> {
 	searchPlaceholder?: string;
 	/** Row click handler — used to open the detail modal. */
 	onRowClick?: (row: TData) => void;
-	/** Client-side page size. Default 10. */
+	/** Client-side page size. Default 10 (seed/minimum when auto-filling). */
 	pageSize?: number;
+	/**
+	 * Auto-compute the page size from the full-height table box so rows fill it
+	 * (no blank space before the footer). Client-side only. Default true.
+	 */
+	autoFillRows?: boolean;
 	isLoading?: boolean;
 	emptyState?: React.ReactNode;
 	/** Right-aligned toolbar slot (type filter, extra actions). */
@@ -76,11 +92,15 @@ export function DataTable<TData, TValue>({
 	pagination,
 	onPaginationChange,
 	totalRows,
+	autoFillRows = true,
 }: DataTableProps<TData, TValue>) {
 	const [sorting, setSorting] = useState<SortingState>([]);
 	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 	const [internalPagination, setInternalPagination] = useState<PaginationState>(
 		{ pageIndex: 0, pageSize },
+	);
+	const [pageSizeChoice, setPageSizeChoice] = useState<"auto" | number>(
+		autoFillRows ? "auto" : pageSize,
 	);
 
 	const table = useReactTable({
@@ -125,6 +145,47 @@ export function DataTable<TData, TValue>({
 		? pi * ps + rowsOnPage
 		: Math.min((pi + 1) * ps, total);
 
+	// Auto-fill the full-height table box: pick a page size that fills the
+	// available height so there is no blank space before the footer. The box is
+	// flex-1 (height set by the viewport, independent of row count), so we only
+	// recompute on resize. Client-side pagination only.
+	const scrollRef = useRef<HTMLDivElement>(null);
+	const autoFill =
+		autoFillRows && !manualPagination && pageSizeChoice === "auto";
+	const filteredLen = autoFill ? table.getFilteredRowModel().rows.length : 0;
+	const canMeasure = autoFill && !isLoading && rows.length > 0;
+
+	const measureFit = useCallback(() => {
+		const el = scrollRef.current;
+		if (!el || !canMeasure) return;
+		const headH =
+			el.querySelector("thead")?.getBoundingClientRect().height ?? 0;
+		let rowH = 0;
+		el.querySelectorAll("tbody tr").forEach((r) => {
+			rowH = Math.max(rowH, r.getBoundingClientRect().height);
+		});
+		if (rowH <= 0) return;
+		const fit = Math.max(
+			MIN_ROWS,
+			Math.floor((el.clientHeight - headH) / rowH),
+		);
+		setInternalPagination((p) => {
+			if (p.pageSize === fit) return p;
+			const maxIndex = Math.max(0, Math.ceil(filteredLen / fit) - 1);
+			return { pageIndex: Math.min(p.pageIndex, maxIndex), pageSize: fit };
+		});
+	}, [canMeasure, filteredLen]);
+
+	useEffect(() => {
+		if (!autoFill) return;
+		const el = scrollRef.current;
+		if (!el) return;
+		measureFit();
+		const ro = new ResizeObserver(() => measureFit());
+		ro.observe(el);
+		return () => ro.disconnect();
+	}, [autoFill, measureFit]);
+
 	return (
 		<div className="flex h-full min-h-0 flex-col gap-4">
 			{(searchColumn || toolbar) && (
@@ -148,7 +209,10 @@ export function DataTable<TData, TValue>({
 				</div>
 			)}
 
-			<div className="min-h-0 flex-1 overflow-auto rounded-md border">
+			<div
+				ref={scrollRef}
+				className="min-h-0 flex-1 overflow-auto rounded-md border"
+			>
 				<Table>
 					<TableHeader>
 						{table.getHeaderGroups().map((headerGroup) => (
@@ -234,11 +298,52 @@ export function DataTable<TData, TValue>({
 			</div>
 
 			<div className="flex items-center justify-between gap-2">
-				<p className="text-sm text-muted-foreground">
-					{total === 0
-						? "Nenhum registro"
-						: `Exibindo ${start}-${end} de ${total} registro(s)`}
-				</p>
+				<div className="flex items-center gap-2">
+					<Select
+						value={
+							manualPagination
+								? String(ps)
+								: pageSizeChoice === "auto"
+									? "auto"
+									: String(pageSizeChoice)
+						}
+						onValueChange={(v) => {
+							if (manualPagination) {
+								table.setPageSize(Number(v));
+								return;
+							}
+							if (v === "auto") {
+								setPageSizeChoice("auto");
+								return;
+							}
+							const n = Number(v);
+							setPageSizeChoice(n);
+							setInternalPagination({ pageIndex: 0, pageSize: n });
+						}}
+					>
+						<SelectTrigger
+							className="h-9 w-22"
+							aria-label="Registros por página"
+						>
+							<SelectValue />
+						</SelectTrigger>
+						<SelectContent>
+							{!manualPagination && (
+								<SelectItem value="auto">Automático</SelectItem>
+							)}
+							{PAGE_SIZE_OPTIONS.map((n) => (
+								<SelectItem key={n} value={String(n)}>
+									{n}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
+					<p className="text-sm text-muted-foreground">
+						{total === 0
+							? "Nenhum registro"
+							: `Exibindo ${start}-${end} de ${total} registro(s)`}
+					</p>
+				</div>
 				<div className="flex items-center gap-2">
 					<Button
 						variant="outline"

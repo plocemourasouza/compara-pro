@@ -22,16 +22,16 @@ export default async function AdminLayout({
 	}
 
 	return (
-		<div className="min-h-screen bg-muted">
-			<div className="flex min-h-screen">
+		<div className="h-screen overflow-hidden bg-muted">
+			<div className="flex h-full">
 				<AdminSidebar user={user} />
-				<main className="flex flex-1 flex-col ml-64">
+				<main className="flex min-h-0 flex-1 flex-col ml-64">
 					<AppHeader
 						user={user}
 						notificationsHref="/admin/notifications"
 						settingsHref="/admin/settings"
 					/>
-					<div className="flex min-h-0 flex-1 flex-col p-8">
+					<div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-8">
 						<PageTransition>{children}</PageTransition>
 					</div>
 				</main>
