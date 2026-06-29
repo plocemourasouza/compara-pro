@@ -26,6 +26,21 @@ export async function getRepresentedSupplierIds(
 }
 
 /**
+ * IDs de fornecedores no escopo do usuário: ADMIN (suporte) vê TODOS os
+ * fornecedores ativos; representante só os da própria carteira.
+ */
+export async function scopedSupplierIds(user: ScopeUser): Promise<string[]> {
+	if (user.area === "ADMIN") {
+		const all = await prisma.company.findMany({
+			where: { type: "SUPPLIER", deletedAt: null },
+			select: { id: true },
+		});
+		return all.map((c) => c.id);
+	}
+	return getRepresentedSupplierIds(user);
+}
+
+/**
  * Filtro de companyId pronto para `where`. ADMIN → `undefined` (sem filtro, vê
  * tudo). Representante → `{ in: ids }` (escopo). Evita ifs espalhados nos
  * call-sites: `where.companyId = await scopedCompanyFilter(user)`.

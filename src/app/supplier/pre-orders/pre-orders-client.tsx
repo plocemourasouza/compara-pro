@@ -1,8 +1,10 @@
 "use client";
 
+import { CheckCircle2, ClipboardList, Clock, XCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { PreOrderDetailModal } from "@/components/shared/pre-order-detail-modal";
+import { StatCard } from "@/components/dashboard/stat-card";
 import {
 	getPreOrderColumns,
 	type PreOrder,
@@ -16,6 +18,15 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { formatters } from "@/lib/utils/masks";
+
+type Bucket = { count: number; value: number };
+type PreOrderStats = {
+	total: Bucket;
+	pending: Bucket;
+	approved: Bucket;
+	rejected: Bucket;
+};
 
 interface SupplierUser {
 	id: string;
@@ -30,13 +41,12 @@ interface PreOrdersClientProps {
 }
 
 export default function PreOrdersClient({ user }: PreOrdersClientProps) {
+	const router = useRouter();
 	const [orders, setOrders] = useState<PreOrder[]>([]);
 	const [loading, setLoading] = useState(true);
-	const [busy, setBusy] = useState(false);
 	const [statusFilter, setStatusFilter] = useState("all");
 	const [supplierFilter, setSupplierFilter] = useState("all");
-	const [selected, setSelected] = useState<PreOrder | null>(null);
-	const [detailOpen, setDetailOpen] = useState(false);
+	const [stats, setStats] = useState<PreOrderStats | null>(null);
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: mount-only fetch
 	useEffect(() => {
@@ -58,36 +68,13 @@ export default function PreOrdersClient({ user }: PreOrdersClientProps) {
 		} finally {
 			setLoading(false);
 		}
-	}
-
-	async function respond(
-		id: string,
-		action: "APPROVE" | "REJECT",
-		notes?: string,
-	) {
-		setBusy(true);
 		try {
-			const res = await fetch("/api/pre-order/bulk-action", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ preOrderIds: [id], action, notes }),
-			});
-			const data = (await res.json()) as { message?: string; error?: string };
-			if (!res.ok) throw new Error(data.error ?? "Erro");
-			toast.success(data.message ?? "Pré-pedido atualizado");
-			setDetailOpen(false);
-			await load();
-		} catch (err) {
-			toast.error(err instanceof Error ? err.message : "Erro");
-		} finally {
-			setBusy(false);
+			const res = await fetch("/api/pre-order/stats");
+			if (res.ok) setStats((await res.json()) as PreOrderStats);
+		} catch {
+			// indicadores best-effort
 		}
 	}
-
-	const openDetail = (order: PreOrder) => {
-		setSelected(order);
-		setDetailOpen(true);
-	};
 
 	const columns = useMemo(() => getPreOrderColumns(), []);
 
@@ -118,6 +105,35 @@ export default function PreOrdersClient({ user }: PreOrdersClientProps) {
 				</p>
 			</div>
 
+			<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+				<StatCard
+					title="Total de pré-pedidos"
+					icon={ClipboardList}
+					value={stats ? stats.total.count.toLocaleString("pt-BR") : "—"}
+					hint={stats ? formatters.currency(stats.total.value) : undefined}
+				/>
+				<StatCard
+					title="Pendentes"
+					icon={Clock}
+					value={stats ? stats.pending.count.toLocaleString("pt-BR") : "—"}
+					hint={stats ? formatters.currency(stats.pending.value) : undefined}
+				/>
+				<StatCard
+					title="Aprovados"
+					icon={CheckCircle2}
+					iconClassName="text-success"
+					value={stats ? stats.approved.count.toLocaleString("pt-BR") : "—"}
+					hint={stats ? formatters.currency(stats.approved.value) : undefined}
+				/>
+				<StatCard
+					title="Rejeitados"
+					icon={XCircle}
+					iconClassName="text-destructive"
+					value={stats ? stats.rejected.count.toLocaleString("pt-BR") : "—"}
+					hint={stats ? formatters.currency(stats.rejected.value) : undefined}
+				/>
+			</div>
+
 			<Card className="flex min-h-0 flex-1 flex-col">
 				<CardHeader>
 					<CardTitle>Pré-pedidos</CardTitle>
@@ -128,7 +144,9 @@ export default function PreOrdersClient({ user }: PreOrdersClientProps) {
 						data={filteredOrders}
 						searchKey="ref"
 						searchPlaceholder="Buscar por cliente ou nº..."
-						onRowClick={openDetail}
+						onRowClick={(order) =>
+							router.push(`/supplier/pre-orders/${order.id}`)
+						}
 						isLoading={loading}
 						emptyState="Nenhum pré-pedido recebido ainda."
 						toolbar={
@@ -168,16 +186,6 @@ export default function PreOrdersClient({ user }: PreOrdersClientProps) {
 					/>
 				</CardContent>
 			</Card>
-
-			<PreOrderDetailModal
-				open={detailOpen}
-				onOpenChange={setDetailOpen}
-				preOrder={selected}
-				canRespond
-				busy={busy}
-				onApprove={(id) => respond(id, "APPROVE")}
-				onReject={(id, notes) => respond(id, "REJECT", notes)}
-			/>
 		</div>
 	);
 }

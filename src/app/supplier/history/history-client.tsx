@@ -1,7 +1,15 @@
 "use client";
 
-import { RefreshCw } from "lucide-react";
+import {
+	DollarSign,
+	ListChecks,
+	Package,
+	RefreshCw,
+	Upload as UploadIcon,
+} from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { StatCard } from "@/components/dashboard/stat-card";
+import { ProductImportDialog } from "@/components/shared/product-import-dialog";
 import { UploadDetailModal } from "@/components/shared/upload-detail-modal";
 import {
 	getUploadColumns,
@@ -17,6 +25,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { formatters } from "@/lib/utils/masks";
 
 type User = {
 	id: string;
@@ -28,16 +37,22 @@ type User = {
 
 interface HistoryClientProps {
 	user: User;
+	suppliers: { id: string; name: string }[];
 }
 
-export default function HistoryClient({ user }: HistoryClientProps) {
-	const showCompany = user.area === "REPRESENTATIVE" || user.area === "ADMIN";
+export default function HistoryClient({ user, suppliers }: HistoryClientProps) {
 	const [uploads, setUploads] = useState<Upload[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [statusFilter, setStatusFilter] = useState("all");
 	const [typeFilter, setTypeFilter] = useState("all");
 	const [selectedId, setSelectedId] = useState<string | null>(null);
 	const [detailOpen, setDetailOpen] = useState(false);
+	const [importOpen, setImportOpen] = useState(false);
+	const [stats, setStats] = useState<{
+		activeLists: number;
+		products: number;
+		totalValue: number;
+	} | null>(null);
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: mount-only fetch
 	useEffect(() => {
@@ -56,6 +71,12 @@ export default function HistoryClient({ user }: HistoryClientProps) {
 		} finally {
 			setLoading(false);
 		}
+		try {
+			const res = await fetch("/api/upload/history/stats");
+			if (res.ok) setStats(await res.json());
+		} catch {
+			// indicadores são best-effort; ignora falha
+		}
 	};
 
 	const openDetail = (upload: Upload) => {
@@ -64,15 +85,16 @@ export default function HistoryClient({ user }: HistoryClientProps) {
 	};
 
 	const columns = useMemo(
-		() => getUploadColumns({ showPriceIndicator: true, showCompany }),
-		[showCompany],
+		() => getUploadColumns({ showCompany: true, priceListMode: true }),
+		[],
 	);
 
 	const filteredUploads = useMemo(
 		() =>
 			uploads.filter((u) => {
 				const matchesStatus =
-					statusFilter === "all" || u.status === statusFilter;
+					statusFilter === "all" ||
+					(statusFilter === "active" ? u.isActive : !u.isActive);
 				const matchesType = typeFilter === "all" || u.uploadType === typeFilter;
 				return matchesStatus && matchesType;
 			}),
@@ -83,29 +105,51 @@ export default function HistoryClient({ user }: HistoryClientProps) {
 		<div className="flex min-h-0 flex-1 flex-col gap-6">
 			<div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
 				<div>
-					<h1 className="text-2xl font-bold tracking-tight">
-						Histórico de Uploads
-					</h1>
+					<h1 className="text-2xl font-bold tracking-tight">Listas de Preço</h1>
 					<p className="text-muted-foreground">
-						Visualize o histórico de todos os uploads realizados
+						Listas de preço enviadas pelos fornecedores
 					</p>
 				</div>
-				<Button
-					variant="outline"
-					size="sm"
-					onClick={fetchHistory}
-					disabled={loading}
-				>
-					<RefreshCw
-						className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`}
-					/>
-					Atualizar
-				</Button>
+				<div className="flex items-center gap-2">
+					<Button
+						variant="outline"
+						size="sm"
+						onClick={fetchHistory}
+						disabled={loading}
+					>
+						<RefreshCw
+							className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`}
+						/>
+						Atualizar
+					</Button>
+					<Button size="sm" onClick={() => setImportOpen(true)}>
+						<UploadIcon className="mr-2 h-4 w-4" />
+						Importar
+					</Button>
+				</div>
+			</div>
+
+			<div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+				<StatCard
+					title="Listas ativas"
+					icon={ListChecks}
+					value={stats ? stats.activeLists.toLocaleString("pt-BR") : "—"}
+				/>
+				<StatCard
+					title="Produtos ativos"
+					icon={Package}
+					value={stats ? stats.products.toLocaleString("pt-BR") : "—"}
+				/>
+				<StatCard
+					title="Valor total (ativos)"
+					icon={DollarSign}
+					value={stats ? formatters.currency(stats.totalValue) : "—"}
+				/>
 			</div>
 
 			<Card className="flex min-h-0 flex-1 flex-col">
 				<CardHeader>
-					<CardTitle>Uploads</CardTitle>
+					<CardTitle>Listas de Preço</CardTitle>
 				</CardHeader>
 				<CardContent className="flex min-h-0 flex-1 flex-col pt-6">
 					<DataTable
@@ -115,7 +159,7 @@ export default function HistoryClient({ user }: HistoryClientProps) {
 						searchPlaceholder="Nome do arquivo..."
 						onRowClick={openDetail}
 						isLoading={loading}
-						emptyState="Nenhum upload encontrado."
+						emptyState="Nenhuma lista encontrada."
 						toolbar={
 							<>
 								<Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -124,10 +168,8 @@ export default function HistoryClient({ user }: HistoryClientProps) {
 									</SelectTrigger>
 									<SelectContent>
 										<SelectItem value="all">Todos os status</SelectItem>
-										<SelectItem value="COMPLETED">Concluído</SelectItem>
-										<SelectItem value="PROCESSING">Processando</SelectItem>
-										<SelectItem value="FAILED">Falhou</SelectItem>
-										<SelectItem value="CANCELLED">Cancelado</SelectItem>
+										<SelectItem value="active">Ativo</SelectItem>
+										<SelectItem value="inactive">Inativo</SelectItem>
 									</SelectContent>
 								</Select>
 								<Select value={typeFilter} onValueChange={setTypeFilter}>
@@ -156,6 +198,15 @@ export default function HistoryClient({ user }: HistoryClientProps) {
 				uploadId={selectedId}
 				canReprocess
 				onReprocessed={fetchHistory}
+				itemsBasePath="/supplier/history"
+			/>
+
+			<ProductImportDialog
+				open={importOpen}
+				onOpenChange={setImportOpen}
+				suppliers={suppliers}
+				user={user}
+				onImported={fetchHistory}
 			/>
 		</div>
 	);

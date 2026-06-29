@@ -48,19 +48,19 @@ const navigation: Array<{
 }> = [
 	{ name: "Dashboard", href: "/supplier", icon: Home },
 	{
-		name: "Representantes",
+		name: "Fornecedores",
 		href: "/supplier/fornecedores",
 		icon: Building2,
 	},
+	{ name: "Listas de preço", href: "/supplier/history", icon: FileText },
 	{ name: "Produtos", href: "/supplier/products", icon: Package },
-	{ name: "Clientes", href: "/supplier/clients", icon: Users },
 	{
 		name: "Pré-pedidos",
 		href: "/supplier/pre-orders",
 		icon: ShoppingCart,
 		badgeKey: "pending",
 	},
-	{ name: "Histórico", href: "/supplier/history", icon: FileText },
+	{ name: "Clientes", href: "/supplier/clients", icon: Users },
 	{ name: "Usuários", href: "/supplier/usuarios", icon: UserCog },
 	{ name: "Configurações", href: "/supplier/settings", icon: Settings },
 ];

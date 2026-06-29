@@ -86,8 +86,9 @@ function SupplierTooltip({ active, payload }: TooltipInjected) {
 			<p className="font-semibold">{row.supplier}</p>
 			<p className="mb-1 text-muted-foreground">{formatCurrency(row.total)}</p>
 			<ul className="space-y-0.5">
-				{items.map((it) => (
-					<li key={it.name} className="flex justify-between gap-3">
+				{items.map((it, i) => (
+					// biome-ignore lint/suspicious/noArrayIndexKey: product names repeat within a supplier; index ensures unique keys
+					<li key={`${it.name}-${i}`} className="flex justify-between gap-3">
 						<span className="max-w-[160px] truncate">{it.name}</span>
 						<span className="tabular-nums">{formatCurrency(it.value)}</span>
 					</li>

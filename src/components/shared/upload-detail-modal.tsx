@@ -1,6 +1,7 @@
 "use client";
 
-import { Clock, RefreshCw } from "lucide-react";
+import { Clock, ListTree, RefreshCw } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -40,6 +41,8 @@ interface UploadDetailModalProps {
 	canReprocess?: boolean;
 	/** Called after a successful reprocess so the list can refresh. */
 	onReprocessed?: () => void;
+	/** Base path for the "Ver todos os itens" screen (e.g. "/supplier/history"). */
+	itemsBasePath?: string;
 }
 
 export function UploadDetailModal({
@@ -48,7 +51,9 @@ export function UploadDetailModal({
 	uploadId,
 	canReprocess = false,
 	onReprocessed,
+	itemsBasePath,
 }: UploadDetailModalProps) {
+	const router = useRouter();
 	const [detail, setDetail] = useState<UploadDetail | null>(null);
 	const [loading, setLoading] = useState(false);
 	const [loadError, setLoadError] = useState(false);
@@ -300,6 +305,18 @@ export function UploadDetailModal({
 					<DialogClose asChild>
 						<Button variant="outline">Fechar</Button>
 					</DialogClose>
+					{itemsBasePath && uploadId && (
+						<Button
+							variant="outline"
+							onClick={() => {
+								onOpenChange(false);
+								router.push(`${itemsBasePath}/${uploadId}`);
+							}}
+						>
+							<ListTree className="mr-2 h-4 w-4" />
+							Ver todos os itens
+						</Button>
+					)}
 					{canReprocess && detail?.status === "FAILED" && (
 						<Button onClick={handleReprocess} disabled={reprocessing}>
 							<RefreshCw

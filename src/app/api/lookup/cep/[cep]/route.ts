@@ -7,7 +7,7 @@ type RouteParams = { params: Promise<{ cep: string }> };
 export async function GET(_request: NextRequest, { params }: RouteParams) {
 	const { cep } = await params;
 	try {
-		await requireAuth(["ADMIN"]);
+		await requireAuth(["ADMIN", "REPRESENTATIVE"]);
 		const data = await lookupCep(cep);
 		return NextResponse.json(data);
 	} catch (error) {

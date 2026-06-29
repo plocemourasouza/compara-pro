@@ -211,7 +211,7 @@ export default function SupplierDashboard({
 		: [];
 
 	return (
-		<div className="space-y-6">
+		<div className="space-y-6 pb-6">
 			<div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
 				<div>
 					<h1 className="font-bold text-2xl tracking-tight">
@@ -232,7 +232,7 @@ export default function SupplierDashboard({
 			</div>
 
 			{metrics && metrics.pendingRequests > 0 && (
-				<Link href="/supplier/clients">
+				<Link href="/supplier/clients" className="block">
 					<Card className="border-primary/40 bg-primary/5 transition-colors hover:border-primary/60">
 						<CardContent className="flex items-center gap-3 py-4">
 							<UserPlus className="h-5 w-5 text-primary" />

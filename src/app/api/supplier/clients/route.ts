@@ -6,19 +6,26 @@ import {
 	generateActivationCode,
 	hashActivationCode,
 } from "@/lib/auth-activation";
-import { getRepresentedSupplierIds } from "@/lib/auth-scope";
+import { getRepresentedSupplierIds, scopedSupplierIds } from "@/lib/auth-scope";
 import { AuthError, requireAuth } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
 import { formatters, masks } from "@/lib/utils/masks";
 
 const addClientSchema = z.object({
 	supplierCompanyId: z.string().min(1, "Selecione o fornecedor"),
+	// Obrigatório quando ADMIN (escolhe a agência dona do vínculo); para
+	// representante é derivado da própria agência.
+	representativeCompanyId: z.string().optional(),
 	companyName: z.string().min(2, "Informe o nome da empresa"),
 	cnpj: z
 		.string()
 		.transform((v) => v.replace(/\D/g, ""))
 		.refine((v) => v === "" || v.length === 14, "CNPJ inválido")
 		.optional(),
+	zipCode: z.string().optional(),
+	street: z.string().optional(),
+	number: z.string().optional(),
+	neighborhood: z.string().optional(),
 	city: z.string().optional(),
 	state: z.string().optional(),
 	userName: z.string().min(2, "Informe o nome do contato"),
@@ -29,7 +36,8 @@ const addClientSchema = z.object({
 export async function GET() {
 	try {
 		const user = await requireAuth(["REPRESENTATIVE", "ADMIN"]);
-		const supplierIds = await getRepresentedSupplierIds(user);
+		// ADMIN (suporte) vê clientes de todos os fornecedores; representante só os da carteira.
+		const supplierIds = await scopedSupplierIds(user);
 		if (supplierIds.length === 0) {
 			return NextResponse.json({ clients: [] });
 		}
@@ -121,7 +129,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
 	try {
-		const user = await requireAuth(["REPRESENTATIVE"]);
+		const user = await requireAuth(["REPRESENTATIVE", "ADMIN"]);
 
 		const parsed = addClientSchema.safeParse(await request.json());
 		if (!parsed.success) {
@@ -132,22 +140,71 @@ export async function POST(request: Request) {
 		}
 		const data = parsed.data;
 
-		// O cliente entra na carteira de um fornecedor específico que o
-		// representante representa.
-		const supplierIds = await getRepresentedSupplierIds(user);
-		if (!supplierIds.includes(data.supplierCompanyId)) {
-			return NextResponse.json(
-				{ error: "Selecione um fornecedor que você representa" },
-				{ status: 403 },
-			);
-		}
+		// Resolve a agência (representativeCompanyId) dona do vínculo:
+		// ADMIN escolhe a agência (validada contra o fornecedor); representante usa a própria.
 		const supplierCompanyId = data.supplierCompanyId;
+		let representativeCompanyId: string;
+		if (user.area === "ADMIN") {
+			if (!data.representativeCompanyId) {
+				return NextResponse.json(
+					{ error: "Selecione a agência (representante)" },
+					{ status: 400 },
+				);
+			}
+			const rel = await prisma.representativeSupplier.findUnique({
+				where: {
+					representativeCompanyId_supplierCompanyId: {
+						representativeCompanyId: data.representativeCompanyId,
+						supplierCompanyId,
+					},
+				},
+			});
+			if (!rel) {
+				return NextResponse.json(
+					{ error: "Fornecedor não pertence à agência selecionada" },
+					{ status: 400 },
+				);
+			}
+			representativeCompanyId = data.representativeCompanyId;
+		} else {
+			const supplierIds = await getRepresentedSupplierIds(user);
+			if (!supplierIds.includes(supplierCompanyId)) {
+				return NextResponse.json(
+					{ error: "Selecione um fornecedor que você representa" },
+					{ status: 403 },
+				);
+			}
+			if (!user.company?.id) {
+				return NextResponse.json(
+					{ error: "Representante sem empresa vinculada" },
+					{ status: 403 },
+				);
+			}
+			representativeCompanyId = user.company.id;
+		}
 		const cnpjDigits = data.cnpj ? masks.removeNonDigits(data.cnpj) : "";
 		const cnpj = cnpjDigits.length === 14 ? cnpjDigits : null;
 		const userEmail = data.userEmail.trim().toLowerCase();
 		const userPhone = data.userPhone
 			? masks.removeNonDigits(data.userPhone) || null
 			: null;
+		const zipCode = data.zipCode
+			? masks.removeNonDigits(data.zipCode) || null
+			: null;
+		// Dados de empresa + responsável (espelha o contato de primeiro acesso).
+		const companyData = {
+			street: data.street || null,
+			number: data.number || null,
+			neighborhood: data.neighborhood || null,
+			city: data.city || null,
+			state: data.state ? data.state.toUpperCase() : null,
+			zipCode,
+			email: userEmail,
+			phone: userPhone,
+			responsibleName: data.userName,
+			responsibleEmail: userEmail,
+			responsiblePhone: userPhone,
+		};
 
 		// Acha empresa CLIENT existente (por CNPJ, senão por nome) ou cria.
 		let client = cnpj
@@ -162,14 +219,19 @@ export async function POST(request: Request) {
 				{ status: 409 },
 			);
 		}
-		if (!client) {
+		if (client) {
+			// Atualiza dados/endereço da empresa existente.
+			client = await prisma.company.update({
+				where: { id: client.id },
+				data: { name: data.companyName, ...companyData },
+			});
+		} else {
 			client = await prisma.company.create({
 				data: {
 					name: data.companyName,
 					cnpj,
 					type: "CLIENT",
-					city: data.city || null,
-					state: data.state || null,
+					...companyData,
 				},
 			});
 		}
@@ -187,14 +249,6 @@ export async function POST(request: Request) {
 			return NextResponse.json(
 				{ error: "Cliente já está na sua carteira." },
 				{ status: 409 },
-			);
-		}
-		// Agência (representante logado) que cadastra o cliente — dono do vínculo.
-		const representativeCompanyId = user.company?.id;
-		if (!representativeCompanyId) {
-			return NextResponse.json(
-				{ error: "Representante sem empresa vinculada" },
-				{ status: 403 },
 			);
 		}
 		await prisma.supplierClient.create({

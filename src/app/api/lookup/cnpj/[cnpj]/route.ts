@@ -7,7 +7,7 @@ type RouteParams = { params: Promise<{ cnpj: string }> };
 export async function GET(_request: NextRequest, { params }: RouteParams) {
 	const { cnpj } = await params;
 	try {
-		await requireAuth(["ADMIN"]);
+		await requireAuth(["ADMIN", "REPRESENTATIVE"]);
 		const data = await lookupCnpj(cnpj);
 		return NextResponse.json(data);
 	} catch (error) {

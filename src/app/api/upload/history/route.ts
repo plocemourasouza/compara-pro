@@ -66,6 +66,7 @@ export async function GET(request: NextRequest) {
 					uploadedAt: true,
 					processedAt: true,
 					company: { select: { id: true, name: true } },
+					uploadedBy: { select: { name: true } },
 				},
 			}),
 			prisma.uploadHistory.count({ where }),

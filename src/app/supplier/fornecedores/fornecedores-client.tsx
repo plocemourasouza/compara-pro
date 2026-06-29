@@ -84,18 +84,22 @@ export default function FornecedoresClient() {
 		{
 			accessorKey: "name",
 			header: "Fornecedor",
-			cell: ({ row }) => (
-				<div>
-					<p className="font-medium">{row.original.name}</p>
-					{row.original.cnpj && (
-						<CnpjCell
-							masked={row.original.cnpj}
-							companyId={row.original.id}
-							className="text-muted-foreground text-xs"
-						/>
-					)}
-				</div>
-			),
+			cell: ({ row }) => <p className="font-medium">{row.original.name}</p>,
+		},
+		{
+			id: "cnpj",
+			header: "CNPJ",
+			enableSorting: false,
+			cell: ({ row }) =>
+				row.original.cnpj ? (
+					<CnpjCell
+						masked={row.original.cnpj}
+						companyId={row.original.id}
+						className="text-muted-foreground text-xs"
+					/>
+				) : (
+					"—"
+				),
 		},
 		{
 			id: "local",

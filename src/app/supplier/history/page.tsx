@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
+import { getRepresentedSupplierIds } from "@/lib/auth-scope";
 import { getCurrentUser } from "@/lib/auth-server";
+import { prisma } from "@/lib/db";
 import HistoryClient from "./history-client";
 
 export default async function HistoryPage() {
@@ -13,5 +15,21 @@ export default async function HistoryPage() {
 		redirect("/dashboard");
 	}
 
-	return <HistoryClient user={user} />;
+	const suppliers =
+		user.area === "ADMIN"
+			? await prisma.company.findMany({
+					where: { type: "SUPPLIER", deletedAt: null },
+					select: { id: true, name: true },
+					orderBy: { name: "asc" },
+				})
+			: await prisma.company.findMany({
+					where: {
+						id: { in: await getRepresentedSupplierIds(user) },
+						deletedAt: null,
+					},
+					select: { id: true, name: true },
+					orderBy: { name: "asc" },
+				});
+
+	return <HistoryClient user={user} suppliers={suppliers} />;
 }

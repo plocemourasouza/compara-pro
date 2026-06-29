@@ -1,7 +1,7 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
-import { Trash2 } from "lucide-react";
+import { Trash2, TrendingDown, TrendingUp } from "lucide-react";
 import type { DetailSection } from "@/components/shared/entity-detail-modal";
 import { HintTooltip } from "@/components/shared/hint-tooltip";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +18,10 @@ export interface Product {
 	category?: string;
 	unit?: string;
 	company: { id: string; name: string; type: string };
+	/** Date+time of the price list this product's current price came from. */
+	lastListDate?: string | null;
+	/** % variation of current price vs the previous list (negative = cheaper). */
+	priceVariation?: number | null;
 	createdAt: string;
 	updatedAt: string;
 }
@@ -37,6 +41,38 @@ export function getProductColumns({
 	onDelete,
 	showCompany = false,
 }: ColumnOptions): ColumnDef<Product>[] {
+	const listDateColumn: ColumnDef<Product> = {
+		accessorKey: "lastListDate",
+		header: "Dt. Lista",
+		cell: ({ row }) =>
+			row.original.lastListDate
+				? formatters.datetime(row.original.lastListDate)
+				: "-",
+	};
+
+	const variationColumn: ColumnDef<Product> = {
+		accessorKey: "priceVariation",
+		header: "% Var.",
+		cell: ({ row }) => {
+			const v = row.original.priceVariation;
+			if (v == null) return "-";
+			if (v === 0) return <span className="text-muted-foreground">0%</span>;
+			const cheaper = v < 0;
+			const Icon = cheaper ? TrendingDown : TrendingUp;
+			const cls = cheaper ? "text-success" : "text-destructive";
+			return (
+				<span className={`inline-flex items-center gap-1 ${cls}`}>
+					{Math.abs(v).toLocaleString("pt-BR", {
+						minimumFractionDigits: 1,
+						maximumFractionDigits: 1,
+					})}
+					%
+					<Icon className="h-3.5 w-3.5" />
+				</span>
+			);
+		},
+	};
+
 	const columns: ColumnDef<Product>[] = [
 		{
 			accessorKey: "name",
@@ -72,12 +108,14 @@ export function getProductColumns({
 				</div>
 			),
 		},
+		...(showCompany ? [listDateColumn] : []),
 		{
 			accessorKey: "price",
 			header: "Preço",
 			cell: ({ row }) =>
 				row.original.price ? formatters.currency(row.original.price) : "-",
 		},
+		...(showCompany ? [variationColumn] : []),
 		{
 			accessorKey: "category",
 			header: "Categoria",

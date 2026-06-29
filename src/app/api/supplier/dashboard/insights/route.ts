@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
-import { getRepresentedSupplierIds } from "@/lib/auth-scope";
+import { scopedSupplierIds } from "@/lib/auth-scope";
 import { AuthError, requireAuth } from "@/lib/auth-server";
 import { buildDashboardInsights } from "@/lib/services/dashboard-insights";
 
 export async function GET() {
 	try {
 		const user = await requireAuth(["REPRESENTATIVE", "ADMIN"]);
-		const supplierCompanyIds = await getRepresentedSupplierIds(user);
+		const supplierCompanyIds = await scopedSupplierIds(user);
 
 		const insights = await buildDashboardInsights({
 			kind: "representative",

@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
-import { getRepresentedSupplierIds } from "@/lib/auth-scope";
+import { scopedSupplierIds } from "@/lib/auth-scope";
 import { AuthError, requireAuth } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
 
 export async function GET() {
 	try {
 		const user = await requireAuth(["REPRESENTATIVE", "ADMIN"]);
-		const companyIds = await getRepresentedSupplierIds(user);
+		const companyIds = await scopedSupplierIds(user);
 
 		// Representante sem fornecedores (ou admin sem empresa): métricas vazias.
 		if (companyIds.length === 0) {

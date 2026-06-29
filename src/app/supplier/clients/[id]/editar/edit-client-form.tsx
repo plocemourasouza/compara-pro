@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, CheckCircle2, Loader2, Save } from "lucide-react";
+import { ArrowLeft, Loader2, Save } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -9,13 +9,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { MaskedInput } from "@/components/shared/masked-input";
 import { Button } from "@/components/ui/button";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
 	Form,
 	FormControl,
@@ -25,19 +19,10 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
 import { masks } from "@/lib/utils/masks";
 
 const schema = z.object({
-	supplierCompanyId: z.string().min(1, "Selecione o fornecedor"),
-	representativeCompanyId: z.string().optional(),
-	companyName: z.string().min(2, "Informe o nome da empresa"),
+	name: z.string().min(2, "Informe o nome da empresa"),
 	cnpj: z.string().optional(),
 	zipCode: z.string().optional(),
 	street: z.string().optional(),
@@ -45,63 +30,27 @@ const schema = z.object({
 	neighborhood: z.string().optional(),
 	city: z.string().optional(),
 	state: z.string().optional(),
-	userName: z.string().min(2, "Informe o nome do contato"),
-	userEmail: z.string().email("E-mail inválido"),
-	userPhone: z.string().optional(),
+	responsibleName: z.string().min(2, "Informe o responsável"),
+	responsibleEmail: z.string().email("E-mail inválido"),
+	responsiblePhone: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof schema>;
 
-interface AddClientFormProps {
-	suppliers: { id: string; name: string }[];
-	/** Admin escolhe a agência dona do vínculo + o fornecedor (filtrado por ela). */
-	isAdmin?: boolean;
-	agencies?: { id: string; name: string }[];
-	repSuppliers?: Record<string, string[]>;
+interface EditClientFormProps {
+	clientId: string;
+	defaultValues: FormValues;
 }
 
-export default function AddClientForm({
-	suppliers,
-	isAdmin = false,
-	agencies = [],
-	repSuppliers = {},
-}: AddClientFormProps) {
+export default function EditClientForm({
+	clientId,
+	defaultValues,
+}: EditClientFormProps) {
 	const router = useRouter();
-	const [result, setResult] = useState<{
-		name: string;
-		code: string | null;
-		link: string | null;
-		userExisted: boolean;
-	} | null>(null);
-
 	const form = useForm<FormValues>({
 		resolver: zodResolver(schema),
-		defaultValues: {
-			supplierCompanyId:
-				!isAdmin && suppliers.length === 1 ? (suppliers[0]?.id ?? "") : "",
-			representativeCompanyId: "",
-			companyName: "",
-			cnpj: "",
-			zipCode: "",
-			street: "",
-			number: "",
-			neighborhood: "",
-			city: "",
-			state: "",
-			userName: "",
-			userEmail: "",
-			userPhone: "",
-		},
+		defaultValues,
 	});
-
-	const agencyId = form.watch("representativeCompanyId");
-	// Admin: fornecedores filtrados pela agência escolhida; rep: todos da carteira.
-	const availableSuppliers = isAdmin
-		? agencyId
-			? suppliers.filter((s) => repSuppliers[agencyId]?.includes(s.id))
-			: []
-		: suppliers;
-
 	const [cnpjLoading, setCnpjLoading] = useState(false);
 	const [cepLoading, setCepLoading] = useState(false);
 	const lastCnpj = useRef("");
@@ -112,7 +61,6 @@ export default function AddClientForm({
 			form.setValue(field, value, { shouldValidate: true, shouldDirty: true });
 	};
 
-	// CNPJ → preenche nome, contato (responsável/e-mail/telefone) e endereço.
 	const runCnpjLookup = async (masked: string) => {
 		const digits = masked.replace(/\D/g, "");
 		if (digits.length !== 14 || digits === lastCnpj.current) return;
@@ -125,10 +73,10 @@ export default function AddClientForm({
 				toast.error(data.error || "Não foi possível buscar o CNPJ.");
 				return;
 			}
-			setVal("companyName", data.name);
-			if (data.responsibleName) setVal("userName", data.responsibleName);
-			if (data.email) setVal("userEmail", data.email);
-			if (data.phone) setVal("userPhone", masks.phone(data.phone));
+			setVal("name", data.name);
+			if (data.responsibleName) setVal("responsibleName", data.responsibleName);
+			if (data.email) setVal("responsibleEmail", data.email);
+			if (data.phone) setVal("responsiblePhone", masks.phone(data.phone));
 			const a = data.address ?? {};
 			if (a.zipCode) setVal("zipCode", masks.cep(a.zipCode));
 			setVal("street", a.street);
@@ -169,90 +117,31 @@ export default function AddClientForm({
 	};
 
 	const onSubmit = async (values: FormValues) => {
-		const res = await fetch("/api/supplier/clients", {
-			method: "POST",
+		const res = await fetch(`/api/supplier/clients/${clientId}`, {
+			method: "PUT",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify(values),
 		});
-		const data = await res.json();
+		const data = await res.json().catch(() => null);
 		if (!res.ok) {
-			toast.error(data.error || "Erro ao adicionar cliente");
+			toast.error(data?.error || "Erro ao salvar cliente");
 			return;
 		}
-		toast.success("Cliente adicionado à carteira.");
-		setResult({
-			name: data.client.name,
-			code: data.activation?.code ?? null,
-			link: data.activation?.link ?? null,
-			userExisted: Boolean(data.userExisted),
-		});
+		toast.success("Cliente atualizado.");
+		router.push(`/supplier/clients/${clientId}`);
 	};
 
-	if (result) {
-		return (
-			<div className="mx-auto max-w-xl space-y-6">
-				<Card>
-					<CardHeader>
-						<CardTitle className="flex items-center gap-2 text-lg">
-							<CheckCircle2 className="h-5 w-5 text-success" />
-							{result.name} adicionado
-						</CardTitle>
-						<CardDescription>
-							{result.userExisted
-								? "O usuário do cliente já existia e foi vinculado."
-								: "Envie o código de primeiro acesso ao contato do cliente."}
-						</CardDescription>
-					</CardHeader>
-					{result.code && (
-						<CardContent className="space-y-2">
-							<div className="rounded-md border bg-muted/40 p-4 text-center">
-								<p className="text-muted-foreground text-xs">
-									Código de primeiro acesso
-								</p>
-								<p className="font-bold font-mono text-2xl tracking-widest">
-									{result.code}
-								</p>
-							</div>
-							{result.link && (
-								<p className="text-center text-muted-foreground text-sm">
-									Acesso em <span className="font-medium">{result.link}</span>
-								</p>
-							)}
-						</CardContent>
-					)}
-					<CardContent className="flex gap-2">
-						<Button onClick={() => router.push("/supplier/clients")}>
-							Ver carteira
-						</Button>
-						<Button
-							variant="outline"
-							onClick={() => {
-								setResult(null);
-								form.reset();
-							}}
-						>
-							Adicionar outro
-						</Button>
-					</CardContent>
-				</Card>
-			</div>
-		);
-	}
-
 	return (
-		<div className="space-y-6">
+		<div className="mx-auto max-w-3xl space-y-6">
 			<div className="flex items-center gap-3">
-				<Button variant="ghost" size="sm" onClick={() => router.back()}>
+				<Button
+					variant="ghost"
+					size="sm"
+					onClick={() => router.push(`/supplier/clients/${clientId}`)}
+				>
 					<ArrowLeft className="h-4 w-4" />
 				</Button>
-				<div>
-					<h1 className="font-bold text-2xl tracking-tight">
-						Adicionar cliente
-					</h1>
-					<p className="text-muted-foreground">
-						Cadastre o cliente e convide o contato para o primeiro acesso.
-					</p>
-				</div>
+				<h1 className="font-bold text-2xl tracking-tight">Editar cliente</h1>
 			</div>
 
 			<Form {...form}>
@@ -260,75 +149,8 @@ export default function AddClientForm({
 					<Card>
 						<CardHeader>
 							<CardTitle className="text-lg">Empresa do cliente</CardTitle>
-							<CardDescription>Dados da empresa cliente.</CardDescription>
 						</CardHeader>
 						<CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-6">
-							{isAdmin && (
-								<FormField
-									control={form.control}
-									name="representativeCompanyId"
-									render={({ field }) => (
-										<FormItem className="sm:col-span-6">
-											<FormLabel>Agência (representante) *</FormLabel>
-											<Select
-												value={field.value}
-												onValueChange={(v) => {
-													field.onChange(v);
-													form.setValue("supplierCompanyId", "");
-												}}
-											>
-												<FormControl>
-													<SelectTrigger className="w-full">
-														<SelectValue placeholder="Qual agência representa este cliente?" />
-													</SelectTrigger>
-												</FormControl>
-												<SelectContent>
-													{agencies.map((a) => (
-														<SelectItem key={a.id} value={a.id}>
-															{a.name}
-														</SelectItem>
-													))}
-												</SelectContent>
-											</Select>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
-							)}
-							<FormField
-								control={form.control}
-								name="supplierCompanyId"
-								render={({ field }) => (
-									<FormItem className="sm:col-span-6">
-										<FormLabel>Fornecedor *</FormLabel>
-										<Select
-											value={field.value}
-											onValueChange={field.onChange}
-											disabled={isAdmin && !agencyId}
-										>
-											<FormControl>
-												<SelectTrigger className="w-full">
-													<SelectValue
-														placeholder={
-															isAdmin && !agencyId
-																? "Escolha a agência primeiro"
-																: "Para qual fornecedor é este cliente?"
-														}
-													/>
-												</SelectTrigger>
-											</FormControl>
-											<SelectContent>
-												{availableSuppliers.map((s) => (
-													<SelectItem key={s.id} value={s.id}>
-														{s.name}
-													</SelectItem>
-												))}
-											</SelectContent>
-										</Select>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
 							<FormField
 								control={form.control}
 								name="cnpj"
@@ -357,12 +179,12 @@ export default function AddClientForm({
 							/>
 							<FormField
 								control={form.control}
-								name="companyName"
+								name="name"
 								render={({ field }) => (
 									<FormItem className="sm:col-span-4">
-										<FormLabel>Nome da Empresa *</FormLabel>
+										<FormLabel>Nome da empresa *</FormLabel>
 										<FormControl>
-											<Input placeholder="Nome do cliente" {...field} />
+											<Input {...field} />
 										</FormControl>
 										<FormMessage />
 									</FormItem>
@@ -440,7 +262,7 @@ export default function AddClientForm({
 									<FormItem className="sm:col-span-2">
 										<FormLabel>Cidade</FormLabel>
 										<FormControl>
-											<Input placeholder="Cidade" {...field} />
+											<Input {...field} />
 										</FormControl>
 										<FormMessage />
 									</FormItem>
@@ -454,7 +276,6 @@ export default function AddClientForm({
 										<FormLabel>UF</FormLabel>
 										<FormControl>
 											<Input
-												placeholder="UF"
 												maxLength={2}
 												{...field}
 												onChange={(e) =>
@@ -471,22 +292,17 @@ export default function AddClientForm({
 
 					<Card>
 						<CardHeader>
-							<CardTitle className="text-lg">
-								Contato (primeiro acesso)
-							</CardTitle>
-							<CardDescription>
-								Quem vai acessar o sistema pelo cliente.
-							</CardDescription>
+							<CardTitle className="text-lg">Responsável (contato)</CardTitle>
 						</CardHeader>
 						<CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-6">
 							<FormField
 								control={form.control}
-								name="userName"
+								name="responsibleName"
 								render={({ field }) => (
-									<FormItem className="sm:col-span-3">
-										<FormLabel>Nome do Contato *</FormLabel>
+									<FormItem className="sm:col-span-2">
+										<FormLabel>Responsável *</FormLabel>
 										<FormControl>
-											<Input placeholder="Nome" {...field} />
+											<Input {...field} />
 										</FormControl>
 										<FormMessage />
 									</FormItem>
@@ -494,16 +310,12 @@ export default function AddClientForm({
 							/>
 							<FormField
 								control={form.control}
-								name="userEmail"
+								name="responsibleEmail"
 								render={({ field }) => (
-									<FormItem className="sm:col-span-3">
-										<FormLabel>E-mail do Contato *</FormLabel>
+									<FormItem className="sm:col-span-2">
+										<FormLabel>E-mail *</FormLabel>
 										<FormControl>
-											<Input
-												type="email"
-												placeholder="contato@empresa.com"
-												{...field}
-											/>
+											<Input type="email" {...field} />
 										</FormControl>
 										<FormMessage />
 									</FormItem>
@@ -511,15 +323,16 @@ export default function AddClientForm({
 							/>
 							<FormField
 								control={form.control}
-								name="userPhone"
+								name="responsiblePhone"
 								render={({ field }) => (
-									<FormItem className="sm:col-span-3">
+									<FormItem className="sm:col-span-2">
 										<FormLabel>Telefone</FormLabel>
 										<FormControl>
 											<MaskedInput
 												mask="phone"
 												placeholder="(00) 00000-0000"
-												{...field}
+												value={field.value ?? ""}
+												onChange={field.onChange}
 											/>
 										</FormControl>
 										<FormMessage />
@@ -529,19 +342,10 @@ export default function AddClientForm({
 						</CardContent>
 					</Card>
 
-					<div className="flex justify-end gap-2">
-						<Button
-							type="button"
-							variant="outline"
-							onClick={() => router.push("/supplier/clients")}
-						>
-							Cancelar
-						</Button>
+					<div className="flex justify-end">
 						<Button type="submit" disabled={form.formState.isSubmitting}>
 							<Save className="mr-2 h-4 w-4" />
-							{form.formState.isSubmitting
-								? "Salvando..."
-								: "Adicionar cliente"}
+							Salvar
 						</Button>
 					</div>
 				</form>

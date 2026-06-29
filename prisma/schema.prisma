@@ -23,6 +23,7 @@ model User {
   companyId           String?
   company             Company?       @relation(fields: [companyId], references: [id])
   notifications       Notification[]
+  uploads             UploadHistory[] @relation("UploadUploader")
   preferences         Json? // notificações, idioma, tema
   activationCodeHash  String? // código de primeiro acesso (hasheado)
   activationExpiresAt DateTime?
@@ -242,6 +243,8 @@ model UploadHistory {
   id                   String            @id @default(cuid())
   companyId            String
   company              Company           @relation(fields: [companyId], references: [id])
+  uploadedById         String?
+  uploadedBy           User?             @relation("UploadUploader", fields: [uploadedById], references: [id])
   fileName             String
   fileSize             Int
   totalRows            Int

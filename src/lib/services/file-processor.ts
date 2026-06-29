@@ -1,6 +1,7 @@
 import * as XLSX from "xlsx";
 import { prisma } from "@/lib/db";
 import { applyMapping, buildRows } from "@/lib/file-mapping";
+import { OptimizedProductMatcher } from "@/lib/services/optimized-product-matcher";
 import {
 	type ClientRequirement,
 	type ColumnMapping,
@@ -35,7 +36,7 @@ export class FileProcessor {
 		file: File,
 		uploadType: "SUPPLIER_PRODUCTS" | "CLIENT_REQUIREMENTS",
 		companyId: string,
-		_userId: string,
+		userId: string,
 		columnMapping?: ColumnMapping,
 	): Promise<ProcessingResult> {
 		try {
@@ -43,6 +44,7 @@ export class FileProcessor {
 			const uploadHistory = await prisma.uploadHistory.create({
 				data: {
 					companyId,
+					uploadedById: userId,
 					fileName: file.name,
 					fileSize: file.size,
 					uploadType,
@@ -112,6 +114,20 @@ export class FileProcessor {
 					priceChangeIndicator,
 				},
 			});
+
+			// Demanda de cliente concluída: pré-calcula a comparação aqui (best-effort)
+			// para que "Ver indicações" use o resultado pronto, sem matching pesado no request.
+			const completed = result.errors.length !== totalRows;
+			if (uploadType === "CLIENT_REQUIREMENTS" && completed) {
+				try {
+					await OptimizedProductMatcher.createComparison(
+						uploadHistory.id,
+						companyId,
+					);
+				} catch (err) {
+					console.error("Precompute comparison failed:", err);
+				}
+			}
 
 			return {
 				uploadId: uploadHistory.id,

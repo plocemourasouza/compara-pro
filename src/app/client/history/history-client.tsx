@@ -150,6 +150,7 @@ export default function HistoryClient({ user: _user }: HistoryClientProps) {
 				open={detailOpen}
 				onOpenChange={setDetailOpen}
 				uploadId={selectedId}
+				itemsBasePath="/client/history"
 			/>
 		</div>
 	);

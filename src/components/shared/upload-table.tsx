@@ -18,6 +18,7 @@ export interface Upload {
 	uploadedAt: string;
 	processedAt?: string;
 	company?: { id: string; name: string };
+	uploadedBy?: { name: string } | null;
 }
 
 export interface UploadDetail extends Upload {
@@ -93,11 +94,14 @@ export function formatFileSize(bytes: number): string {
 interface ColumnOptions {
 	showPriceIndicator?: boolean;
 	showCompany?: boolean;
+	// Price-list view: status shows Ativo/Inativo, hides Preço, adds Usuário.
+	priceListMode?: boolean;
 }
 
 export function getUploadColumns({
 	showPriceIndicator = false,
 	showCompany = false,
+	priceListMode = false,
 }: ColumnOptions = {}): ColumnDef<Upload>[] {
 	const columns: ColumnDef<Upload>[] = [
 		{
@@ -106,7 +110,7 @@ export function getUploadColumns({
 			cell: ({ row }) => (
 				<div className="flex items-center gap-2">
 					<span className="font-medium">{row.original.fileName}</span>
-					{row.original.isActive && (
+					{!priceListMode && row.original.isActive && (
 						<Badge variant="outline" className="text-xs">
 							Ativo
 						</Badge>
@@ -132,14 +136,17 @@ export function getUploadColumns({
 		});
 	}
 
-	columns.push(
-		{
-			accessorKey: "uploadType",
-			header: "Tipo",
-			enableSorting: false,
-			cell: ({ row }) => getUploadTypeLabel(row.original.uploadType),
-		},
-		{
+	columns.push({
+		accessorKey: "uploadType",
+		header: "Tipo",
+		enableSorting: false,
+		cell: ({ row }) => getUploadTypeLabel(row.original.uploadType),
+	});
+
+	// Non-price-list views keep Status before Linhas. In price-list mode,
+	// Status (and Usuário) move to after "Upload em" (see below).
+	if (!priceListMode) {
+		columns.push({
 			accessorKey: "status",
 			header: "Status",
 			cell: ({ row }) => (
@@ -147,30 +154,28 @@ export function getUploadColumns({
 					{getStatusLabel(row.original.status)}
 				</Badge>
 			),
-		},
-		{
-			id: "rows",
-			header: "Linhas",
-			enableSorting: false,
-			cell: ({ row }) => (
-				<div className="text-sm">
-					<span>{row.original.totalRows} total</span>
-					<span className="text-success">
-						{" "}
-						· {row.original.processedRows} ok
-					</span>
-					{row.original.errorRows > 0 && (
-						<span className="text-destructive">
-							{" "}
-							· {row.original.errorRows} erro
-						</span>
-					)}
-				</div>
-			),
-		},
-	);
+		});
+	}
 
-	if (showPriceIndicator) {
+	columns.push({
+		id: "rows",
+		header: "Linhas",
+		enableSorting: false,
+		cell: ({ row }) => (
+			<div className="text-sm">
+				<span>{row.original.totalRows} total</span>
+				<span className="text-success"> · {row.original.processedRows} ok</span>
+				{row.original.errorRows > 0 && (
+					<span className="text-destructive">
+						{" "}
+						· {row.original.errorRows} erro
+					</span>
+				)}
+			</div>
+		),
+	});
+
+	if (showPriceIndicator && !priceListMode) {
 		columns.push({
 			id: "priceIndicator",
 			header: "Preço",
@@ -191,6 +196,27 @@ export function getUploadColumns({
 		header: "Upload em",
 		cell: ({ row }) => formatters.datetime(row.original.uploadedAt),
 	});
+
+	if (priceListMode) {
+		columns.push(
+			{
+				accessorKey: "status",
+				header: "Status",
+				cell: ({ row }) =>
+					row.original.isActive ? (
+						<Badge className="bg-success/10 text-success">Ativo</Badge>
+					) : (
+						<Badge variant="secondary">Inativo</Badge>
+					),
+			},
+			{
+				id: "uploadedBy",
+				header: "Usuário",
+				enableSorting: false,
+				cell: ({ row }) => row.original.uploadedBy?.name ?? "-",
+			},
+		);
+	}
 
 	return columns;
 }

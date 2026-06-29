@@ -82,9 +82,21 @@ export default function IndicationsClient({
 			? `?supplierCompanyId=${supplierCompanyId}`
 			: "";
 		fetch(`/api/supplier/clients/${clientId}/indications/${uploadId}${qs}`)
-			.then((r) => (r.ok ? r.json() : Promise.reject(r)))
+			.then(async (r) => {
+				if (r.ok) return r.json();
+				const body = (await r.json().catch(() => null)) as {
+					error?: string;
+				} | null;
+				throw new Error(body?.error || "Não foi possível gerar as indicações.");
+			})
 			.then((d) => setData(d))
-			.catch(() => toast.error("Não foi possível gerar as indicações."))
+			.catch((err) =>
+				toast.error(
+					err instanceof Error
+						? err.message
+						: "Não foi possível gerar as indicações.",
+				),
+			)
 			.finally(() => setLoading(false));
 	}, [clientId, uploadId, supplierCompanyId]);
 

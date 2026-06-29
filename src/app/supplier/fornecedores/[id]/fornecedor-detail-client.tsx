@@ -12,7 +12,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { CnpjCell } from "@/components/shared/cnpj-cell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,12 +34,33 @@ interface ClientRow {
 interface SupplierDetail {
 	id: string;
 	name: string;
+	legalName: string | null;
 	cnpj: string | null;
+	email: string | null;
+	phone: string | null;
+	zipCode: string | null;
+	street: string | null;
+	number: string | null;
+	neighborhood: string | null;
 	city: string | null;
 	state: string | null;
+	responsibleName: string | null;
+	responsibleEmail: string | null;
+	responsiblePhone: string | null;
 	productCount: number;
 	activeCatalog: { fileName: string; uploadedAt: string } | null;
 	clients: ClientRow[];
+}
+
+function Field({ label, value }: { label: string; value: React.ReactNode }) {
+	return (
+		<div>
+			<dt className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+				{label}
+			</dt>
+			<dd className="mt-0.5 text-foreground text-sm">{value || "—"}</dd>
+		</div>
+	);
 }
 
 export default function FornecedorDetailClient({
@@ -103,19 +123,16 @@ export default function FornecedorDetailClient({
 						variant="ghost"
 						size="sm"
 						onClick={() => router.push("/supplier/fornecedores")}
+						aria-label="Voltar"
 					>
-						<ArrowLeft className="h-4 w-4" />
+						<ArrowLeft className="h-4 w-4" aria-hidden="true" />
 					</Button>
 					<div>
 						<h1 className="font-bold text-2xl tracking-tight">
 							{supplier.name}
 						</h1>
 						<div className="text-muted-foreground">
-							{supplier.cnpj ? (
-								<CnpjCell masked={supplier.cnpj} companyId={supplier.id} />
-							) : (
-								"Sem CNPJ"
-							)}
+							{supplier.cnpj || "Sem CNPJ"}
 							{supplier.city ? ` · ${supplier.city}` : ""}
 							{supplier.state ? `/${supplier.state}` : ""}
 						</div>
@@ -134,6 +151,61 @@ export default function FornecedorDetailClient({
 					</Button>
 				</div>
 			</div>
+
+			{/* Cadastro */}
+			<Card>
+				<CardHeader className="pb-3">
+					<CardTitle className="text-base">Cadastro</CardTitle>
+				</CardHeader>
+				<CardContent>
+					<dl className="grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
+						<Field label="CNPJ" value={supplier.cnpj} />
+						<Field label="Razão social" value={supplier.legalName} />
+						<Field label="Responsável" value={supplier.responsibleName} />
+						<Field
+							label="Endereço"
+							value={[supplier.street, supplier.number]
+								.filter(Boolean)
+								.join(", ")}
+						/>
+						<Field label="Bairro" value={supplier.neighborhood} />
+						<Field
+							label="CEP"
+							value={supplier.zipCode ? formatters.cep(supplier.zipCode) : null}
+						/>
+						<Field
+							label="Cidade / UF"
+							value={[supplier.city, supplier.state].filter(Boolean).join("/")}
+						/>
+						<Field
+							label="E-mail"
+							value={
+								supplier.email ? (
+									<a
+										href={`mailto:${supplier.email}`}
+										className="text-primary hover:underline"
+									>
+										{supplier.email}
+									</a>
+								) : null
+							}
+						/>
+						<Field
+							label="Telefone"
+							value={
+								supplier.phone ? (
+									<a
+										href={`tel:${supplier.phone}`}
+										className="text-primary hover:underline"
+									>
+										{formatters.phone(supplier.phone)}
+									</a>
+								) : null
+							}
+						/>
+					</dl>
+				</CardContent>
+			</Card>
 
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
 				<Card>

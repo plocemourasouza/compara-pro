@@ -1,18 +1,19 @@
 import { NextResponse } from "next/server";
-import { getRepresentedSupplierIds } from "@/lib/auth-scope";
+import { Prisma } from "@/generated/prisma";
+import { scopedSupplierIds } from "@/lib/auth-scope";
 import { AuthError, requireAuth } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
-import { formatters } from "@/lib/utils/masks";
+import { formatters, masks } from "@/lib/utils/masks";
 import { supplierCompanySchema } from "@/lib/validations/representative";
 
 type RouteParams = { params: Promise<{ id: string }> };
 
-// Detalhe do fornecedor representado: contadores, catálogo ativo e carteira.
+// Detalhe do fornecedor representado: cadastro, contadores, catálogo ativo e carteira.
 export async function GET(_request: Request, { params }: RouteParams) {
 	try {
 		const { id } = await params;
 		const user = await requireAuth(["REPRESENTATIVE", "ADMIN"]);
-		const ids = await getRepresentedSupplierIds(user);
+		const ids = await scopedSupplierIds(user);
 		if (!ids.includes(id)) {
 			return NextResponse.json(
 				{ error: "Fornecedor não encontrado" },
@@ -27,9 +28,19 @@ export async function GET(_request: Request, { params }: RouteParams) {
 				select: {
 					id: true,
 					name: true,
+					legalName: true,
 					cnpj: true,
+					email: true,
+					phone: true,
+					zipCode: true,
+					street: true,
+					number: true,
+					neighborhood: true,
 					city: true,
 					state: true,
+					responsibleName: true,
+					responsibleEmail: true,
+					responsiblePhone: true,
 					_count: { select: { products: true } },
 				},
 			}),
@@ -45,7 +56,10 @@ export async function GET(_request: Request, { params }: RouteParams) {
 			prisma.supplierClient.findMany({
 				where: {
 					supplierCompanyId: id,
-					...(agencyId ? { representativeCompanyId: agencyId } : {}),
+					// Representante vê só a sua carteira; admin vê toda.
+					...(user.area === "ADMIN" || !agencyId
+						? {}
+						: { representativeCompanyId: agencyId }),
 				},
 				orderBy: { createdAt: "desc" },
 				select: {
@@ -73,9 +87,20 @@ export async function GET(_request: Request, { params }: RouteParams) {
 			supplier: {
 				id: supplier.id,
 				name: supplier.name,
-				cnpj: formatters.redactCnpj(supplier.cnpj),
+				legalName: supplier.legalName,
+				// CNPJ completo: o dono (rep/admin) está vendo o fornecedor.
+				cnpj: supplier.cnpj ? formatters.cnpj(supplier.cnpj) : null,
+				email: supplier.email,
+				phone: supplier.phone,
+				zipCode: supplier.zipCode,
+				street: supplier.street,
+				number: supplier.number,
+				neighborhood: supplier.neighborhood,
 				city: supplier.city,
 				state: supplier.state,
+				responsibleName: supplier.responsibleName,
+				responsibleEmail: supplier.responsibleEmail,
+				responsiblePhone: supplier.responsiblePhone,
 				productCount: supplier._count.products,
 				activeCatalog: activeCatalog
 					? {
@@ -107,12 +132,12 @@ export async function GET(_request: Request, { params }: RouteParams) {
 	}
 }
 
-// Edita os dados da empresa fornecedora (apenas se representada).
+// Edita os dados da empresa fornecedora (CNPJ é imutável — empresa compartilhada).
 export async function PUT(request: Request, { params }: RouteParams) {
 	try {
 		const { id } = await params;
-		const user = await requireAuth(["REPRESENTATIVE"]);
-		const ids = await getRepresentedSupplierIds(user);
+		const user = await requireAuth(["REPRESENTATIVE", "ADMIN"]);
+		const ids = await scopedSupplierIds(user);
 		if (!ids.includes(id)) {
 			return NextResponse.json(
 				{ error: "Fornecedor não encontrado" },
@@ -128,15 +153,27 @@ export async function PUT(request: Request, { params }: RouteParams) {
 			);
 		}
 		const data = parsed.data;
-		const cnpj = data.cnpj && data.cnpj.length === 14 ? data.cnpj : null;
+		const zip = data.zipCode ? masks.removeNonDigits(data.zipCode) : "";
 
+		// Não altera o CNPJ (chave da empresa compartilhada entre agências).
 		const supplier = await prisma.company.update({
 			where: { id },
 			data: {
 				name: data.name,
-				cnpj,
+				legalName: data.legalName || null,
+				street: data.street || null,
+				number: data.number || null,
+				neighborhood: data.neighborhood || null,
 				city: data.city || null,
-				state: data.state || null,
+				state: data.state ? data.state.toUpperCase() : null,
+				zipCode: zip.length === 8 ? zip : null,
+				email: data.email || null,
+				phone: data.phone ? masks.removeNonDigits(data.phone) || null : null,
+				responsibleName: data.responsibleName || null,
+				responsibleEmail: data.responsibleEmail || null,
+				responsiblePhone: data.responsiblePhone
+					? masks.removeNonDigits(data.responsiblePhone) || null
+					: null,
 			},
 			select: { id: true, name: true },
 		});
@@ -148,6 +185,15 @@ export async function PUT(request: Request, { params }: RouteParams) {
 				{ status: error.status },
 			);
 		}
+		if (
+			error instanceof Prisma.PrismaClientKnownRequestError &&
+			error.code === "P2002"
+		) {
+			return NextResponse.json(
+				{ error: "CNPJ já cadastrado em outra empresa" },
+				{ status: 409 },
+			);
+		}
 		console.error("Update represented supplier error:", error);
 		return NextResponse.json(
 			{ error: "Erro interno do servidor" },
@@ -156,11 +202,20 @@ export async function PUT(request: Request, { params }: RouteParams) {
 	}
 }
 
-// Desvincula o fornecedor do representante (não apaga a empresa nem produtos).
+// Desvincula o fornecedor (não apaga a empresa nem produtos).
+// REPRESENTATIVE remove o próprio vínculo; ADMIN remove todos os vínculos do fornecedor.
 export async function DELETE(_request: Request, { params }: RouteParams) {
 	try {
 		const { id } = await params;
-		const user = await requireAuth(["REPRESENTATIVE"]);
+		const user = await requireAuth(["REPRESENTATIVE", "ADMIN"]);
+
+		if (user.area === "ADMIN") {
+			await prisma.representativeSupplier.deleteMany({
+				where: { supplierCompanyId: id },
+			});
+			return NextResponse.json({ success: true });
+		}
+
 		const agencyId = user.company?.id;
 		if (!agencyId) {
 			return NextResponse.json(
@@ -168,7 +223,6 @@ export async function DELETE(_request: Request, { params }: RouteParams) {
 				{ status: 400 },
 			);
 		}
-
 		const link = await prisma.representativeSupplier.findUnique({
 			where: {
 				representativeCompanyId_supplierCompanyId: {
@@ -183,7 +237,6 @@ export async function DELETE(_request: Request, { params }: RouteParams) {
 				{ status: 404 },
 			);
 		}
-
 		await prisma.representativeSupplier.delete({ where: { id: link.id } });
 		return NextResponse.json({ success: true });
 	} catch (error) {

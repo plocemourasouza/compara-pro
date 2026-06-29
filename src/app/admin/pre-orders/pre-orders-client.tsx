@@ -1,10 +1,10 @@
 "use client";
 
 import { CheckCircle2, ClipboardList, Clock, DollarSign } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { StatCard } from "@/components/dashboard/stat-card";
-import { PreOrderDetailModal } from "@/components/shared/pre-order-detail-modal";
 import {
 	getPreOrderColumns,
 	type PreOrder,
@@ -33,11 +33,10 @@ interface PreOrdersClientProps {
 }
 
 export default function PreOrdersClient({ user: _user }: PreOrdersClientProps) {
+	const router = useRouter();
 	const [preOrders, setPreOrders] = useState<PreOrder[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [statusFilter, setStatusFilter] = useState("all");
-	const [selected, setSelected] = useState<PreOrder | null>(null);
-	const [detailOpen, setDetailOpen] = useState(false);
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: mount-only fetch
 	useEffect(() => {
@@ -59,11 +58,6 @@ export default function PreOrdersClient({ user: _user }: PreOrdersClientProps) {
 		} finally {
 			setLoading(false);
 		}
-	};
-
-	const openDetail = (order: PreOrder) => {
-		setSelected(order);
-		setDetailOpen(true);
 	};
 
 	const columns = useMemo(
@@ -130,7 +124,7 @@ export default function PreOrdersClient({ user: _user }: PreOrdersClientProps) {
 						data={filteredOrders}
 						searchKey="ref"
 						searchPlaceholder="Buscar por cliente, representante ou nº..."
-						onRowClick={openDetail}
+						onRowClick={(order) => router.push(`/admin/pre-orders/${order.id}`)}
 						isLoading={loading}
 						emptyState="Nenhum pré-pedido encontrado."
 						toolbar={
@@ -150,12 +144,6 @@ export default function PreOrdersClient({ user: _user }: PreOrdersClientProps) {
 					/>
 				</CardContent>
 			</Card>
-
-			<PreOrderDetailModal
-				open={detailOpen}
-				onOpenChange={setDetailOpen}
-				preOrder={selected}
-			/>
 		</div>
 	);
 }

@@ -21,7 +21,16 @@ export async function GET(
 		// cliente. Admin precisa informar o fornecedor explicitamente.
 		let supplierCompanyId: string | null = null;
 		if (user.area === "ADMIN") {
-			supplierCompanyId = requested;
+			// Admin pode informar o fornecedor; sem param, usa o primeiro da carteira do cliente.
+			supplierCompanyId =
+				requested ??
+				(
+					await prisma.supplierClient.findFirst({
+						where: { clientCompanyId: id },
+						select: { supplierCompanyId: true },
+					})
+				)?.supplierCompanyId ??
+				null;
 		} else if (requested && supplierIds.includes(requested)) {
 			supplierCompanyId = requested;
 		} else {
@@ -59,12 +68,18 @@ export async function GET(
 		// A demanda precisa pertencer ao cliente informado.
 		const upload = await prisma.uploadHistory.findFirst({
 			where: { id: uploadId, companyId: id, uploadType: "CLIENT_REQUIREMENTS" },
-			select: { id: true, fileName: true },
+			select: { id: true, fileName: true, status: true },
 		});
 		if (!upload) {
 			return NextResponse.json(
 				{ error: "Demanda não encontrada" },
 				{ status: 404 },
+			);
+		}
+		if (upload.status !== "COMPLETED") {
+			return NextResponse.json(
+				{ error: "Demanda ainda não processada" },
+				{ status: 409 },
 			);
 		}
 

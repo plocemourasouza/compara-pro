@@ -72,6 +72,76 @@ export async function GET(request: NextRequest) {
 			},
 		});
 
+		// Representative/Admin views show price-list metadata: the date of the
+		// list the current price came from, and the % variation vs the previous list.
+		if (user.area === "REPRESENTATIVE" || user.area === "ADMIN") {
+			// Date (data + hora) of each product's source list.
+			const uploadIds = [
+				...new Set(
+					products
+						.map((p) => p.lastUploadId)
+						.filter((id): id is string => Boolean(id)),
+				),
+			];
+			const uploads = uploadIds.length
+				? await prisma.uploadHistory.findMany({
+						where: { id: { in: uploadIds } },
+						select: { id: true, uploadedAt: true },
+					})
+				: [];
+			const uploadDateById = new Map(uploads.map((u) => [u.id, u.uploadedAt]));
+
+			// Previous-list price per company (penultimate completed supplier upload),
+			// keyed by sku and code so we can match each product.
+			const companyIds = [...new Set(products.map((p) => p.companyId))];
+			const prevPriceByCompany = new Map<string, Map<string, number>>();
+			await Promise.all(
+				companyIds.map(async (cid) => {
+					const recent = await prisma.uploadHistory.findMany({
+						where: {
+							companyId: cid,
+							uploadType: "SUPPLIER_PRODUCTS",
+							status: "COMPLETED",
+						},
+						orderBy: { uploadedAt: "desc" },
+						take: 2,
+						select: { id: true },
+					});
+					const prev = recent[1];
+					if (!prev) return;
+					const rows = await prisma.uploadedProduct.findMany({
+						where: { uploadId: prev.id },
+						select: { sku: true, code: true, price: true },
+					});
+					const priceByKey = new Map<string, number>();
+					for (const r of rows) {
+						if (r.price == null) continue;
+						if (r.sku) priceByKey.set(r.sku, r.price);
+						if (r.code) priceByKey.set(r.code, r.price);
+					}
+					prevPriceByCompany.set(cid, priceByKey);
+				}),
+			);
+
+			const enriched = products.map((p) => {
+				const lastListDate = p.lastUploadId
+					? (uploadDateById.get(p.lastUploadId) ?? null)
+					: null;
+				const prevMap = prevPriceByCompany.get(p.companyId);
+				const previousPrice =
+					(p.sku ? prevMap?.get(p.sku) : undefined) ??
+					(p.code ? prevMap?.get(p.code) : undefined) ??
+					null;
+				const priceVariation =
+					p.price != null && previousPrice != null && previousPrice > 0
+						? ((p.price - previousPrice) / previousPrice) * 100
+						: null;
+				return { ...p, lastListDate, priceVariation };
+			});
+
+			return NextResponse.json({ products: enriched });
+		}
+
 		return NextResponse.json({ products });
 	} catch (error) {
 		console.error("GET /api/products error:", error);
