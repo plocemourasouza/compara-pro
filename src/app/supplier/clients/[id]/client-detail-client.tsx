@@ -25,6 +25,14 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from "@/components/ui/table";
 import { formatters } from "@/lib/utils/masks";
 
 interface ClientInfo {
@@ -53,15 +61,6 @@ interface Demand {
 	processedRows: number;
 	errorRows: number;
 	uploadedAt: string;
-}
-
-function initials(name: string): string {
-	return name
-		.trim()
-		.split(/\s+/)
-		.slice(0, 2)
-		.map((w) => w[0]?.toUpperCase() ?? "")
-		.join("");
 }
 
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
@@ -136,36 +135,28 @@ export default function ClientDetailClient({ clientId }: { clientId: string }) {
 	const cityLine = [client.city, client.state].filter(Boolean).join("/");
 
 	return (
-		<div className="mx-auto max-w-5xl space-y-6">
+		<div className="space-y-6">
 			{/* Header */}
-			<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-				<div className="flex items-center gap-3">
+			<div className="flex items-start justify-between gap-3">
+				<div className="flex items-start gap-3">
 					<Button
 						variant="ghost"
-						size="icon"
+						size="sm"
 						onClick={() => router.push("/supplier/clients")}
 						aria-label="Voltar"
 					>
 						<ArrowLeft className="h-4 w-4" aria-hidden="true" />
 					</Button>
-					<div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10 font-semibold text-primary">
-						{initials(client.name)}
-					</div>
-					<div className="min-w-0">
-						<div className="flex items-center gap-2">
-							<h1 className="truncate font-bold text-2xl tracking-tight">
-								{client.name}
-							</h1>
-							<Badge variant="secondary" className="shrink-0">
-								Na carteira
-							</Badge>
-						</div>
+					<div>
+						<h1 className="font-bold text-2xl tracking-tight">{client.name}</h1>
 						<p className="text-muted-foreground text-sm">
 							{client.cnpj || "Sem CNPJ"}
+							{client.city ? ` · ${client.city}` : ""}
+							{client.state ? `/${client.state}` : ""}
 						</p>
 					</div>
 				</div>
-				<div className="flex shrink-0 items-center gap-2">
+				<div className="flex shrink-0 gap-2">
 					<Button
 						variant="outline"
 						onClick={() => router.push(`/supplier/clients/${clientId}/editar`)}
@@ -269,47 +260,62 @@ export default function ClientDetailClient({ clientId }: { clientId: string }) {
 							ainda não enviou listas de demanda.
 						</div>
 					) : (
-						<ul className="divide-y">
-							{demands.map((d) => (
-								<li
-									key={d.id}
-									className="flex items-center justify-between gap-3 py-3"
-								>
-									<div className="flex min-w-0 items-center gap-3">
-										<div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
-											<FileText className="h-4 w-4" />
-										</div>
-										<div className="min-w-0">
-											<p className="truncate font-medium text-sm">
-												{d.fileName}
-											</p>
-											<p className="text-muted-foreground text-xs">
-												{d.totalRows} itens · {formatters.date(d.uploadedAt)}
-											</p>
-										</div>
-									</div>
-									<div className="flex shrink-0 items-center gap-3">
-										<Badge variant={getStatusVariant(d.status)}>
-											{getStatusLabel(d.status)}
-										</Badge>
-										<Button
-											size="sm"
-											disabled={d.status !== "COMPLETED"}
-											onClick={() =>
-												router.push(
-													`/supplier/clients/${clientId}/indicacoes/${d.id}${
-														supplierId ? `?supplierCompanyId=${supplierId}` : ""
-													}`,
-												)
-											}
-										>
-											<Sparkles className="mr-2 h-4 w-4" />
-											Ver indicações
-										</Button>
-									</div>
-								</li>
-							))}
-						</ul>
+						<Table>
+							<TableHeader>
+								<TableRow>
+									<TableHead>Arquivo</TableHead>
+									<TableHead className="text-right">Itens</TableHead>
+									<TableHead>Data</TableHead>
+									<TableHead>Status</TableHead>
+									<TableHead className="text-right">Ações</TableHead>
+								</TableRow>
+							</TableHeader>
+							<TableBody>
+								{demands.map((d) => (
+									<TableRow key={d.id}>
+										<TableCell>
+											<div className="flex min-w-0 items-center gap-3">
+												<div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+													<FileText className="h-4 w-4" />
+												</div>
+												<span className="truncate font-medium">
+													{d.fileName}
+												</span>
+											</div>
+										</TableCell>
+										<TableCell className="text-right tabular-nums">
+											{d.totalRows}
+										</TableCell>
+										<TableCell className="text-muted-foreground">
+											{formatters.date(d.uploadedAt)}
+										</TableCell>
+										<TableCell>
+											<Badge variant={getStatusVariant(d.status)}>
+												{getStatusLabel(d.status)}
+											</Badge>
+										</TableCell>
+										<TableCell className="text-right">
+											<Button
+												size="sm"
+												disabled={d.status !== "COMPLETED"}
+												onClick={() =>
+													router.push(
+														`/supplier/clients/${clientId}/indicacoes/${d.id}${
+															supplierId
+																? `?supplierCompanyId=${supplierId}`
+																: ""
+														}`,
+													)
+												}
+											>
+												<Sparkles className="mr-2 h-4 w-4" />
+												Ver indicações
+											</Button>
+										</TableCell>
+									</TableRow>
+								))}
+							</TableBody>
+						</Table>
 					)}
 				</CardContent>
 			</Card>
