@@ -191,6 +191,7 @@ CREATE TABLE "upload_history" (
     "priceChangeIndicator" "PriceChange",
     "uploadedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "processedAt" TIMESTAMP(3),
+    "uploadedById" TEXT,
 
     CONSTRAINT "upload_history_pkey" PRIMARY KEY ("id")
 );
@@ -379,6 +380,9 @@ ALTER TABLE "pre_order_items" ADD CONSTRAINT "pre_order_items_productId_fkey" FO
 
 -- AddForeignKey
 ALTER TABLE "upload_history" ADD CONSTRAINT "upload_history_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "companies"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "upload_history" ADD CONSTRAINT "upload_history_uploadedById_fkey" FOREIGN KEY ("uploadedById") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "uploaded_products" ADD CONSTRAINT "uploaded_products_uploadId_fkey" FOREIGN KEY ("uploadId") REFERENCES "upload_history"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
