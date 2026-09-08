@@ -1,4 +1,7 @@
+import { AlertTriangle } from "lucide-react";
 import { redirect } from "next/navigation";
+import { ErrorBoundary } from "@/components/shared/error-boundary";
+import { Card, CardContent } from "@/components/ui/card";
 import { getCurrentUser } from "@/lib/auth-server";
 import ClientDashboard from "./client-dashboard";
 
@@ -13,5 +16,18 @@ export default async function ClientDashboardPage() {
 		redirect(user.area === "REPRESENTATIVE" ? "/supplier" : "/admin");
 	}
 
-	return <ClientDashboard user={user} />;
+	return (
+		<ErrorBoundary
+			fallback={
+				<Card>
+					<CardContent className="py-12 text-center text-muted-foreground">
+						<AlertTriangle className="mx-auto mb-2 h-8 w-8 text-destructive" />
+						Não foi possível carregar o dashboard.
+					</CardContent>
+				</Card>
+			}
+		>
+			<ClientDashboard user={user} />
+		</ErrorBoundary>
+	);
 }

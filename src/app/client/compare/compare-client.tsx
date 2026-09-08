@@ -16,6 +16,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import ParecerPanel from "@/components/compare/parecer-panel";
+import { ErrorBoundary } from "@/components/shared/error-boundary";
 import ManualMatchDialog from "@/components/shared/manual-match-dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -558,7 +559,19 @@ export default function CompareClient({ user: _user }: CompareClientProps) {
 					)}
 
 					{/* AI parecer */}
-					<ParecerPanel comparisonId={comparison.id} />
+					<ErrorBoundary
+						resetKey={comparison.id}
+						fallback={
+							<Card>
+								<CardContent className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
+									<AlertCircle className="h-4 w-4 shrink-0" />
+									Não foi possível gerar o parecer de IA para esta comparação.
+								</CardContent>
+							</Card>
+						}
+					>
+						<ParecerPanel comparisonId={comparison.id} />
+					</ErrorBoundary>
 
 					{/* Filters */}
 					<Card>
