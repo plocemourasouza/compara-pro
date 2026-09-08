@@ -7,7 +7,7 @@ const { PrismaClient } = require("../src/generated/prisma");
 const prisma = new PrismaClient({
 	adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
 });
-const B = "http://localhost:3000";
+const B = process.env.BASE_URL || "http://localhost:3150";
 
 (async () => {
 	const u = await prisma.user.findUnique({

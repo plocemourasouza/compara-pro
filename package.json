@@ -3,7 +3,7 @@
 	"version": "0.1.0",
 	"private": true,
 	"scripts": {
-		"dev": "next dev --turbopack",
+		"dev": "next dev --turbopack -p 3150",
 		"build": "prisma generate && prisma migrate deploy && next build",
 		"db:deploy": "prisma migrate deploy",
 		"start": "next start",
