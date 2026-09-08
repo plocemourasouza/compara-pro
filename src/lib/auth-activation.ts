@@ -29,6 +29,6 @@ export function activationExpiry(from: Date = new Date()): Date {
 
 /** Link da tela de primeiro acesso. */
 export function buildActivationLink(): string {
-	const base = process.env.APP_URL ?? "http://localhost:3000";
+	const base = process.env.APP_URL ?? "http://localhost:3150";
 	return `${base}/auth/primeiro-acesso`;
 }

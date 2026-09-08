@@ -6,7 +6,7 @@ const { PrismaClient } = require("../src/generated/prisma");
 const prisma = new PrismaClient({
 	adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
 });
-const B = process.env.BASE_URL || "http://localhost:3000";
+const B = process.env.BASE_URL || "http://localhost:3150";
 (async () => {
 	const buyer = await prisma.user.findUnique({
 		where: { email: "comprador@demo.com" },
