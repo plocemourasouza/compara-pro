@@ -110,6 +110,6 @@ quebra se um handler novo esquecer o gate. Advisories de dependência aceitas es
 
 ## Status
 
-MVP funcional: `tsc --noEmit` limpo, **160** testes unitários (Vitest), **52** specs E2E (Playwright)
+MVP funcional: `tsc --noEmit` limpo, Biome sem nenhum apontamento, **241** testes unitários (Vitest), **52** specs E2E (Playwright)
 e verificação ponta a ponta por scripts (`npm run verify:cycle`) como oráculo de integração.
 Error boundaries e telas de `loading`/`error`/`404` cobrem as três áreas.
