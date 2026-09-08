@@ -2,6 +2,10 @@ import { expect, test } from "@playwright/test";
 
 // Regressão: a modal de detalhe do histórico carrega para o admin (admin sem
 // empresa deve ver o detalhe de qualquer upload).
+//
+// admin/history foi redesenhado (commit 3bd4d15, "Listas de Preço"): a linha
+// da tabela agora mostra Status como Ativo/Inativo (isActive), não mais o
+// status bruto de processamento — que continua visível dentro da modal.
 test("admin carrega detalhe do upload sem erro", async ({ page }) => {
 	await page.goto("/auth/login");
 	await page.fill('input[name="email"]', "admin@demo.com");
@@ -12,7 +16,7 @@ test("admin carrega detalhe do upload sem erro", async ({ page }) => {
 	await page.goto("/admin/history");
 	const row = page
 		.locator("tbody tr")
-		.filter({ hasText: /Concluído|Falhou|Processando|Cancelado/ })
+		.filter({ hasText: /Ativo|Inativo/ })
 		.first();
 	await expect(row).toBeVisible({ timeout: 15_000 });
 	await row.click();
@@ -42,11 +46,16 @@ test("admin vê produtos no detalhe de um upload de fornecedor (catálogo)", asy
 	await page.waitForURL("**/admin", { timeout: 20_000 });
 
 	await page.goto("/admin/history");
-	// upload de fornecedor = arquivo "catalogo.xlsx" concluído
+	// upload de fornecedor = arquivo "catalogo.xlsx" concluído. A coluna Status
+	// da lista não mostra mais o status bruto (ver comentário acima) — mas o
+	// upload de fornecedor mais recente por empresa é sempre o "isActive" (ver
+	// FileProcessor.processUpload), e no seed todo registro chamado exatamente
+	// "catalogo.xlsx" é COMPLETED, então filtrar por "Ativo" seleciona o mesmo
+	// conjunto de linhas que antes filtrava por "Concluído".
 	const row = page
 		.locator("tbody tr")
 		.filter({ hasText: /catalogo\.xlsx/i })
-		.filter({ hasText: /Concluído/ })
+		.filter({ hasText: /Ativo/ })
 		.first();
 	await expect(row).toBeVisible({ timeout: 15_000 });
 	await row.click();

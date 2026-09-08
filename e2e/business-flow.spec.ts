@@ -57,7 +57,9 @@ test.describe
 					sup.getByRole("heading", { level: 1, name: /pré-pedidos/i }),
 				).toBeVisible({ timeout: 15_000 });
 
-				// localizar um pré-pedido pendente → abrir modal → aprovar
+				// localizar um pré-pedido pendente → abrir detalhe → aprovar
+				// (o detalhe navega para /supplier/pre-orders/{id}; deixou de ser
+				// modal no commit 3bd4d15, "Listas de Preço...".)
 				const row = sup
 					.locator("tbody tr")
 					.filter({ hasText: /Pendente/ })
@@ -65,9 +67,10 @@ test.describe
 				await expect(row).toBeVisible({ timeout: 15_000 });
 				await row.click();
 
-				const dialog = sup.getByRole("dialog");
-				await expect(dialog).toBeVisible();
-				await dialog.getByRole("button", { name: /aprovar/i }).click();
+				await sup.waitForURL(/\/supplier\/pre-orders\/[^/]+$/, {
+					timeout: 15_000,
+				});
+				await sup.getByRole("button", { name: /aprovar/i }).click();
 
 				// confirmação da aprovação (toast / modal fecha)
 				await expect(sup.getByText(/aprovad/i).first()).toBeVisible({

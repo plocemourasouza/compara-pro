@@ -14,6 +14,10 @@ test("carteira lista o cliente e gera indicações do catálogo", async ({
 	await loginAlfa(page);
 
 	await page.goto("/supplier/clients");
+	// Busca em vez de confiar na primeira página: o teste irmão ("adicionar
+	// cliente") cria uma empresa real a cada execução e não a remove, então a
+	// carteira cresce e o registro semeado sai da página 1.
+	await page.getByPlaceholder("Buscar cliente...").fill("Comprador Demo");
 	const row = page.locator("tbody tr").filter({ hasText: "Comprador Demo" });
 	await expect(row).toBeVisible({ timeout: 15_000 });
 	await row.click();
