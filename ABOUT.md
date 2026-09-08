@@ -188,7 +188,7 @@ Regras de negócio importantes:
 - **Banco**: PostgreSQL via Docker (`docker compose up -d`), porta host **5435**.
 - **Seed de demonstração**: `bun run seed:demo` — logins `admin@demo.com`, `comprador@demo.com`, `representante@demo.com` (senha `demo1234`).
 
-Detalhes de setup, deploy na Vercel e variáveis de ambiente estão no [README.md](README.md).
+Detalhes de setup e variáveis de ambiente estão no [README.md](README.md).
 
 ---
 

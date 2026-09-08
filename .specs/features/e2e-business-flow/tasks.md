@@ -4,9 +4,9 @@
 
 ## Resumo
 - Total de tasks: 9
-- Dependências externas: dev server `:3000` + seed demo (global-setup já cobre); **precisa rodar localmente** (E2E não roda headless sem server).
+- Dependências externas: dev server `:3150` + seed demo (global-setup já cobre); **precisa rodar localmente** (E2E não roda headless sem server).
 - Verificação: `npm run test:e2e` (Playwright sobe o webServer automaticamente).
-- ⚠️ E2E **exige server local** — bloqueado por preferência local-first só p/ *deploy*, não p/ rodar testes; mas o agente não sobe o server sem aval (sessão anterior negou o start).
+- ⚠️ E2E **exige server local** na porta `:3150`; o agente não sobe o server sem aval (sessão anterior negou o start).
 
 ## Tasks
 

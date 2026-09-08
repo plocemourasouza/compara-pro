@@ -6,7 +6,7 @@
 - Total de tasks: 12
 - Estimativa total: ~2h
 - Dependências externas: nenhuma (sem migration, sem serviço, sem aprovação)
-- Stack de verificação: `npm run test` (vitest), `npm run typecheck` (tsc), `npm run lint` (biome), `npm run verify:cycle` (smoke API). **Build local evitado** (`npm run build` roda `prisma migrate deploy` — deploy bloqueado, ver [[local-first-no-deploy]]); validar por typecheck.
+- Stack de verificação: `npm run test` (vitest), `npm run typecheck` (tsc), `npm run lint` (biome), `npm run verify:cycle` (smoke API). Validação por typecheck; `npm run build` opcional.
 
 ## Tasks
 

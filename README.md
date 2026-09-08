@@ -54,7 +54,7 @@ cp .env.example .env.local
 #   - DATABASE_URL (Postgres)
 #   - JWT_SECRET
 #   - AI_CONFIG_ENCRYPTION_KEY  ->  openssl rand -base64 32   (necessária p/ configurar IA)
-#   - R2_* (storage de avatar; só necessário em produção — ver seção Deploy)
+#   - AWS_* / S3_* (storage de avatar no S3; sem elas o upload falha — fail-secure)
 
 # 3. Banco (Postgres via docker-compose) + schema
 docker compose up -d
@@ -65,7 +65,7 @@ npx prisma generate
 node scripts/seed-demo.cjs     # senha demo1234
 
 # 5. Dev server
-npm run dev                    # http://localhost:3000
+npm run dev                    # http://localhost:3150
 ```
 
 **Logins de demonstração** (após o seed): `admin@demo.com` (admin), `comprador@demo.com` (comprador) e
@@ -84,7 +84,7 @@ npm run dev                    # http://localhost:3000
 | `npm run seed:demo` | popula dados de demonstração |
 | `npm run verify:cycle` | smoke e2e do fluxo comprador→representante (precisa do dev server) |
 
-> Se o dev server não estiver na porta 3000, aponte os smokes/E2E com `BASE_URL`, ex.:
+> Se o dev server não estiver na porta 3150, aponte os smokes/E2E com `BASE_URL`, ex.:
 > `BASE_URL=http://localhost:3150 npm run verify:cycle` · `BASE_URL=http://localhost:3150 npx playwright test --workers=1`.
 
 ## Estrutura
@@ -103,30 +103,7 @@ scripts              seed e verificação ponta a ponta
 Auth em toda rota/Server Action, validação Zod em toda entrada externa, chave de IA criptografada e
 nunca exposta. Advisories de dependência aceitas estão documentadas em [SECURITY.md](docs/SECURITY.md).
 
-## Deploy (Vercel)
-
-O `npm run build` roda `prisma generate && prisma migrate deploy && next build` — as migrations
-(`prisma/migrations/*`, baseline `0_init` + versionadas) são aplicadas automaticamente no deploy.
-
-Variáveis de ambiente em produção:
-
-```
-DATABASE_URL           Postgres de produção
-JWT_SECRET             segredo de sessão
-AI_CONFIG_ENCRYPTION_KEY
-AWS_REGION             ex. us-east-1
-AWS_ACCESS_KEY_ID      IAM user com s3:PutObject/s3:DeleteObject no bucket
-AWS_SECRET_ACCESS_KEY
-S3_BUCKET              nome do bucket de avatares
-S3_PUBLIC_URL          opcional: domínio CloudFront/custom (sem barra final).
-                       Vazio = https://<S3_BUCKET>.s3.<AWS_REGION>.amazonaws.com
-```
-
-Avatares vão para AWS S3 — a fs da Vercel é read-only, então uploads não podem ir para
-`public/uploads/`. O bucket precisa servir leitura pública (bucket policy) ou via CloudFront. Sem as
-vars de S3, o upload de avatar falha com erro genérico (fail-secure); o resto do app funciona.
-
 ## Status
 
-MVP funcional, com testes unitários (Vitest), E2E de autenticação (Playwright) e verificação ponta a
-ponta por scripts (`npm run verify:cycle`).
+MVP funcional: 160 testes unitários (Vitest), 52 specs E2E (Playwright), e verificação ponta a
+ponta por scripts (`npm run verify:cycle`) como oráculo de integração.

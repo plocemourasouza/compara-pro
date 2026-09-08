@@ -207,36 +207,7 @@ const metrics = OptimizedProductMatcher.getPerformanceMetrics()
 
 ---
 
-## 🔄 Migração e Deploy
-
-### 1. Aplicar Índices
-```bash
-# Aplicar migration com índices
-npx prisma migrate deploy
-
-# Verificar índices criados
-psql $DATABASE_URL -c "\di"
-```
-
-### 2. Configurar Cache
-```typescript
-// Cache iniciado automaticamente
-// Configuração em src/lib/cache.ts
-const cache = PriceCompareCache.getInstance()
-```
-
-### 3. Monitoring
-```typescript
-// Health check com métricas
-GET /api/admin/system-health
-
-// Inclui agora:
-// - Cache statistics
-// - Error rates by code
-// - Performance metrics
-```
-
----
+> **Bloco E — congelado.** Redis, jobs, Elasticsearch, rate limiting, WebSockets e ML ficam por último, depois de A/B/C.
 
 ## 🎯 Próximos Passos
 

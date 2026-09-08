@@ -53,10 +53,9 @@ Hoje o fluxo comprador→fornecedor é coberto **só no nível de API** por [scr
 - Substituir `verify-cycle.cjs` (continua como smoke rápido de API).
 - Testar todos os caminhos de erro de negócio (foco no happy path + 1 erro estrutural).
 - Visual regression / screenshots.
-- CI (rodar E2E no GitHub Actions) — bloqueado, ver [[ci-deferred-until-deploy]] / [[local-first-no-deploy]].
 
 ## Dependências
-- Dev server local em `:3000` (Playwright `webServer` sobe via `npm run dev`).
+- Dev server local em `:3150` (Playwright `webServer` sobe via `npm run dev`).
 - Seed demo idempotente (`e2e/global-setup.ts` → `seed-demo.cjs`); usuários comprador/representante/admin.
 - DB Postgres `localhost:5435/price_comparison`.
 

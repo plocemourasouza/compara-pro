@@ -44,9 +44,6 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
-# vercel
-.vercel
-
 # typescript
 *.tsbuildinfo
 next-env.d.ts
@@ -64,6 +61,3 @@ next-env.d.ts
 
 # Uploads de avatar (runtime)
 /public/uploads/
-
-# Documentos de projeto/edital (Alavanca Digital etc.) — não versionar
-/docs/
