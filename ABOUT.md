@@ -197,8 +197,10 @@ Detalhes de setup e variáveis de ambiente estão no [README.md](README.md).
 **MVP funcional**, com:
 
 - Fluxo completo comprador → comparação → pré-pedido → representante.
-- Testes unitários (Vitest) e E2E (Playwright), incluindo escopo de gestão de usuários e match manual.
+- **160** testes unitários (Vitest) e **52** specs E2E (Playwright), incluindo gestão de usuários e match manual.
 - Scripts de verificação ponta a ponta (`verify:cycle`, `verify:parecer`).
-- Evolução em curso no modelo de papéis (área derivada do tipo de empresa e agências de representação).
+- Modelo de papéis **consolidado**: não existe `User.role` — a área vem de `Company.type` (`src/lib/area.ts`),
+  com agências de representação representando fornecedores sem login.
+- Borda fail-closed (`src/proxy.ts`), error boundaries e telas de `loading`/`error`/`404` nas três áreas.
 
 O projeto nasceu como **POC** (`price-comparison-poc`) e evolui para uma solução de compras B2B com parecer assistido por IA e operação multi-fornecedor via representantes comerciais.

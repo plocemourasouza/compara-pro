@@ -8,7 +8,9 @@ recomendação de fornecedor). Na mesma tela o comprador ajusta as escolhas por 
 
 ## Funcionalidades
 
-- **RBAC** — três papéis: `ADMIN`, `REPRESENTATIVE` (representante comercial), `CLIENT` (comprador).
+- **Conta = empresa** — não existe `User.role`. A área do usuário é **derivada** de `Company.type`
+  (`src/lib/area.ts`): `CLIENT` (comprador) → `/client`, `REPRESENTATIVE` (representante comercial) →
+  `/supplier`, usuário **sem empresa** → `ADMIN`. Empresas `SUPPLIER` são catálogos sem login.
 - **Representante → N fornecedores** — cada representante representa vários fornecedores; cada lista de
   preços é enviada em nome de um fornecedor de origem. A lista de fornecedores representados mostra
   também quantas listas de preço cada um enviou.
@@ -58,8 +60,8 @@ cp .env.example .env.local
 
 # 3. Banco (Postgres via docker-compose) + schema
 docker compose up -d
-npx prisma migrate deploy        # aplica as migrations (baseline 0_init + versionadas)
-npx prisma generate
+./node_modules/.bin/prisma migrate deploy   # migrations (baseline 0_init + versionadas)
+./node_modules/.bin/prisma generate         # use o binário local; `npx prisma` falha neste projeto
 
 # 4. Dados de demonstração (opcional)
 node scripts/seed-demo.cjs     # senha demo1234
@@ -101,9 +103,13 @@ scripts              seed e verificação ponta a ponta
 ## Segurança
 
 Auth em toda rota/Server Action, validação Zod em toda entrada externa, chave de IA criptografada e
-nunca exposta. Advisories de dependência aceitas estão documentadas em [SECURITY.md](docs/SECURITY.md).
+nunca exposta. A borda (`src/proxy.ts`) é **fail-closed**: `/api/*` exige sessão por padrão e só uma
+allowlist explícita, por match exato, escapa. Um teste estático (`src/app/api/auth-guard.test.ts`)
+quebra se um handler novo esquecer o gate. Advisories de dependência aceitas estão documentadas em
+[SECURITY.md](docs/SECURITY.md).
 
 ## Status
 
-MVP funcional: 160 testes unitários (Vitest), 52 specs E2E (Playwright), e verificação ponta a
-ponta por scripts (`npm run verify:cycle`) como oráculo de integração.
+MVP funcional: `tsc --noEmit` limpo, **160** testes unitários (Vitest), **52** specs E2E (Playwright)
+e verificação ponta a ponta por scripts (`npm run verify:cycle`) como oráculo de integração.
+Error boundaries e telas de `loading`/`error`/`404` cobrem as três áreas.
