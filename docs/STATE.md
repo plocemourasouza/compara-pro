@@ -1,7 +1,7 @@
 # STATE — handoff
 
 **Atualizado:** 2026-09-08 · Branch **main** · working tree **limpo**.
-**Sincronizado:** `main` à frente de `origin/main` — bloco de dívida **não pushado** (aguarda "pode pushar").
+**Sincronizado:** `main` = `origin/main` — bloco de dívida pushado em 2026-09-08 (7 commits).
 **Build:** `lint` exit 0 (**0 erros, 0 infos**) · `typecheck` exit 0 · **241/241** Vitest (24 arquivos) · **52/52** Playwright · `verify:cycle` FINALIZED.
 
 ---
