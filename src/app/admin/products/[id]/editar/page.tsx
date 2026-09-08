@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { ProductForm } from "@/components/shared/product-form";
+import { dashboardForArea } from "@/lib/area";
 import { getCurrentUser } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
 import type { ProductFormValues } from "@/lib/validations/product";
@@ -17,7 +18,7 @@ export default async function EditProductPage({
 	}
 
 	if (user.area !== "ADMIN") {
-		redirect("/dashboard");
+		redirect(dashboardForArea(user.area));
 	}
 
 	const [product, companies] = await Promise.all([

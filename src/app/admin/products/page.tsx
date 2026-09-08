@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { dashboardForArea } from "@/lib/area";
 import { getCurrentUser } from "@/lib/auth-server";
 import ProductsClient from "./products-client";
 
@@ -10,7 +11,7 @@ export default async function ProductsPage() {
 	}
 
 	if (user.area !== "ADMIN") {
-		redirect("/dashboard");
+		redirect(dashboardForArea(user.area));
 	}
 
 	return <ProductsClient user={user} />;

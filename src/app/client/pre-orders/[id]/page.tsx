@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { PreOrderDetailView } from "@/components/shared/pre-order-detail-view";
+import { dashboardForArea } from "@/lib/area";
 import { getCurrentUser } from "@/lib/auth-server";
 
 export default async function ClientPreOrderDetailPage({
@@ -14,7 +15,7 @@ export default async function ClientPreOrderDetailPage({
 	}
 
 	if (user.area !== "ADMIN" && user.area !== "CLIENT") {
-		redirect("/dashboard");
+		redirect(dashboardForArea(user.area));
 	}
 
 	const { id } = await params;

@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { CompanyForm } from "@/components/shared/company-form";
+import { dashboardForArea } from "@/lib/area";
 import { getCurrentUser } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
 import type { CreateCompanyData } from "@/lib/validations/company";
@@ -17,7 +18,7 @@ export default async function EditCompanyPage({
 	}
 
 	if (user.area !== "ADMIN") {
-		redirect("/dashboard");
+		redirect(dashboardForArea(user.area));
 	}
 
 	const company = await prisma.company.findFirst({

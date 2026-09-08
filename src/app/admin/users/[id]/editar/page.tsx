@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { UserForm } from "@/components/shared/user-form";
-import { areaOf } from "@/lib/area";
+import { areaOf, dashboardForArea } from "@/lib/area";
 import { getCurrentUser } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
 import type { UserFormValues } from "@/lib/validations/user";
@@ -18,7 +18,7 @@ export default async function EditUserPage({
 	}
 
 	if (user.area !== "ADMIN") {
-		redirect("/dashboard");
+		redirect(dashboardForArea(user.area));
 	}
 
 	const target = await prisma.user.findUnique({

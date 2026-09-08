@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { dashboardForArea } from "@/lib/area";
 import { scopedSupplierIds } from "@/lib/auth-scope";
 import { requireAuth } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
@@ -11,7 +12,7 @@ export default async function EditClientPage({
 }) {
 	const user = await requireAuth();
 	if (user.area !== "REPRESENTATIVE" && user.area !== "ADMIN") {
-		redirect("/dashboard");
+		redirect(dashboardForArea(user.area));
 	}
 
 	const { id } = await params;

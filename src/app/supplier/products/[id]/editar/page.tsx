@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { ProductForm } from "@/components/shared/product-form";
+import { dashboardForArea } from "@/lib/area";
 import { getRepresentedSupplierIds } from "@/lib/auth-scope";
 import { getCurrentUser } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
@@ -18,7 +19,7 @@ export default async function EditSupplierProductPage({
 	}
 
 	if (user.area !== "ADMIN" && user.area !== "REPRESENTATIVE") {
-		redirect("/dashboard");
+		redirect(dashboardForArea(user.area));
 	}
 
 	const isAdmin = user.area === "ADMIN";

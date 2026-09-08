@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { UserForm } from "@/components/shared/user-form";
+import { dashboardForArea } from "@/lib/area";
 import { getCurrentUser } from "@/lib/auth-server";
 
 export default async function NewUserPage() {
@@ -10,7 +11,7 @@ export default async function NewUserPage() {
 	}
 
 	if (user.area !== "ADMIN") {
-		redirect("/dashboard");
+		redirect(dashboardForArea(user.area));
 	}
 
 	return (

@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { dashboardForArea } from "@/lib/area";
 import { getCurrentUser } from "@/lib/auth-server";
 import CompareClient from "./compare-client";
 
@@ -10,7 +11,7 @@ export default async function ComparePage() {
 	}
 
 	if (user.area !== "CLIENT") {
-		redirect("/dashboard");
+		redirect(dashboardForArea(user.area));
 	}
 
 	return <CompareClient user={user} />;

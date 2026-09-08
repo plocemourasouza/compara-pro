@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { dashboardForArea } from "@/lib/area";
 import { getCurrentUser } from "@/lib/auth-server";
 import FornecedorDetailClient from "./fornecedor-detail-client";
 
@@ -15,7 +16,7 @@ export default async function FornecedorDetailPage({
 	}
 
 	if (user.area !== "REPRESENTATIVE" && user.area !== "ADMIN") {
-		redirect("/dashboard");
+		redirect(dashboardForArea(user.area));
 	}
 
 	return <FornecedorDetailClient supplierId={id} />;

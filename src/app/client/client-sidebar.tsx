@@ -6,7 +6,7 @@ import {
 	Building2,
 	LayoutDashboard as Dashboard,
 	FileText,
-	Home,
+	type Home,
 	LogOut,
 	Settings,
 	ShoppingCart,
@@ -104,15 +104,6 @@ export default function ClientSidebar({ user }: ClientSidebarProps) {
 
 				{/* Navigation */}
 				<nav className="flex-1 px-4 py-6 space-y-2">
-					{/* Voltar para Dashboard */}
-					<Link
-						href="/dashboard"
-						className="flex items-center px-3 py-2 text-sm font-medium text-muted-foreground rounded-md hover:bg-muted hover:text-foreground mb-4"
-					>
-						<Home className="mr-3 h-4 w-4" />
-						Voltar ao Dashboard
-					</Link>
-
 					<div className="border-t border-border pt-4">
 						<div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
 							Cliente

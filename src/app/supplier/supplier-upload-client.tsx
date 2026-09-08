@@ -322,7 +322,7 @@ export default function SupplierUploadClient({
 		if (onClose) {
 			onClose();
 		} else {
-			router.push("/dashboard");
+			router.push("/supplier");
 		}
 	};
 

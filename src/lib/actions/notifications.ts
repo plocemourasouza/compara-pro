@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { requireAuth } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
 
@@ -18,7 +17,6 @@ export async function markAllNotificationsReadAction() {
 			},
 		});
 
-		revalidatePath("/dashboard");
 		return { success: true };
 	} catch (error) {
 		console.error("Error marking notifications as read:", error);
@@ -40,7 +38,6 @@ export async function markNotificationReadAction(notificationId: string) {
 			},
 		});
 
-		revalidatePath("/dashboard");
 		return { success: true };
 	} catch (error) {
 		console.error("Error marking notification as read:", error);

@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { dashboardForArea } from "@/lib/area";
 import { requireAuth } from "@/lib/auth-server";
 import SuppliersClient from "./suppliers-client";
 
@@ -6,7 +7,7 @@ export default async function ClientSuppliersPage() {
 	const user = await requireAuth();
 
 	if (user.area !== "CLIENT" && user.area !== "ADMIN") {
-		redirect("/dashboard");
+		redirect(dashboardForArea(user.area));
 	}
 
 	return <SuppliersClient />;

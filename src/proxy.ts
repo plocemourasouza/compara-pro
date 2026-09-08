@@ -2,7 +2,7 @@ import { jwtVerify } from "jose";
 import { type NextRequest, NextResponse } from "next/server";
 
 // Rotas de página que requerem autenticação (prefixo).
-const protectedPageRoutes = ["/admin", "/supplier", "/client", "/dashboard"];
+const protectedPageRoutes = ["/admin", "/supplier", "/client"];
 
 // Rotas de página públicas (não requerem autenticação).
 const publicPageRoutes = [

@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import HydrationFix from "@/components/hydration-fix";
+import { dashboardForArea } from "@/lib/area";
 import { getCurrentUser } from "@/lib/auth-server";
 import CompaniesClient from "./companies-client";
 
@@ -11,7 +12,7 @@ export default async function CompaniesPage() {
 	}
 
 	if (user.area !== "ADMIN") {
-		redirect("/dashboard");
+		redirect(dashboardForArea(user.area));
 	}
 
 	return (

@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { dashboardForArea } from "@/lib/area";
 import { getCurrentUser } from "@/lib/auth-server";
 import { ReportsClient } from "./reports-client";
 
@@ -10,7 +11,7 @@ export default async function ReportsPage() {
 	}
 
 	if (user.area !== "ADMIN") {
-		redirect("/dashboard");
+		redirect(dashboardForArea(user.area));
 	}
 
 	return <ReportsClient user={user} />;

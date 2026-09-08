@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { UploadItemsView } from "@/components/shared/upload-items-view";
+import { dashboardForArea } from "@/lib/area";
 import { getCurrentUser } from "@/lib/auth-server";
 
 export default async function SupplierUploadItemsPage({
@@ -14,7 +15,7 @@ export default async function SupplierUploadItemsPage({
 	}
 
 	if (user.area !== "ADMIN" && user.area !== "REPRESENTATIVE") {
-		redirect("/dashboard");
+		redirect(dashboardForArea(user.area));
 	}
 
 	const { id } = await params;

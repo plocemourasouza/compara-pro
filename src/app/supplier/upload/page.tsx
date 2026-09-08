@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { dashboardForArea } from "@/lib/area";
 import { getRepresentedSupplierIds } from "@/lib/auth-scope";
 import { requireAuth } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
@@ -8,7 +9,7 @@ export default async function SupplierUploadPage() {
 	const user = await requireAuth();
 
 	if (user.area !== "REPRESENTATIVE" && user.area !== "ADMIN") {
-		redirect("/dashboard");
+		redirect(dashboardForArea(user.area));
 	}
 
 	const ids = await getRepresentedSupplierIds(user);

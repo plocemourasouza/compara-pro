@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { UsersManager } from "@/components/shared/users-manager";
+import { dashboardForArea } from "@/lib/area";
 import { getCurrentUser } from "@/lib/auth-server";
 
 export default async function UsersPage() {
@@ -10,7 +11,7 @@ export default async function UsersPage() {
 	}
 
 	if (user.area !== "ADMIN") {
-		redirect("/dashboard");
+		redirect(dashboardForArea(user.area));
 	}
 
 	// /admin/users gerencia apenas ADMINs. Representantes e clientes são geridos

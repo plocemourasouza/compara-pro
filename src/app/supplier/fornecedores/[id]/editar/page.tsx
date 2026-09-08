@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { SupplierForm } from "@/components/shared/supplier-form";
+import { dashboardForArea } from "@/lib/area";
 import { scopedSupplierIds } from "@/lib/auth-scope";
 import { getCurrentUser } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
@@ -17,7 +18,7 @@ export default async function EditSupplierPage({
 	}
 
 	if (user.area !== "REPRESENTATIVE" && user.area !== "ADMIN") {
-		redirect("/dashboard");
+		redirect(dashboardForArea(user.area));
 	}
 
 	// ADMIN edita qualquer fornecedor; representante só os que representa.

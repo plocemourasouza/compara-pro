@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { SupplierForm } from "@/components/shared/supplier-form";
+import { dashboardForArea } from "@/lib/area";
 import { getCurrentUser } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
 
@@ -11,7 +12,7 @@ export default async function NewSupplierPage() {
 	}
 
 	if (user.area !== "REPRESENTATIVE" && user.area !== "ADMIN") {
-		redirect("/dashboard");
+		redirect(dashboardForArea(user.area));
 	}
 
 	// Admin escolhe a agência (representante) dona do vínculo.
