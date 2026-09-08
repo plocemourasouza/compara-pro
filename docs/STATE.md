@@ -1,7 +1,7 @@
 # STATE — handoff
 
 **Atualizado:** 2026-09-08 · Branch **main** · working tree **limpo**.
-**Sincronizado:** `main` à frente de `origin/main` — **não pushado** (aguarda "pode pushar").
+**Sincronizado:** `main` = `origin/main` — pushado em 2026-09-08 (22 commits + sync de docs).
 **Build:** `typecheck` exit 0 · **160/160** Vitest · **52/52** Playwright (2 execuções seguidas) · `verify:cycle` FINALIZED.
 
 ---
