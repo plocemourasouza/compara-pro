@@ -65,8 +65,6 @@ test.describe("pre-orders — lista → detalhe (itens) → ação", () => {
 		await expect(
 			page.getByRole("heading", { level: 1, name: /Pré-pedido #/ }),
 		).toBeVisible();
-		await expect(page.getByRole("button", { name: /aprovar/i })).toHaveCount(
-			0,
-		);
+		await expect(page.getByRole("button", { name: /aprovar/i })).toHaveCount(0);
 	});
 });

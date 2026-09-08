@@ -49,13 +49,13 @@
 - **Dados legados:** registros `UploadedProduct` supplier antigos podem permanecer (inertes) ou ser limpos — decidir no design (cleanup opcional, não-bloqueador).
 
 ## Acceptance Criteria
-- [ ] **AC-01:** Dado um catálogo com produtos de fornecedor, quando `searchProducts(query)` roda, então retorna resultados do `products` (não de `UploadedProduct`), com o mesmo shape público.
-- [ ] **AC-02:** Dado um produto de fornecedor no catálogo, quando o match manual usa seu id, então o match é criado e validado como SUPPLIER.
-- [ ] **AC-03:** Dado um upload `SUPPLIER_PRODUCTS`, quando processado, então **nenhuma** linha nova é criada em `UploadedProduct` e o catálogo `products` é atualizado.
-- [ ] **AC-04:** Dado um upload `CLIENT_REQUIREMENTS`, quando processado, então `UploadedProduct` é criado com `targetPrice`/`quantity` (inalterado).
-- [ ] **AC-05:** Dado o fluxo comprador→fornecedor, quando rodo `verify:cycle` + E2E, então não há regressão (comparar/match/pré-pedido/aprovar intactos).
-- [ ] **AC-ERROR-01:** Dado um id de produto inexistente no match manual, quando chamado, então retorna erro claro (sem 500 silencioso).
-- [ ] **AC-07 (fix FK):** Dado um match manual de um produto de fornecedor do catálogo, quando criado, então `SupplierMatch.supplierProductId` recebe um **`Product.id`** válido (FK satisfeita) — exercitado contra DB real.
+- [x] **AC-01:** Dado um catálogo com produtos de fornecedor, quando `searchProducts(query)` roda, então retorna resultados do `products` (não de `UploadedProduct`), com o mesmo shape público.
+- [x] **AC-02:** Dado um produto de fornecedor no catálogo, quando o match manual usa seu id, então o match é criado e validado como SUPPLIER.
+- [x] **AC-03:** Dado um upload `SUPPLIER_PRODUCTS`, quando processado, então **nenhuma** linha nova é criada em `UploadedProduct` e o catálogo `products` é atualizado.
+- [x] **AC-04:** Dado um upload `CLIENT_REQUIREMENTS`, quando processado, então `UploadedProduct` é criado com `targetPrice`/`quantity` (inalterado).
+- [x] **AC-05:** Dado o fluxo comprador→fornecedor, quando rodo `verify:cycle` + E2E, então não há regressão (comparar/match/pré-pedido/aprovar intactos).
+- [x] **AC-ERROR-01:** Dado um id de produto inexistente no match manual, quando chamado, então retorna erro claro (sem 500 silencioso).
+- [x] **AC-07 (fix FK):** Dado um match manual de um produto de fornecedor do catálogo, quando criado, então `SupplierMatch.supplierProductId` recebe um **`Product.id`** válido (FK satisfeita) — exercitado contra DB real.
 
 ## Fora do Escopo
 - Remover o model `UploadedProduct` do schema (ainda usado pelo client + demanda).

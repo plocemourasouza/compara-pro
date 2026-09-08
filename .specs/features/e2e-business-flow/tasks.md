@@ -47,7 +47,7 @@
   - Critério: AC-03 verde
   - Estimativa: 20min
 
-- [ ] **T-08 (condicional)**: Parecer/override no fluxo (se `ParecerPanel` acessível)
+- [x] **T-08 (condicional)**: Parecer/override no fluxo — coberto por `e2e/compare-manual-parecer.spec.ts`
   - Registra parecer antes da aprovação; valida persistência (AC-06)
   - Critério: parecer persiste; OU documentar gap residual + atualizar [[backlog-deferred-items]]
   - Estimativa: 25min

@@ -10,7 +10,7 @@
 ## Tasks
 
 ### RF-01 — migrar `searchProducts` (TDD)
-- [ ] **T-01 (RED)**: Teste de `searchProducts` lendo catálogo
+- [x] **T-01 (RED)**: Teste de `searchProducts` lendo catálogo — `optimized-product-matcher.search.test.ts` (retroativo, via harness `src/test/prisma-mock.ts`)
   - Arquivo: `src/lib/services/optimized-product-matcher.search.test.ts` (ou colocado conforme padrão)
   - Cobrir: retorna produtos de `products` (supplier), shape público mantido, filtro `price>0`/`companyId` (AC-01)
   - Critério: `npm run test` → FALHA (ainda lê staging) = RED
@@ -28,7 +28,7 @@
   - Critério: documentado qual fonte a UI usa hoje; plano de ajuste se necessário
   - Estimativa: 15min
 
-- [ ] **T-04 (RED)**: Teste do match manual resolvendo id de catálogo
+- [x] **T-04 (RED)**: Teste do match manual resolvendo id de catálogo — `src/lib/actions/matching.test.ts` (retroativo)
   - Cobrir: id de `products` SUPPLIER → ok; id inexistente/não-supplier → erro claro (AC-02, AC-ERROR-01)
   - Critério: `npm run test` → FALHA = RED
   - Estimativa: 20min
@@ -49,7 +49,7 @@
   - Critério: typecheck 0; client (CLIENT_REQUIREMENTS) continua gravando
   - Estimativa: 10min
 
-- [ ] **T-08**: Teste do processador — supplier não grava staging, client grava
+- [x] **T-08**: Teste do processador — `file-processor.staging.test.ts` (retroativo)
   - Cobrir: AC-03 (supplier → 0 staging novo, catálogo atualizado) + AC-04 (client → staging com targetPrice)
   - Critério: `npm run test` verde
   - Estimativa: 25min

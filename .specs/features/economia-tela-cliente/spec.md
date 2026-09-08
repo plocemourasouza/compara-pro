@@ -45,16 +45,16 @@ O comprador (CLIENT) decide a compra na tela de comparação ([compare-client.ts
 
 ## Acceptance Criteria
 
-- [ ] **AC-01:** Dado um match cujo `clientProduct` tem `targetPrice` no DB, quando `GET /api/comparison/[id]` responde, então o JSON inclui `clientProduct.targetPrice` com o valor numérico.
-- [ ] **AC-02:** Dado um match cujo `clientProduct.targetPrice` é null, quando a API responde, então `clientProduct.targetPrice` é `null` (não ausente, não 0).
-- [ ] **AC-03:** Dado um item incluído com `targetPrice=10`, preço escolhido `8` e quantidade `3`, quando a tela renderiza, então exibe economia do item = `R$ 6,00` (`(10−8)×3`).
-- [ ] **AC-04:** Dado um item com `targetPrice` null, quando a tela renderiza, então o item NÃO exibe nenhum valor de economia.
-- [ ] **AC-05:** Dado um item com preço escolhido ≥ `targetPrice`, quando a tela renderiza, então a economia do item é `0` e nenhum valor negativo é exibido.
-- [ ] **AC-06:** Dados 2 itens incluídos com economias `R$ 6,00` e `R$ 4,00`, quando a tela renderiza, então a economia total exibida é `R$ 10,00`.
-- [ ] **AC-07:** Dado que nenhum item incluído tem economia > 0, quando a tela renderiza, então o bloco de economia total fica oculto.
-- [ ] **AC-08:** Dado que o usuário muda o fornecedor escolhido de um item, quando a seleção muda, então a economia do item e o total recalculam reativamente.
-- [ ] **AC-09:** Dado que um item é desmarcado (não incluído), quando a seleção muda, então sua economia sai do total.
-- [ ] **AC-10:** Dada a mesma comparação finalizada como pré-pedido, quando comparo a economia da tela com `savings.finalizedSavings` do admin, então os valores são iguais (mesma fórmula).
+- [x] **AC-01:** Dado um match cujo `clientProduct` tem `targetPrice` no DB, quando `GET /api/comparison/[id]` responde, então o JSON inclui `clientProduct.targetPrice` com o valor numérico.
+- [x] **AC-02:** Dado um match cujo `clientProduct.targetPrice` é null, quando a API responde, então `clientProduct.targetPrice` é `null` (não ausente, não 0).
+- [x] **AC-03:** Dado um item incluído com `targetPrice=10`, preço escolhido `8` e quantidade `3`, quando a tela renderiza, então exibe economia do item = `R$ 6,00` (`(10−8)×3`).
+- [x] **AC-04:** Dado um item com `targetPrice` null, quando a tela renderiza, então o item NÃO exibe nenhum valor de economia.
+- [x] **AC-05:** Dado um item com preço escolhido ≥ `targetPrice`, quando a tela renderiza, então a economia do item é `0` e nenhum valor negativo é exibido.
+- [x] **AC-06:** Dados 2 itens incluídos com economias `R$ 6,00` e `R$ 4,00`, quando a tela renderiza, então a economia total exibida é `R$ 10,00`.
+- [x] **AC-07:** Dado que nenhum item incluído tem economia > 0, quando a tela renderiza, então o bloco de economia total fica oculto.
+- [x] **AC-08:** Dado que o usuário muda o fornecedor escolhido de um item, quando a seleção muda, então a economia do item e o total recalculam reativamente.
+- [x] **AC-09:** Dado que um item é desmarcado (não incluído), quando a seleção muda, então sua economia sai do total.
+- [x] **AC-10:** Dada a mesma comparação finalizada como pré-pedido, quando comparo a economia da tela com `savings.finalizedSavings` do admin, então os valores são iguais (mesma fórmula).
 
 ## Fora do Escopo
 - Persistir/mostrar economia no histórico do perfil do cliente (fase futura).

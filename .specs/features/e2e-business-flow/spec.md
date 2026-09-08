@@ -41,13 +41,13 @@ Hoje o fluxo comprador→fornecedor é coberto **só no nível de API** por [scr
 - **Manutenção:** Sem hard-coded de IDs; localizar por texto/role/testid.
 
 ## Acceptance Criteria
-- [ ] **AC-01:** Dado o seed demo, quando o spec roda, então comprador loga, compara, ajusta seleção e confirma um pré-pedido pela UI sem `pageerror`.
-- [ ] **AC-02:** Dado o pré-pedido criado, quando o representante loga, então ele o vê na tela de pré-pedidos.
-- [ ] **AC-03:** Dado o pré-pedido visível, quando o representante aprova pela UI, então o status final exibido é "aprovado".
-- [ ] **AC-04:** Dado o helper `loginAs`, quando usado em ≥2 specs, então ambos autenticam sem duplicar o bloco de login.
-- [ ] **AC-05:** Dado um Radix Select de upload/fornecedor, quando o spec seleciona uma opção por nome, então a seleção reflete na UI de forma estável (sem retry manual).
-- [ ] **AC-ERROR-01:** Dado um passo que falha (ex.: nenhum upload no seed), quando o spec roda, então a falha aponta a etapa exata.
-- [ ] **AC-06 (condicional):** Se `ParecerPanel` está no fluxo, então o spec registra um parecer antes da aprovação e valida que persiste.
+- [x] **AC-01:** Dado o seed demo, quando o spec roda, então comprador loga, compara, ajusta seleção e confirma um pré-pedido pela UI sem `pageerror`.
+- [x] **AC-02:** Dado o pré-pedido criado, quando o representante loga, então ele o vê na tela de pré-pedidos.
+- [x] **AC-03:** Dado o pré-pedido visível, quando o representante aprova pela UI, então o status final exibido é "aprovado".
+- [x] **AC-04:** Dado o helper `loginAs`, quando usado em ≥2 specs, então ambos autenticam sem duplicar o bloco de login.
+- [x] **AC-05:** Dado um Radix Select de upload/fornecedor, quando o spec seleciona uma opção por nome, então a seleção reflete na UI de forma estável (sem retry manual).
+- [x] **AC-ERROR-01:** Dado um passo que falha (ex.: nenhum upload no seed), quando o spec roda, então a falha aponta a etapa exata.
+- [x] **AC-06 (condicional):** Se `ParecerPanel` está no fluxo, então o spec registra um parecer antes da aprovação e valida que persiste.
 
 ## Fora do Escopo
 - Substituir `verify-cycle.cjs` (continua como smoke rápido de API).

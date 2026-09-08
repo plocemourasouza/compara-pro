@@ -66,11 +66,18 @@ test("adicionar cliente gera código de primeiro acesso", async ({ page }) => {
 	// carteira cresce a cada execução e empurra os registros semeados para
 	// fora da paginação, quebrando o teste irmão desta mesma spec.
 	const list = await page.request.get("/api/supplier/clients");
-	const { clients } = (await list.json()) as { clients: { id: string; name: string }[] };
+	const { clients } = (await list.json()) as {
+		clients: { id: string; name: string }[];
+	};
 	const created = clients.find((c) => c.name === `Cliente E2E ${stamp}`);
-	expect(created, "cliente recém-criado deve aparecer na carteira").toBeTruthy();
+	expect(
+		created,
+		"cliente recém-criado deve aparecer na carteira",
+	).toBeTruthy();
 	if (created) {
-		const del = await page.request.delete(`/api/supplier/clients/${created.id}`);
+		const del = await page.request.delete(
+			`/api/supplier/clients/${created.id}`,
+		);
 		expect(del.ok(), `falha ao remover ${created.id}`).toBeTruthy();
 	}
 });
