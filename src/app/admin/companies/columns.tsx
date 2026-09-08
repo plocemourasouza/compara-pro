@@ -93,9 +93,7 @@ export function getCompaniesColumns({
 					f?.toLowerCase().includes(q),
 				);
 			},
-			cell: ({ row }) => (
-				<div className="font-medium">{row.original.name}</div>
-			),
+			cell: ({ row }) => <div className="font-medium">{row.original.name}</div>,
 		},
 		{
 			accessorKey: "cnpj",

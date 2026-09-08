@@ -306,7 +306,11 @@ async function main() {
 	// Mapa fornecedor -> agência (mais antiga) p/ herdar o representante na
 	// carteira e nos pré-pedidos. Cobre links de demo + full já criados.
 	const repLinks = await prisma.representativeSupplier.findMany({
-		orderBy: [{ supplierCompanyId: "asc" }, { createdAt: "asc" }, { id: "asc" }],
+		orderBy: [
+			{ supplierCompanyId: "asc" },
+			{ createdAt: "asc" },
+			{ id: "asc" },
+		],
 	});
 	const supplierAgency = new Map();
 	for (const l of repLinks) {
