@@ -69,6 +69,10 @@ async function authenticate(
 		});
 
 		const requestHeaders = new Headers(request.headers);
+		// Apaga antes de escrever: sem o delete, um token válido sem `userId`
+		// deixaria passar o x-user-id que o cliente mandou. Nenhum handler lê
+		// esse header hoje, mas ele não pode ser uma entrada controlável.
+		requestHeaders.delete("x-user-id");
 		if (payload.userId) {
 			requestHeaders.set("x-user-id", String(payload.userId));
 		}
@@ -84,7 +88,9 @@ export async function proxy(request: NextRequest) {
 	const { pathname } = request.nextUrl;
 
 	if (pathname.startsWith("/api/")) {
-		const isPublicApi = PUBLIC_API.some((route) => pathname.startsWith(route));
+		// Match exato: com startsWith, uma rota futura como /api/auth/login-sso
+		// herdaria o acesso público sem ninguém perceber.
+		const isPublicApi = PUBLIC_API.includes(pathname);
 		if (isPublicApi) {
 			return NextResponse.next();
 		}

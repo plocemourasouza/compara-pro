@@ -60,4 +60,17 @@ test("adicionar cliente gera código de primeiro acesso", async ({ page }) => {
 		page.getByText("Código de primeiro acesso", { exact: true }),
 	).toBeVisible({ timeout: 15_000 });
 	await expect(page.locator("p.font-mono")).toHaveText(/^\d{6}$/);
+
+	// Limpeza: desfaz o vínculo de carteira criado aqui (o DELETE remove o
+	// SupplierClient, não a empresa — que fica órfã, inofensiva). Sem isso a
+	// carteira cresce a cada execução e empurra os registros semeados para
+	// fora da paginação, quebrando o teste irmão desta mesma spec.
+	const list = await page.request.get("/api/supplier/clients");
+	const { clients } = (await list.json()) as { clients: { id: string; name: string }[] };
+	const created = clients.find((c) => c.name === `Cliente E2E ${stamp}`);
+	expect(created, "cliente recém-criado deve aparecer na carteira").toBeTruthy();
+	if (created) {
+		const del = await page.request.delete(`/api/supplier/clients/${created.id}`);
+		expect(del.ok(), `falha ao remover ${created.id}`).toBeTruthy();
+	}
 });
