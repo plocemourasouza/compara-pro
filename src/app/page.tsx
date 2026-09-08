@@ -253,7 +253,7 @@ export default function Home() {
 			{/* Footer */}
 			<footer className="bg-foreground text-background py-12 px-6">
 				<div className="container mx-auto">
-					<div className="grid md:grid-cols-4 gap-8">
+					<div className="grid gap-8 md:grid-cols-2">
 						<div>
 							<div className="flex items-center space-x-2 mb-4">
 								<BarChart3 className="h-6 w-6 text-primary" />
@@ -264,71 +264,17 @@ export default function Home() {
 							</p>
 						</div>
 						<div>
-							<h4 className="font-semibold mb-4">Produto</h4>
+							<h4 className="font-semibold mb-4">Acesso</h4>
 							<ul className="space-y-2 text-background/60">
 								<li>
-									{/* biome-ignore lint/a11y/useValidAnchor: placeholder footer link */}
-									<a href="#" className="hover:text-background">
-										Funcionalidades
-									</a>
+									<Link href="/auth/login" className="hover:text-background">
+										Entrar
+									</Link>
 								</li>
 								<li>
-									{/* biome-ignore lint/a11y/useValidAnchor: placeholder footer link */}
-									<a href="#" className="hover:text-background">
-										Preços
-									</a>
-								</li>
-								<li>
-									{/* biome-ignore lint/a11y/useValidAnchor: placeholder footer link */}
-									<a href="#" className="hover:text-background">
-										Integrações
-									</a>
-								</li>
-							</ul>
-						</div>
-						<div>
-							<h4 className="font-semibold mb-4">Empresa</h4>
-							<ul className="space-y-2 text-background/60">
-								<li>
-									{/* biome-ignore lint/a11y/useValidAnchor: placeholder footer link */}
-									<a href="#" className="hover:text-background">
-										Sobre
-									</a>
-								</li>
-								<li>
-									{/* biome-ignore lint/a11y/useValidAnchor: placeholder footer link */}
-									<a href="#" className="hover:text-background">
-										Blog
-									</a>
-								</li>
-								<li>
-									{/* biome-ignore lint/a11y/useValidAnchor: placeholder footer link */}
-									<a href="#" className="hover:text-background">
-										Carreira
-									</a>
-								</li>
-							</ul>
-						</div>
-						<div>
-							<h4 className="font-semibold mb-4">Suporte</h4>
-							<ul className="space-y-2 text-background/60">
-								<li>
-									{/* biome-ignore lint/a11y/useValidAnchor: placeholder footer link */}
-									<a href="#" className="hover:text-background">
-										Ajuda
-									</a>
-								</li>
-								<li>
-									{/* biome-ignore lint/a11y/useValidAnchor: placeholder footer link */}
-									<a href="#" className="hover:text-background">
-										Contato
-									</a>
-								</li>
-								<li>
-									{/* biome-ignore lint/a11y/useValidAnchor: placeholder footer link */}
-									<a href="#" className="hover:text-background">
-										Status
-									</a>
+									<Link href="/auth/register" className="hover:text-background">
+										Criar conta
+									</Link>
 								</li>
 							</ul>
 						</div>
