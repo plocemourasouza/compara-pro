@@ -2,6 +2,7 @@
 
 import { Bell, CheckCircle, LogOut, Settings, User } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -47,12 +48,39 @@ interface Notification {
 	createdAt: string;
 }
 
+/** Título contextual pela rota (sobrescreve a marca quando aplicável). */
+function titleFromPath(pathname: string | null): string | null {
+	if (!pathname) return null;
+	// Páginas internas (detalhe/cadastro/edição) têm um segmento após a base.
+	const isInner = (base: string) =>
+		pathname.startsWith(`${base}/`) && pathname !== base;
+
+	if (pathname.startsWith("/supplier/clients")) {
+		return isInner("/supplier/clients") ? "Cliente" : "Clientes";
+	}
+	if (pathname.startsWith("/supplier/fornecedores")) {
+		return isInner("/supplier/fornecedores") ? "Fornecedor" : "Fornecedores";
+	}
+	if (pathname.startsWith("/supplier/products")) {
+		return isInner("/supplier/products") ? "Produto" : "Produtos";
+	}
+	if (pathname.startsWith("/supplier/pre-orders")) {
+		return isInner("/supplier/pre-orders") ? "Pré-pedido" : "Pré-pedidos";
+	}
+	if (pathname.startsWith("/supplier/history")) return "Listas de preço";
+	if (pathname.startsWith("/supplier/usuarios")) return "Usuários";
+	if (pathname.startsWith("/supplier/settings")) return "Configurações";
+	return null;
+}
+
 export default function AppHeader({
 	user,
-	title = "Compara Pró",
+	title,
 	notificationsHref,
 	settingsHref,
 }: AppHeaderProps) {
+	const pathname = usePathname();
+	const heading = title ?? titleFromPath(pathname) ?? "Compara Pró";
 	const [notifications, setNotifications] = useState<Notification[]>([]);
 	const [unreadCount, setUnreadCount] = useState(0);
 	const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -149,9 +177,9 @@ export default function AppHeader({
 
 	return (
 		<header className="sticky top-0 z-40 w-full bg-background border-b">
-			<div className="flex items-center justify-between px-6 py-4">
+			<div className="flex h-16 items-center justify-between px-6">
 				<div className="flex items-center space-x-4">
-					<h1 className="text-xl font-semibold text-foreground">{title}</h1>
+					<h1 className="text-xl font-semibold text-foreground">{heading}</h1>
 				</div>
 
 				<div className="flex items-center space-x-4">
