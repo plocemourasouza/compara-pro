@@ -7,6 +7,7 @@ export default defineConfig({
 	retries: process.env.CI ? 1 : 0,
 	reporter: "list",
 	globalSetup: "./e2e/global-setup.ts",
+	globalTeardown: "./e2e/global-teardown.ts",
 	use: {
 		baseURL: process.env.BASE_URL || "http://localhost:3150",
 		trace: "on-first-retry",
