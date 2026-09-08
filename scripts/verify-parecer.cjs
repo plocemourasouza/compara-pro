@@ -22,7 +22,7 @@ const B = process.env.BASE_URL || "http://localhost:3150";
 		"auth_token=" +
 		jwt.sign({ userId: u.id }, process.env.JWT_SECRET, { expiresIn: "7d" });
 
-	const cr = await fetch(B + "/api/comparison/create", {
+	const cr = await fetch(`${B}/api/comparison/create`, {
 		method: "POST",
 		headers: { "Content-Type": "application/json", Cookie: cookie },
 		body: JSON.stringify({ uploadId: up.id }),
@@ -32,7 +32,7 @@ const B = process.env.BASE_URL || "http://localhost:3150";
 	const cid = cj.comparisonId;
 	if (!cid) return process.exit(0);
 
-	const pr = await fetch(B + "/api/comparison/" + cid + "/parecer", {
+	const pr = await fetch(`${B}/api/comparison/${cid}/parecer`, {
 		headers: { Cookie: cookie },
 	});
 	const pj = await pr.json();

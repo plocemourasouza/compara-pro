@@ -25,11 +25,11 @@ const sign = (id) =>
 	const buyerCookie = sign(buyer.id);
 
 	const cur = await (
-		await fetch(B + "/api/admin/ai-config", {
+		await fetch(`${B}/api/admin/ai-config`, {
 			headers: { Cookie: adminCookie },
 		})
 	).json();
-	console.log("config atual: provider=" + cur.provider + " model=" + cur.model);
+	console.log(`config atual: provider=${cur.provider} model=${cur.model}`);
 
 	const MARK = "VERIFICACAO-PROMPT:";
 	const customPrompt =
@@ -37,7 +37,7 @@ const sign = (id) =>
 		MARK +
 		"' e em seguida escreva o parecer normalmente.";
 
-	const saveRes = await fetch(B + "/api/admin/ai-config", {
+	const saveRes = await fetch(`${B}/api/admin/ai-config`, {
 		method: "POST",
 		headers: { "Content-Type": "application/json", Cookie: adminCookie },
 		body: JSON.stringify({
@@ -50,7 +50,7 @@ const sign = (id) =>
 	console.log(
 		"1) salvar prompt (sem chave):",
 		saveRes.status,
-		"persistido=" + (saveJson.config?.systemPrompt === customPrompt),
+		`persistido=${saveJson.config?.systemPrompt === customPrompt}`,
 	);
 
 	const up = await prisma.uploadHistory.findFirst({
@@ -58,14 +58,14 @@ const sign = (id) =>
 		select: { id: true },
 	});
 	const cr = await (
-		await fetch(B + "/api/comparison/create", {
+		await fetch(`${B}/api/comparison/create`, {
 			method: "POST",
 			headers: { "Content-Type": "application/json", Cookie: buyerCookie },
 			body: JSON.stringify({ uploadId: up.id }),
 		})
 	).json();
 	const par = await (
-		await fetch(B + "/api/comparison/" + cr.comparisonId + "/parecer", {
+		await fetch(`${B}/api/comparison/${cr.comparisonId}/parecer`, {
 			headers: { Cookie: buyerCookie },
 		})
 	).json();
@@ -73,12 +73,12 @@ const sign = (id) =>
 	console.log(
 		"2) parecer usou o prompt custom:",
 		resumo.startsWith(MARK),
-		"| geradoPorIA=" + par.parecer?.geradoPorIA,
+		`| geradoPorIA=${par.parecer?.geradoPorIA}`,
 	);
 	console.log("   resumo:", resumo.slice(0, 90));
 
 	// reset to default (empty -> null)
-	const reset = await fetch(B + "/api/admin/ai-config", {
+	const reset = await fetch(`${B}/api/admin/ai-config`, {
 		method: "POST",
 		headers: { "Content-Type": "application/json", Cookie: adminCookie },
 		body: JSON.stringify({
@@ -91,7 +91,7 @@ const sign = (id) =>
 	console.log(
 		"3) reset prompt -> null:",
 		reset.status,
-		"systemPrompt=" + resetJson.config?.systemPrompt,
+		`systemPrompt=${resetJson.config?.systemPrompt}`,
 	);
 	process.exit(0);
 })().catch((e) => {

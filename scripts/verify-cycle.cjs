@@ -35,7 +35,7 @@ const sign = (id) =>
 	});
 
 	const cr = await (
-		await fetch(B + "/api/comparison/create", {
+		await fetch(`${B}/api/comparison/create`, {
 			method: "POST",
 			headers: { "Content-Type": "application/json", Cookie: buyerCookie },
 			body: JSON.stringify({ uploadId: up.id }),
@@ -45,7 +45,7 @@ const sign = (id) =>
 	console.log("1) comparison:", cid ? "ok" : "FAIL");
 
 	const cmp = await (
-		await fetch(B + "/api/comparison/" + cid, {
+		await fetch(`${B}/api/comparison/${cid}`, {
 			headers: { Cookie: buyerCookie },
 		})
 	).json();
@@ -56,7 +56,7 @@ const sign = (id) =>
 	}
 	console.log("2) matches p/ Beta:", selected.length);
 
-	const batch = await fetch(B + "/api/pre-order/create-batch", {
+	const batch = await fetch(`${B}/api/pre-order/create-batch`, {
 		method: "POST",
 		headers: { "Content-Type": "application/json", Cookie: buyerCookie },
 		body: JSON.stringify({
@@ -73,7 +73,7 @@ const sign = (id) =>
 	const poId = (bj.preOrderIds || [])[0];
 
 	const list = await (
-		await fetch(B + "/api/pre-order/list?limit=50", {
+		await fetch(`${B}/api/pre-order/list?limit=50`, {
 			headers: { Cookie: supCookie },
 		})
 	).json();
@@ -81,10 +81,10 @@ const sign = (id) =>
 	console.log(
 		"4) fornecedor vê o pré-pedido:",
 		!!found,
-		found ? "status=" + found.status + " total=" + found.totalAmount : "",
+		found ? `status=${found.status} total=${found.totalAmount}` : "",
 	);
 
-	const appr = await fetch(B + "/api/pre-order/bulk-action", {
+	const appr = await fetch(`${B}/api/pre-order/bulk-action`, {
 		method: "POST",
 		headers: { "Content-Type": "application/json", Cookie: supCookie },
 		body: JSON.stringify({ preOrderIds: [poId], action: "APPROVE" }),

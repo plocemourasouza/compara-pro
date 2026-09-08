@@ -33,6 +33,7 @@ describe("FileProcessor.processData — staging vs catalog routing", () => {
 		);
 		const rows = [{ Sku: "SKU-1", Name: "Parafuso M8", Price: "12.50" }];
 
+		// biome-ignore lint/complexity/useLiteralKeys: acesso por colchete alcança o método privado sem recorrer a `any` (ver docblock do arquivo)
 		const result = await FileProcessor["processData"](
 			rows,
 			"upload-1",
@@ -64,6 +65,7 @@ describe("FileProcessor.processData — staging vs catalog routing", () => {
 			},
 		];
 
+		// biome-ignore lint/complexity/useLiteralKeys: acesso por colchete alcança o método privado sem recorrer a `any` (ver docblock do arquivo)
 		const result = await FileProcessor["processData"](
 			rows,
 			"upload-2",
@@ -88,6 +90,7 @@ describe("FileProcessor.processData — staging vs catalog routing", () => {
 	it("an invalid row (missing required name) produces errors[0].row === 2 and no write", async () => {
 		const rows = [{ Sku: "SKU-1", Price: "12.50" }];
 
+		// biome-ignore lint/complexity/useLiteralKeys: acesso por colchete alcança o método privado sem recorrer a `any` (ver docblock do arquivo)
 		const result = await FileProcessor["processData"](
 			rows,
 			"upload-3",
