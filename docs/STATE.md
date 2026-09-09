@@ -48,7 +48,7 @@ Redis, background jobs, monitoramento, Elasticsearch, rate limiting, WebSockets 
 
 - **Autorização espalhada**: 52 dos 54 handlers chamam o gate (`/api/compare` usa `verifyToken` com Bearer, padrão antigo). O teste `src/app/api/auth-guard.test.ts` falha se um handler novo esquecer. Consolidar as ~50 páginas que repetem `if (user.area !== …) redirect(...)` foi avaliado e descartado: risco alto, valor baixo.
 - **Cobertura de componentes ainda rasa** — 3 componentes com lógica real cobertos (`status-badge`, `masked-input`, `useCompanyFilters`); o resto da UI segue coberto só pelos 52 specs E2E.
-- **`business-flow.spec.ts` e `compare-manual-parecer.spec.ts` vazam** comparações e pré-pedidos: cada execução da suíte completa deixa ~3 comparações e ~2 pré-pedidos para trás. O `cleanup-e2e.cjs` só varre empresas `Cliente E2E %`; a `business-flow-deep.spec.ts` limpa o que cria, essas duas não. Correção provável: `global-setup` grava um marcador de horário e o teardown apaga o que a sessão de teste criou depois dele.
+- A suíte completa não deixa mais resíduo: `global-setup` grava `.e2e-run-start` (depois do seed) e o teardown apaga só o que nasceu dessa janela. Duas rodadas seguidas fecham com contagem idêntica em `companies`/`comparisons`/`pre_orders`/`notifications`/`upload_history`.
 - **Janela de data do `useCompanyFilters`** usa `setHours` em zona **local** contra `createdAt` em UTC — **proposital** ("criado neste dia no fuso do usuário"), documentado no fonte. O teste fixa `TZ=America/Sao_Paulo` para não depender da máquina.
 
 ## Gotchas

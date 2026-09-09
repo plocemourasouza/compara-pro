@@ -61,3 +61,6 @@ next-env.d.ts
 
 # Uploads de avatar (runtime)
 /public/uploads/
+
+# marcador de início da rodada de E2E (global-setup -> cleanup-e2e.cjs)
+.e2e-run-start
