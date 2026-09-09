@@ -197,8 +197,8 @@ Detalhes de setup e variáveis de ambiente estão no [README.md](README.md).
 **MVP funcional**, com:
 
 - Fluxo completo comprador → comparação → pré-pedido → representante.
-- **241** testes unitários (Vitest) e **52** specs E2E (Playwright), incluindo gestão de usuários e match manual.
-- A suíte E2E limpa o que cria: `e2e/global-teardown.ts` dispara `scripts/cleanup-e2e.cjs` e a contagem de empresas fica estável entre execuções.
+- **243** testes unitários (Vitest) e **53** specs E2E (Playwright), incluindo gestão de usuários, match manual e o fluxo profundo comprador→representante pela UI.
+- A suíte E2E não deixa resíduo: o `global-setup` grava o instante da rodada e o teardown (`scripts/cleanup-e2e.cjs`) apaga só o que nasceu dessa janela — duas execuções seguidas fecham com as mesmas contagens de empresas, comparações, pré-pedidos e notificações.
 - Scripts de verificação ponta a ponta (`verify:cycle`, `verify:parecer`).
 - Modelo de papéis **consolidado**: não existe `User.role` — a área vem de `Company.type` (`src/lib/area.ts`),
   com agências de representação representando fornecedores sem login.

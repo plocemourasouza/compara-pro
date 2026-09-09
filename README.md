@@ -85,6 +85,7 @@ npm run dev                    # http://localhost:3150
 | `npm run lint` | Biome (lint + format check) |
 | `npm run seed:demo` | popula dados de demonstração |
 | `npm run verify:cycle` | smoke e2e do fluxo comprador→representante (precisa do dev server) |
+| `npm run e2e:cleanup` | varre o que a suíte E2E deixou para trás (idempotente) |
 
 > Se o dev server não estiver na porta 3150, aponte os smokes/E2E com `BASE_URL`, ex.:
 > `BASE_URL=http://localhost:3150 npm run verify:cycle` · `BASE_URL=http://localhost:3150 npx playwright test --workers=1`.
@@ -92,7 +93,7 @@ npm run dev                    # http://localhost:3150
 ## Estrutura
 
 ```
-src/app              rotas (App Router): admin, supplier, client, dashboard, api
+src/app              rotas (App Router): admin, supplier, client, api
 src/lib/services     matching, pré-pedido, parecer (IA), file-processor
 src/lib/ai           abstração de provedores de IA + config criptografada
 src/components       UI (shadcn) + componentes de domínio
@@ -110,6 +111,11 @@ quebra se um handler novo esquecer o gate. Advisories de dependência aceitas es
 
 ## Status
 
-MVP funcional: `tsc --noEmit` limpo, Biome sem nenhum apontamento, **241** testes unitários (Vitest), **52** specs E2E (Playwright)
-e verificação ponta a ponta por scripts (`npm run verify:cycle`) como oráculo de integração.
-Error boundaries e telas de `loading`/`error`/`404` cobrem as três áreas.
+MVP funcional: `tsc --noEmit` limpo, Biome sem nenhum apontamento, **243** testes unitários (Vitest),
+**53** specs E2E (Playwright) e verificação ponta a ponta por scripts (`npm run verify:cycle`) como
+oráculo de integração. O fluxo completo comprador→representante é coberto pela UI em
+`e2e/business-flow-deep.spec.ts` e pela API no `verify:cycle`.
+
+A suíte E2E **não deixa resíduo**: o `global-setup` grava o instante em que a rodada começou e o
+teardown apaga só o que nasceu dessa janela, então rodar a suíte quantas vezes quiser devolve o
+banco ao mesmo estado. Error boundaries e telas de `loading`/`error`/`404` cobrem as três áreas.
