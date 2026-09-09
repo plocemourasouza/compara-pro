@@ -66,12 +66,12 @@ describe("MaskedInput", () => {
 		});
 	});
 
-	it("overflow: CNPJ com 15 dígitos excede a máscara e volta cru, sem truncar", () => {
-		// Comportamento atual de masks.cnpj: quando `cleaned.length > 14` a função
-		// devolve o `value` original sem aplicar nenhuma formatação (nem trunca).
+	it("overflow: CNPJ com 15 dígitos é truncado para 14 e formatado normalmente", () => {
+		// masks.cnpj trunca os dígitos limpos para o tamanho máximo do campo (14)
+		// antes de formatar — o dígito excedente é descartado, nunca ecoado cru.
 		render(
 			<MaskedInput mask="cnpj" value="112223330001811" onChange={() => {}} />,
 		);
-		expect(screen.getByRole("textbox")).toHaveValue("112223330001811");
+		expect(screen.getByRole("textbox")).toHaveValue("11.222.333/0001-81");
 	});
 });

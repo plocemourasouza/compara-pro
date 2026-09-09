@@ -57,14 +57,33 @@ describe("useCompanyFilters", () => {
 		});
 	});
 
-	describe("cityOptions em cascata sobre o Estado", () => {
-		it("stateFilter 'all' → cidades de todos os estados", () => {
+	describe("cityOptions: forma da opção ({ value, label })", () => {
+		it("stateFilter !== 'all' → value e label são o nome puro da cidade", () => {
 			const companies = [
 				makeCompany({ state: "RS", city: "Porto Alegre" }),
 				makeCompany({ state: "SP", city: "Campinas" }),
 			];
 			const { result } = renderHook(() => useCompanyFilters(companies));
-			expect(result.current.cityOptions).toEqual(["Campinas", "Porto Alegre"]);
+
+			act(() => result.current.setStateFilter("RS"));
+
+			expect(result.current.cityOptions).toEqual([
+				{ value: "Porto Alegre", label: "Porto Alegre" },
+			]);
+		});
+	});
+
+	describe("cityOptions em cascata sobre o Estado", () => {
+		it("stateFilter 'all' → cidades de todos os estados, com label 'cidade — estado'", () => {
+			const companies = [
+				makeCompany({ state: "RS", city: "Porto Alegre" }),
+				makeCompany({ state: "SP", city: "Campinas" }),
+			];
+			const { result } = renderHook(() => useCompanyFilters(companies));
+			expect(result.current.cityOptions).toEqual([
+				{ value: "SP::Campinas", label: "Campinas — SP" },
+				{ value: "RS::Porto Alegre", label: "Porto Alegre — RS" },
+			]);
 		});
 
 		it("setStateFilter('RS') → restringe às cidades do RS", () => {
@@ -78,22 +97,25 @@ describe("useCompanyFilters", () => {
 			act(() => result.current.setStateFilter("RS"));
 
 			expect(result.current.cityOptions).toEqual([
-				"Caxias do Sul",
-				"Porto Alegre",
+				{ value: "Caxias do Sul", label: "Caxias do Sul" },
+				{ value: "Porto Alegre", label: "Porto Alegre" },
 			]);
 		});
 
-		it("documenta comportamento atual (suspeito): o Set dedupe por NOME da cidade, ignorando o estado", () => {
-			// "São Paulo/SP" e "São Paulo/MG" colapsam em uma única opção porque
-			// `cityOptions` faz `new Set(companies.map(c => c.city))` — dedupe só
-			// pelo nome, sem compor com o estado. Isto é intencionalmente
-			// documentado como comportamento atual, não corrigido aqui.
+		it("São Paulo/SP e São Paulo/MG NÃO colapsam: permanecem opções distintas", () => {
+			// A identidade da opção é o par estado+cidade (chave composta
+			// "<estado>::<cidade>"), não só o nome — então duas cidades homônimas
+			// em estados diferentes viram duas opções, com o estado no label para
+			// o usuário distinguir.
 			const companies = [
 				makeCompany({ state: "SP", city: "São Paulo" }),
 				makeCompany({ state: "MG", city: "São Paulo" }),
 			];
 			const { result } = renderHook(() => useCompanyFilters(companies));
-			expect(result.current.cityOptions).toEqual(["São Paulo"]);
+			expect(result.current.cityOptions).toEqual([
+				{ value: "MG::São Paulo", label: "São Paulo — MG" },
+				{ value: "SP::São Paulo", label: "São Paulo — SP" },
+			]);
 		});
 	});
 
@@ -202,6 +224,23 @@ describe("useCompanyFilters", () => {
 			expect(result.current.predicate(makeCompany({ city: "Campinas" }))).toBe(
 				false,
 			);
+		});
+
+		it("city: com stateFilter 'all', escolher uma cidade homônima não vaza empresas do outro estado", () => {
+			const spCompany = makeCompany({ state: "SP", city: "São Paulo" });
+			const mgCompany = makeCompany({ state: "MG", city: "São Paulo" });
+			const { result } = renderHook(() =>
+				useCompanyFilters([spCompany, mgCompany]),
+			);
+
+			const spOption = result.current.cityOptions.find(
+				(o) => o.label === "São Paulo — SP",
+			);
+			expect(spOption).toBeDefined();
+			act(() => result.current.setCityFilter(spOption?.value ?? ""));
+
+			expect(result.current.predicate(spCompany)).toBe(true);
+			expect(result.current.predicate(mgCompany)).toBe(false);
 		});
 
 		describe("janela de datas (createdAt vs dateRange)", () => {

@@ -2,15 +2,12 @@
 
 export const masks = {
 	cnpj: (value: string) => {
-		const cleaned = value.replace(/\D/g, "");
-		if (cleaned.length <= 14) {
-			return cleaned
-				.replace(/^(\d{2})(\d)/, "$1.$2")
-				.replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
-				.replace(/\.(\d{3})(\d)/, ".$1/$2")
-				.replace(/(\d{4})(\d)/, "$1-$2");
-		}
-		return value;
+		const cleaned = value.replace(/\D/g, "").slice(0, 14);
+		return cleaned
+			.replace(/^(\d{2})(\d)/, "$1.$2")
+			.replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
+			.replace(/\.(\d{3})(\d)/, ".$1/$2")
+			.replace(/(\d{4})(\d)/, "$1-$2");
 	},
 
 	cpf: (value: string) => {
@@ -22,26 +19,20 @@ export const masks = {
 	},
 
 	cep: (value: string) => {
-		const cleaned = value.replace(/\D/g, "");
-		if (cleaned.length <= 8) {
-			return cleaned.replace(/^(\d{5})(\d)/, "$1-$2");
-		}
-		return value;
+		const cleaned = value.replace(/\D/g, "").slice(0, 8);
+		return cleaned.replace(/^(\d{5})(\d)/, "$1-$2");
 	},
 
 	phone: (value: string) => {
-		const cleaned = value.replace(/\D/g, "");
-		if (cleaned.length <= 11) {
-			if (cleaned.length <= 10) {
-				return cleaned
-					.replace(/^(\d{2})(\d)/, "($1) $2")
-					.replace(/(\d{4})(\d)/, "$1-$2");
-			}
+		const cleaned = value.replace(/\D/g, "").slice(0, 11);
+		if (cleaned.length <= 10) {
 			return cleaned
 				.replace(/^(\d{2})(\d)/, "($1) $2")
-				.replace(/(\d{5})(\d)/, "$1-$2");
+				.replace(/(\d{4})(\d)/, "$1-$2");
 		}
-		return value;
+		return cleaned
+			.replace(/^(\d{2})(\d)/, "($1) $2")
+			.replace(/(\d{5})(\d)/, "$1-$2");
 	},
 
 	// Máscara de moeda (BRL) digitada da direita p/ esquerda: "150" -> "1,50".

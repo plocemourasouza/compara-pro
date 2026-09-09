@@ -13,6 +13,11 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 
+export interface CityOption {
+	value: string;
+	label: string;
+}
+
 export interface CompanyFiltersState {
 	statusFilter: string;
 	setStatusFilter: (value: string) => void;
@@ -23,8 +28,28 @@ export interface CompanyFiltersState {
 	dateRange: DateRange | undefined;
 	setDateRange: (value: DateRange | undefined) => void;
 	stateOptions: string[];
-	cityOptions: string[];
+	cityOptions: CityOption[];
 	predicate: (company: Company) => boolean;
+}
+
+// Separador da chave composta "<estado>::<cidade>" usada em `cityOptions`
+// quando stateFilter === "all" (dois nomes de cidade iguais em estados
+// diferentes precisam de identidade própria — ver cityOptions abaixo). ":"
+// não é um caractere válido em nome de cidade brasileira nem em UF, então a
+// composição é livre de colisão e ainda dá pra ler/depurar a olho nu.
+const CITY_STATE_SEPARATOR = "::";
+
+/** Desfaz a chave composta de `cityOptions`; `state: null` = opção "plana" (sem estado). */
+function parseCityOptionValue(value: string): {
+	state: string | null;
+	city: string;
+} {
+	const separatorIndex = value.indexOf(CITY_STATE_SEPARATOR);
+	if (separatorIndex === -1) return { state: null, city: value };
+	return {
+		state: value.slice(0, separatorIndex),
+		city: value.slice(separatorIndex + CITY_STATE_SEPARATOR.length),
+	};
 }
 
 /**
@@ -47,27 +72,61 @@ export function useCompanyFilters(companies: Company[]): CompanyFiltersState {
 		[companies],
 	);
 
-	const cityOptions = useMemo(
-		() =>
-			Array.from(
+	const cityOptions = useMemo<CityOption[]>(() => {
+		if (stateFilter !== "all") {
+			// Dentro de um único estado não há ambiguidade: valor e label são o
+			// nome puro da cidade, como antes.
+			return Array.from(
 				new Set(
 					companies
-						.filter((c) => stateFilter === "all" || c.state === stateFilter)
+						.filter((c) => c.state === stateFilter)
 						.map((c) => c.city)
 						.filter(Boolean) as string[],
 				),
-			).sort((a, b) => a.localeCompare(b, "pt-BR")),
-		[companies, stateFilter],
-	);
+			)
+				.sort((a, b) => a.localeCompare(b, "pt-BR"))
+				.map((city) => ({ value: city, label: city }));
+		}
 
-	// Cidade depende do Estado: reseta se a cidade escolhida sai da lista
+		// stateFilter "all": duas cidades de mesmo nome em estados diferentes
+		// (ex.: "São Paulo/SP" e "São Paulo/MG") são entidades distintas, então a
+		// identidade da opção é o par estado+cidade, não só o nome. Empresa sem
+		// estado cadastrado cai numa opção "plana" (dedupe só por nome), igual ao
+		// comportamento anterior para esse caso residual.
+		const options = new Map<string, CityOption>();
+		for (const c of companies) {
+			if (!c.city) continue;
+			const value = c.state
+				? `${c.state}${CITY_STATE_SEPARATOR}${c.city}`
+				: c.city;
+			if (!options.has(value)) {
+				const label = c.state ? `${c.city} — ${c.state}` : c.city;
+				options.set(value, { value, label });
+			}
+		}
+		return Array.from(options.values()).sort((a, b) =>
+			a.label.localeCompare(b.label, "pt-BR"),
+		);
+	}, [companies, stateFilter]);
+
+	// Cidade depende do Estado: reseta se a cidade escolhida sai da lista. Isso
+	// também cobre a transição stateFilter "all" → "SP": o valor composto
+	// "SP::São Paulo" deixa de existir na nova lista (que passa a ter só nomes
+	// planos) e o filtro cai para "all" sem precisar de um caso especial.
 	useEffect(() => {
-		if (cityFilter !== "all" && !cityOptions.includes(cityFilter)) {
+		if (
+			cityFilter !== "all" &&
+			!cityOptions.some((option) => option.value === cityFilter)
+		) {
 			setCityFilter("all");
 		}
 	}, [cityOptions, cityFilter]);
 
 	const predicate = useMemo(() => {
+		// `setHours` normaliza `dateRange.from`/`.to` (já em horário local) para o
+		// início/fim do dia local, propositalmente — a intenção é "criado neste
+		// dia no fuso do usuário", não um instante UTC fixo. Não "corrigir" isso
+		// para UTC: quebraria a fronteira do dia para quem não está em UTC.
 		const fromTime = dateRange?.from
 			? new Date(dateRange.from).setHours(0, 0, 0, 0)
 			: null;
@@ -78,7 +137,11 @@ export function useCompanyFilters(companies: Company[]): CompanyFiltersState {
 			if (statusFilter !== "all" && (c.status ?? "ACTIVE") !== statusFilter)
 				return false;
 			if (stateFilter !== "all" && c.state !== stateFilter) return false;
-			if (cityFilter !== "all" && c.city !== cityFilter) return false;
+			if (cityFilter !== "all") {
+				const parsed = parseCityOptionValue(cityFilter);
+				if (c.city !== parsed.city) return false;
+				if (parsed.state !== null && c.state !== parsed.state) return false;
+			}
 			if (fromTime !== null || toTime !== null) {
 				const created = new Date(c.createdAt).getTime();
 				if (fromTime !== null && created < fromTime) return false;
@@ -156,8 +219,8 @@ export function CompanyFilterControls({
 				<SelectContent>
 					<SelectItem value="all">Todas as cidades</SelectItem>
 					{cityOptions.map((city) => (
-						<SelectItem key={city} value={city}>
-							{city}
+						<SelectItem key={city.value} value={city.value}>
+							{city.label}
 						</SelectItem>
 					))}
 				</SelectContent>
