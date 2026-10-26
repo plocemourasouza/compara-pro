@@ -16,6 +16,7 @@ vi.mock("@/lib/db", () => ({
 import {
 	canRevealCnpj,
 	getRepresentedSupplierIds,
+	ownsUploadCompany,
 	scopedCompanyFilter,
 } from "./auth-scope";
 
@@ -86,6 +87,34 @@ describe("scopedCompanyFilter", () => {
 			company: { id: "agency1" },
 		});
 		expect(f).toEqual({ in: [] });
+	});
+});
+
+describe("ownsUploadCompany", () => {
+	const rep = {
+		id: "u1",
+		area: "REPRESENTATIVE",
+		company: { id: "agency1" },
+	};
+
+	it("deixa o representante abrir a lista de um fornecedor da carteira", () => {
+		expect(ownsUploadCompany(rep, "alfa", ["alfa", "beta"])).toBe(true);
+	});
+
+	it("recusa a lista de um fornecedor fora da carteira", () => {
+		expect(ownsUploadCompany(rep, "estranha", ["alfa"])).toBe(false);
+	});
+
+	it("deixa o admin abrir qualquer lista", () => {
+		expect(ownsUploadCompany({ id: "admin", area: "ADMIN" }, "alfa", [])).toBe(
+			true,
+		);
+	});
+
+	it("deixa o comprador abrir só a lista da própria empresa", () => {
+		const client = { id: "u2", area: "CLIENT", company: { id: "loja" } };
+		expect(ownsUploadCompany(client, "loja", ["alfa"])).toBe(true);
+		expect(ownsUploadCompany(client, "alfa", ["alfa"])).toBe(false);
 	});
 });
 

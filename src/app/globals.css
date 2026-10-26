@@ -8,6 +8,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --color-primary-hover: var(--primary-hover);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -25,6 +26,7 @@
   --color-input: var(--input);
   --color-border: var(--border);
   --color-success: var(--success);
+  --color-warning: var(--warning);
   --color-destructive: var(--destructive);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
@@ -45,97 +47,102 @@
 }
 
 /*
- * Cursor-inspired design tokens — warm paper canvas, vivid orange accent,
- * warm grayscale hairlines, tight technical radii. See design review.
+ * Compara Pró — blue identity from the landing.
+ * Neutrals stay cool. Green is success and the winning price.
+ * Red is error. Warning is a separate indigo, never orange.
  */
 :root {
-	--radius: 0.5rem; /* 8px — tighter, more technical */
+	--radius: 0.5rem;
 
-	--background: #f7f7f4; /* warm paper */
-	--foreground: #26251e; /* warm ink */
+	--background: #f7f8fc;
+	--foreground: #192b49;
 
 	--card: #ffffff;
-	--card-foreground: #26251e;
+	--card-foreground: #192b49;
 	--popover: #ffffff;
-	--popover-foreground: #26251e;
+	--popover-foreground: #192b49;
 
-	--primary: #f54e00; /* Cursor orange */
+	--primary: #245bcf;
+	--primary-hover: #1747ab;
 	--primary-foreground: #ffffff;
 
-	--secondary: #efeee8;
-	--secondary-foreground: #26251e;
+	--secondary: #eaf0ff;
+	--secondary-foreground: #192b49;
 
-	--muted: #efeee8;
-	--muted-foreground: #807d72; /* warm muted */
+	--muted: #eaf0ff;
+	--muted-foreground: #657187;
 
-	--accent: #f1ede8;
-	--accent-foreground: #26251e;
+	--accent: #eaf0ff;
+	--accent-foreground: #192b49;
 
 	--destructive: #cf2d56;
 	--success: #1f8a65;
+	--warning: #3b4f86;
 
-	--border: #e6e5e0; /* warm hairline */
-	--input: #e6e5e0;
-	--ring: #f54e00; /* orange focus ring */
+	--border: #dce2ec;
+	--input: #dce2ec;
+	--ring: #245bcf;
 
-	--chart-1: #f54e00;
+	--chart-1: #245bcf;
 	--chart-2: #9fc9a2;
 	--chart-3: #9fbbe0;
 	--chart-4: #c0a8dd;
-	--chart-5: #c08532;
+	--chart-5: #5b6b82;
 
-	--sidebar: #fafaf7;
-	--sidebar-foreground: #26251e;
-	--sidebar-primary: #f54e00;
+	--sidebar: #f7f8fc;
+	--sidebar-foreground: #192b49;
+	--sidebar-primary: #245bcf;
 	--sidebar-primary-foreground: #ffffff;
-	--sidebar-accent: #efeee8;
-	--sidebar-accent-foreground: #26251e;
-	--sidebar-border: #e6e5e0;
-	--sidebar-ring: #f54e00;
+	--sidebar-accent: #eaf0ff;
+	--sidebar-accent-foreground: #192b49;
+	--sidebar-border: #dce2ec;
+	--sidebar-ring: #245bcf;
 }
 
 .dark {
-	--background: #191814; /* warm near-black */
-	--foreground: #f2f1ea;
+	--background: #172a49;
+	--foreground: #f7f8fc;
 
-	--card: #221f1a;
-	--card-foreground: #f2f1ea;
-	--popover: #221f1a;
-	--popover-foreground: #f2f1ea;
+	--card: #1e365c;
+	--card-foreground: #f7f8fc;
+	--popover: #1e365c;
+	--popover-foreground: #f7f8fc;
 
-	--primary: #f54e00; /* orange holds on dark */
+	--primary: #245bcf;
+	--primary-hover: #1747ab;
 	--primary-foreground: #ffffff;
 
-	--secondary: #2a2720;
-	--secondary-foreground: #f2f1ea;
+	--secondary: #243a5c;
+	--secondary-foreground: #f7f8fc;
 
-	--muted: #2a2720;
-	--muted-foreground: #a09c92;
+	--muted: #243a5c;
+	--muted-foreground: #c5d0e0;
 
-	--accent: #2a2720;
-	--accent-foreground: #f2f1ea;
+	--accent: #243e6e;
+	--accent-foreground: #f7f8fc;
 
 	--destructive: #e84a6f;
 	--success: #3fae86;
+	--warning: #c9d4f2;
 
-	--border: #322e26;
-	--input: #322e26;
-	--ring: #f54e00;
+	--border: #314866;
+	--input: #314866;
+	--ring: #245bcf;
 
-	--chart-1: #f54e00;
+	--chart-1: #245bcf;
 	--chart-2: #9fc9a2;
 	--chart-3: #9fbbe0;
 	--chart-4: #c0a8dd;
-	--chart-5: #c08532;
+	--chart-5: #8aa4c8;
 
-	--sidebar: #16150f;
-	--sidebar-foreground: #f2f1ea;
-	--sidebar-primary: #f54e00;
+	--sidebar: #13233f;
+	--sidebar-foreground: #f7f8fc;
+	--sidebar-primary: #245bcf;
 	--sidebar-primary-foreground: #ffffff;
-	--sidebar-accent: #2a2720;
-	--sidebar-accent-foreground: #f2f1ea;
-	--sidebar-border: #322e26;
-	--sidebar-ring: #f54e00;
+	--sidebar-accent: #243a5c;
+	--sidebar-accent-foreground: #f7f8fc;
+	--sidebar-border: #314866;
+	--sidebar-ring: #245bcf;
 }
 
 @layer base {
@@ -143,6 +150,10 @@
 		@apply border-border outline-ring/50;
 	}
 	body {
-		@apply bg-background text-foreground;
+		@apply bg-background font-sans text-foreground;
+	}
+	::selection {
+		background: var(--primary);
+		color: var(--primary-foreground);
 	}
 }

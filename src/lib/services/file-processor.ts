@@ -1,7 +1,9 @@
 import * as XLSX from "xlsx";
+import type { Prisma } from "@/generated/prisma";
 import { prisma } from "@/lib/db";
 import { applyMapping, buildRows } from "@/lib/file-mapping";
 import { OptimizedProductMatcher } from "@/lib/services/optimized-product-matcher";
+import { describeRowError } from "@/lib/upload-row-error";
 import {
 	type ClientRequirement,
 	type ColumnMapping,
@@ -19,6 +21,7 @@ export interface ProcessingError {
 	row: number;
 	field?: string;
 	message: string;
+	value?: string;
 }
 
 export interface ProcessingResult {
@@ -109,6 +112,10 @@ export class FileProcessor {
 					status: result.errors.length === totalRows ? "FAILED" : "COMPLETED",
 					processedRows: result.processedRows,
 					errorRows: result.errorRows,
+					errorDetails: result.errors.slice(
+						0,
+						200,
+					) as unknown as Prisma.InputJsonValue,
 					processedAt: new Date(),
 					isActive: uploadType === "SUPPLIER_PRODUCTS",
 					priceChangeIndicator,
@@ -229,6 +236,7 @@ export class FileProcessor {
 			const row = data[i];
 			if (!row) continue;
 			const rowNumber = i + 2; // Excel rows start at 1, plus header
+			let source: Record<string, unknown> = {};
 
 			try {
 				// Validate and process based on upload type
@@ -238,6 +246,7 @@ export class FileProcessor {
 					if (columnMapping) {
 						// Use explicit column mapping supplied by the caller
 						const mapped = applyMapping(row, columnMapping);
+						source = mapped;
 						validatedData = supplierProductSchema.parse({
 							sku:
 								mapped.sku != null && mapped.sku !== ""
@@ -265,6 +274,7 @@ export class FileProcessor {
 					} else {
 						// Auto-normalize path (existing behavior — unchanged)
 						const normalizedRow = FileProcessor.normalizeRow(row);
+						source = normalizedRow;
 						validatedData = supplierProductSchema.parse({
 							sku: normalizedRow.sku || null,
 							code: normalizedRow.code || null,
@@ -278,6 +288,10 @@ export class FileProcessor {
 				} else {
 					// CLIENT_REQUIREMENTS — mapping support not required; keep auto path
 					const normalizedRow = FileProcessor.normalizeRow(row);
+					source = {
+						...normalizedRow,
+						targetPrice: normalizedRow.targetprice ?? normalizedRow.targetPrice,
+					};
 					validatedData = clientRequirementSchema.parse({
 						sku: normalizedRow.sku || null,
 						code: normalizedRow.code || null,
@@ -314,17 +328,13 @@ export class FileProcessor {
 				processedRows++;
 			} catch (error) {
 				errorRows++;
-				if (error instanceof Error) {
-					errors.push({
-						row: rowNumber,
-						message: error.message,
-					});
-				} else {
-					errors.push({
-						row: rowNumber,
-						message: "Unknown validation error",
-					});
-				}
+				const described = describeRowError(error, source);
+				errors.push({
+					row: rowNumber,
+					...(described.field ? { field: described.field } : {}),
+					message: described.message,
+					value: described.value ?? "",
+				});
 			}
 		}
 

@@ -31,7 +31,12 @@ export interface UploadDetail extends Upload {
 		category?: string;
 		unit?: string;
 	}>;
-	errors?: Array<{ row: number; error: string }>;
+	errors?: Array<{
+		row: number;
+		field?: string;
+		error: string;
+		value?: string;
+	}>;
 }
 
 export function getStatusLabel(status: string): string {

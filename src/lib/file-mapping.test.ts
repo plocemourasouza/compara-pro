@@ -311,6 +311,16 @@ describe("detectHeaderRow", () => {
 		];
 		expect(detectHeaderRow(aoa).headers[1]).toBe("__col1");
 	});
+
+	it("keeps every column when two headers share the same text", () => {
+		const aoa = [
+			["Nome", "137", "137"],
+			["Parafuso", "A", "B"],
+		];
+		const { headers } = detectHeaderRow(aoa);
+		expect(headers).toEqual(["Nome", "137", "137 (coluna 3)"]);
+		expect(new Set(headers).size).toBe(headers.length);
+	});
 });
 
 // ---------------------------------------------------------------------------
@@ -359,5 +369,18 @@ describe("buildRows", () => {
 
 	it("returns empty for an empty sheet", () => {
 		expect(buildRows([])).toEqual({ headers: [], rows: [] });
+	});
+
+	it("preserves both values when two columns share a header", () => {
+		const aoa = [
+			["Nome", "137", "137"],
+			["Parafuso", "A", "B"],
+		];
+		const { rows } = buildRows(aoa);
+		expect(rows[0]).toEqual({
+			Nome: "Parafuso",
+			"137": "A",
+			"137 (coluna 3)": "B",
+		});
 	});
 });

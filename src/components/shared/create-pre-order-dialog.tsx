@@ -2,6 +2,7 @@
 
 import { Building2, Package, ShoppingCart } from "lucide-react";
 import { useState } from "react";
+import { WinningPrice } from "@/components/shared/price-cell";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -228,9 +229,14 @@ export default function CreatePreOrderDialog({
 												</div>
 
 												<div className="text-right">
-													<div className="text-lg font-bold text-success">
-														{formatCurrency(supplierMatch.price)}
-													</div>
+													{match.bestPrice != null &&
+													supplierMatch.price === match.bestPrice ? (
+														<WinningPrice price={supplierMatch.price} />
+													) : (
+														<div className="text-lg font-bold">
+															{formatCurrency(supplierMatch.price)}
+														</div>
+													)}
 													{isSelected && (
 														<div className="mt-2">
 															<Label

@@ -10,7 +10,7 @@ export const STATUS_LABELS: Record<CompanyStatus, string> = {
 
 const STATUS_STYLES: Record<CompanyStatus, string> = {
 	ACTIVE: "border-transparent bg-success/10 text-success",
-	BLOCKED: "border-transparent bg-amber-500/10 text-amber-600",
+	BLOCKED: "border-transparent bg-warning/10 text-warning",
 	INACTIVE: "border-transparent bg-muted text-muted-foreground",
 };
 

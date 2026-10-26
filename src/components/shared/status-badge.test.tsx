@@ -23,7 +23,7 @@ describe("StatusBadge", () => {
 		it("BLOCKED → label e classe corretas", () => {
 			render(<StatusBadge status="BLOCKED" />);
 			const badge = screen.getByText("Bloqueado");
-			expect(badge).toHaveClass("bg-amber-500/10", "text-amber-600");
+			expect(badge).toHaveClass("bg-warning/10", "text-warning");
 		});
 
 		it("INACTIVE → label e classe corretas", () => {

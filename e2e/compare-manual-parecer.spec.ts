@@ -61,20 +61,20 @@ test("parecer renderiza no fluxo e override confirma pré-pedido (T-08)", async 
 		timeout: 30_000,
 	});
 
-	// Override: troca o fornecedor escolhido de um produto (último combobox = um
-	// produto com Alfa/Beta; o primeiro combobox é o seletor de lista).
-	const combos = page.getByRole("combobox");
-	const n = await combos.count();
-	const supplierSelect = combos.nth(n - 1);
-	await supplierSelect.scrollIntoViewIfNeeded();
-	await supplierSelect.click();
-	const options = page.getByRole("option");
-	await expect(options.first()).toBeVisible({ timeout: 10_000 });
-	if ((await options.count()) > 1) {
-		await options.nth(1).click(); // fornecedor alternativo
-	} else {
-		await page.keyboard.press("Escape");
+	// Override: clica numa célula que não é o menor preço da linha.
+	const offers = page.getByRole("button", { name: /R\$/ });
+	await expect(offers.first()).toBeVisible({ timeout: 10_000 });
+	const count = await offers.count();
+	let picked = false;
+	for (let index = 0; index < count; index++) {
+		const name = (await offers.nth(index).getAttribute("aria-label")) ?? "";
+		if (!/menor preço/i.test(name)) {
+			await offers.nth(index).click();
+			picked = true;
+			break;
+		}
 	}
+	expect(picked).toBe(true);
 
 	// Confirma o pré-pedido com o override aplicado.
 	await page.getByRole("button", { name: /confirmar pré-pedido/i }).click();

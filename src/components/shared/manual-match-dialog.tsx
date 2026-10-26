@@ -217,7 +217,7 @@ export default function ManualMatchDialog({
 										</div>
 										{product.price && (
 											<div className="text-right">
-												<p className="font-bold text-lg text-success">
+												<p className="font-bold text-lg text-foreground">
 													{formatCurrency(product.price)}
 												</p>
 												{product.unit && (

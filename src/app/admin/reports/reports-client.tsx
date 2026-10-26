@@ -70,7 +70,7 @@ function formatCurrency(value: number): string {
 }
 
 const COMPANY_COLORS = ["#9fbbe0", "#1f8a65"];
-const PREORDER_COLORS = ["#c08532", "#1f8a65", "#d4574e"];
+const PREORDER_COLORS = ["#245bcf", "#1f8a65", "#d4574e"];
 
 export function ReportsClient({ user: _user }: ReportsClientProps) {
 	const [metrics, setMetrics] = useState<Metrics | null>(null);
@@ -241,8 +241,8 @@ export function ReportsClient({ user: _user }: ReportsClientProps) {
 											{formatCurrency(metrics.preOrders.totalValue)}
 										</p>
 									</div>
-									<div className="p-2 bg-orange-100 rounded-full">
-										<TrendingUp className="h-6 w-6 text-orange-600" />
+									<div className="p-2 bg-primary/10 rounded-full">
+										<TrendingUp className="h-6 w-6 text-primary" />
 									</div>
 								</div>
 							</CardContent>

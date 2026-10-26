@@ -4,6 +4,7 @@ import { ArrowLeft, Loader2, TriangleAlert } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { WinningPrice } from "@/components/shared/price-cell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -209,16 +210,13 @@ export default function IndicationsClient({
 											</div>
 										</TableCell>
 										<TableCell className="text-right">
-											<div className="flex items-center justify-end gap-2">
+											{it.isBest ? (
+												<WinningPrice price={it.price} label="menor" />
+											) : (
 												<span className="font-medium">
 													{formatters.currency(it.price)}
 												</span>
-												{it.isBest && (
-													<Badge variant="default" className="text-xs">
-														menor
-													</Badge>
-												)}
-											</div>
+											)}
 										</TableCell>
 									</TableRow>
 								))}
@@ -232,7 +230,7 @@ export default function IndicationsClient({
 				<Card>
 					<CardHeader>
 						<CardTitle className="flex items-center gap-2 text-lg">
-							<TriangleAlert className="h-5 w-5 text-amber-500" />
+							<TriangleAlert className="h-5 w-5 text-warning" />
 							Oportunidades (concorrência atende, você não)
 						</CardTitle>
 						<CardDescription>
@@ -263,9 +261,14 @@ export default function IndicationsClient({
 											{g.otherSuppliers}
 										</TableCell>
 										<TableCell className="text-right">
-											{g.bestPriceElsewhere != null
-												? formatters.currency(g.bestPriceElsewhere)
-												: "—"}
+											{g.bestPriceElsewhere != null ? (
+												<WinningPrice
+													price={g.bestPriceElsewhere}
+													label="menor"
+												/>
+											) : (
+												"—"
+											)}
 										</TableCell>
 									</TableRow>
 								))}

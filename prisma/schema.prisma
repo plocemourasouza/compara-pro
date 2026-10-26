@@ -250,6 +250,7 @@ model UploadHistory {
   totalRows            Int
   processedRows        Int
   errorRows            Int
+  errorDetails         Json? // erros de linha: { row, field?, message }
   uploadType           UploadType // SUPPLIER_PRODUCTS, CLIENT_REQUIREMENTS
   status               UploadStatus // PROCESSING, COMPLETED, FAILED
   isActive             Boolean           @default(false) // Only one active per company for suppliers

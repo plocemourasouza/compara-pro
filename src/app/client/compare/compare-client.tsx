@@ -6,7 +6,6 @@ import {
 	CheckCircle,
 	Filter,
 	PiggyBank,
-	Plus,
 	Search,
 	ShoppingCart,
 	TrendingUp,
@@ -16,13 +15,16 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import ParecerPanel from "@/components/compare/parecer-panel";
+import {
+	type ComparisonSupplierColumn,
+	ComparisonTable,
+	type ComparisonTableRow,
+} from "@/components/shared/comparison-table";
 import { ErrorBoundary } from "@/components/shared/error-boundary";
 import ManualMatchDialog from "@/components/shared/manual-match-dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import {
 	Select,
@@ -33,7 +35,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { formatCurrency } from "@/lib/format";
-import { calcItemSavings, calcTotalSavings } from "@/lib/savings";
+import { calcTotalSavings } from "@/lib/savings";
 
 type User = {
 	id: string;
@@ -66,6 +68,8 @@ interface ClientProduct {
 	name: string;
 	sku?: string;
 	code?: string;
+	unit?: string | null;
+	quantity?: number | null;
 	targetPrice?: number | null;
 }
 
@@ -159,10 +163,11 @@ export default function CompareClient({ user: _user }: CompareClientProps) {
 				if (!best || sm.price < best.price) best = sm;
 			}
 			if (best) {
+				const listed = m.clientProduct.quantity;
 				next[m.id] = {
 					included: true,
 					supplierId: best.supplier.id,
-					quantity: 1,
+					quantity: listed && listed > 0 ? listed : 1,
 				};
 			}
 		}
@@ -224,19 +229,6 @@ export default function CompareClient({ user: _user }: CompareClientProps) {
 		}
 	};
 
-	const getMatchTypeColor = (type: string) => {
-		switch (type) {
-			case "SKU":
-				return "bg-success/10 text-success";
-			case "CODE":
-				return "bg-primary/10 text-primary";
-			case "NAME":
-				return "bg-yellow-100 text-yellow-800";
-			default:
-				return "bg-destructive/10 text-destructive";
-		}
-	};
-
 	const filteredMatches =
 		comparison?.matches.filter((match) => {
 			if (searchTerm) {
@@ -294,11 +286,46 @@ export default function CompareClient({ user: _user }: CompareClientProps) {
 		}
 	};
 
-	const chosenSupplierMatch = (m: Match): SupplierMatch | undefined => {
-		const sel = selections[m.id];
-		if (!sel) return undefined;
-		return m.supplierMatches.find((sm) => sm.supplier.id === sel.supplierId);
-	};
+	const comparisonSuppliers: ComparisonSupplierColumn[] = comparison
+		? [...comparison.matches]
+				.flatMap((match) =>
+					match.supplierMatches.map((offer) => offer.supplier),
+				)
+				.filter(
+					(supplier, index, all) =>
+						all.findIndex((item) => item.id === supplier.id) === index,
+				)
+				.sort((a, b) => a.name.localeCompare(b.name, "pt-BR"))
+		: [];
+
+	const comparisonRows: ComparisonTableRow[] = filteredMatches.map((match) => {
+		const selection = selections[match.id];
+		const product = match.clientProduct;
+		const meta = [
+			product.sku && `SKU ${product.sku}`,
+			product.code && `Código ${product.code}`,
+			product.unit,
+			getMatchTypeLabel(match.matchType),
+		]
+			.filter(Boolean)
+			.join(" · ");
+		return {
+			id: match.id,
+			name: product.name,
+			meta: meta || undefined,
+			quantity:
+				selection?.quantity ??
+				(product.quantity && product.quantity > 0 ? product.quantity : 1),
+			included: selection?.included ?? false,
+			offers: match.supplierMatches.map((offer) => ({
+				supplierId: offer.supplier.id,
+				price: offer.price,
+			})),
+			bestPrice: match.bestPrice,
+			selectedSupplierId: selection?.supplierId,
+			unmatched: match.supplierMatches.length === 0,
+		};
+	});
 
 	const groupSummary = (): GroupSummary[] => {
 		if (!comparison) return [];
@@ -505,14 +532,14 @@ export default function CompareClient({ user: _user }: CompareClientProps) {
 						<Card>
 							<CardContent className="p-6">
 								<div className="flex items-center">
-									<div className="p-2 bg-yellow-100 rounded-lg">
-										<TrendingUp className="h-6 w-6 text-yellow-600" />
+									<div className="p-2 bg-primary/10 rounded-lg">
+										<TrendingUp className="h-6 w-6 text-primary" />
 									</div>
 									<div className="ml-4">
 										<p className="text-sm font-medium text-muted-foreground">
 											Valor Total
 										</p>
-										<p className="text-2xl font-bold text-yellow-600">
+										<p className="text-2xl font-bold text-primary">
 											{comparison.bestPriceTotal
 												? formatCurrency(comparison.bestPriceTotal)
 												: "-"}
@@ -608,7 +635,6 @@ export default function CompareClient({ user: _user }: CompareClientProps) {
 						</CardContent>
 					</Card>
 
-					{/* Results — inline override per product */}
 					<Card>
 						<CardHeader>
 							<CardTitle>Resultados da Comparação</CardTitle>
@@ -618,148 +644,7 @@ export default function CompareClient({ user: _user }: CompareClientProps) {
 							</p>
 						</CardHeader>
 						<CardContent>
-							<div className="space-y-4">
-								{filteredMatches.map((match) => {
-									const sel = selections[match.id];
-									const chosen = chosenSupplierMatch(match);
-									const above =
-										chosen && match.bestPrice
-											? chosen.price - match.bestPrice
-											: 0;
-									const itemSavings = sel
-										? calcItemSavings(
-												match.clientProduct.targetPrice,
-												chosen?.price,
-												sel.quantity,
-											)
-										: 0;
-									return (
-										<div key={match.id} className="border rounded-lg p-4">
-											<div className="flex justify-between items-start mb-3">
-												<div className="flex-1">
-													<h4 className="font-semibold">
-														{match.clientProduct.name}
-													</h4>
-													<div className="flex gap-2 text-sm text-muted-foreground mt-1">
-														{match.clientProduct.sku && (
-															<span>SKU: {match.clientProduct.sku}</span>
-														)}
-														{match.clientProduct.code && (
-															<span>Código: {match.clientProduct.code}</span>
-														)}
-													</div>
-												</div>
-												<div className="flex items-center gap-2">
-													<Badge className={getMatchTypeColor(match.matchType)}>
-														{getMatchTypeLabel(match.matchType)}
-													</Badge>
-													{match.bestPrice && (
-														<Badge variant="outline" className="font-semibold">
-															Melhor: {formatCurrency(match.bestPrice)}
-														</Badge>
-													)}
-												</div>
-											</div>
-
-											{match.supplierMatches.length > 0 && sel ? (
-												<div className="flex flex-col gap-3 rounded bg-muted/40 p-3 sm:flex-row sm:items-end">
-													<span className="flex items-center gap-2 text-sm">
-														<Checkbox
-															checked={sel.included}
-															onCheckedChange={(c) =>
-																updateSel(match.id, { included: c === true })
-															}
-														/>
-														Incluir
-													</span>
-													<div className="flex-1">
-														<span className="text-xs text-muted-foreground">
-															Fornecedor
-														</span>
-														<Select
-															value={sel.supplierId}
-															onValueChange={(v) =>
-																updateSel(match.id, { supplierId: v })
-															}
-														>
-															<SelectTrigger>
-																<SelectValue />
-															</SelectTrigger>
-															<SelectContent>
-																{match.supplierMatches.map((sm) => (
-																	<SelectItem
-																		key={sm.id}
-																		value={sm.supplier.id}
-																	>
-																		{sm.supplier.name} —{" "}
-																		{formatCurrency(sm.price)}
-																	</SelectItem>
-																))}
-															</SelectContent>
-														</Select>
-														{above > 0 && (
-															<p className="mt-1 text-xs text-destructive">
-																+{formatCurrency(above)} acima do melhor preço
-															</p>
-														)}
-													</div>
-													<div className="w-24">
-														<span className="text-xs text-muted-foreground">
-															Quantidade
-														</span>
-														<Input
-															type="number"
-															min={1}
-															value={sel.quantity}
-															onChange={(e) =>
-																updateSel(match.id, {
-																	quantity: Math.max(
-																		1,
-																		Number(e.target.value) || 1,
-																	),
-																})
-															}
-														/>
-													</div>
-													<div className="text-right">
-														<span className="text-xs text-muted-foreground">
-															Subtotal
-														</span>
-														<p className="font-bold">
-															{formatCurrency(
-																(chosen?.price ?? 0) * sel.quantity,
-															)}
-														</p>
-														{itemSavings > 0 && (
-															<p className="text-xs font-medium text-green-600">
-																Economia {formatCurrency(itemSavings)}
-															</p>
-														)}
-													</div>
-												</div>
-											) : (
-												<div className="text-center p-4 text-muted-foreground">
-													<XCircle className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-													<p>Produto não encontrado nos fornecedores</p>
-													<Button
-														variant="outline"
-														size="sm"
-														className="mt-2"
-														onClick={() =>
-															handleManualMatch(match.clientProduct)
-														}
-													>
-														<Plus className="h-4 w-4 mr-2" />
-														Buscar Manualmente
-													</Button>
-												</div>
-											)}
-										</div>
-									);
-								})}
-							</div>
-
-							{filteredMatches.length === 0 && (
+							{filteredMatches.length === 0 ? (
 								<div className="text-center py-8 text-muted-foreground">
 									<Search className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
 									<h3 className="text-lg font-semibold mb-2">
@@ -767,6 +652,26 @@ export default function CompareClient({ user: _user }: CompareClientProps) {
 									</h3>
 									<p>Tente ajustar os filtros ou o termo de busca.</p>
 								</div>
+							) : (
+								<ComparisonTable
+									suppliers={comparisonSuppliers}
+									rows={comparisonRows}
+									onToggleIncluded={(id, included) =>
+										updateSel(id, { included })
+									}
+									onQuantityChange={(id, quantity) =>
+										updateSel(id, { quantity })
+									}
+									onSelectSupplier={(id, supplierId) =>
+										updateSel(id, { supplierId })
+									}
+									onManualMatch={(id) => {
+										const match = filteredMatches.find(
+											(item) => item.id === id,
+										);
+										if (match) handleManualMatch(match.clientProduct);
+									}}
+								/>
 							)}
 						</CardContent>
 					</Card>

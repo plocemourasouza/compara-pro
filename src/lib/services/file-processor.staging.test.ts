@@ -98,11 +98,38 @@ describe("FileProcessor.processData — staging vs catalog routing", () => {
 			"company-1",
 		);
 
-		expect(result.errors).toHaveLength(1);
-		expect(result.errors[0]?.row).toBe(2);
+		expect(result.errors).toEqual([
+			{
+				row: 2,
+				field: "Nome",
+				message: "Campo obrigatório ausente: Nome",
+				value: "",
+			},
+		]);
 		expect(result.processedRows).toBe(0);
 		expect(prismaMock.product.upsert).not.toHaveBeenCalled();
 		expect(prismaMock.product.create).not.toHaveBeenCalled();
 		expect(prismaMock.uploadedProduct.create).not.toHaveBeenCalled();
+	});
+
+	it("preço negativo indica o campo Preço", async () => {
+		const rows = [{ Name: "Parafuso", Price: "-1" }];
+
+		// biome-ignore lint/complexity/useLiteralKeys: acesso por colchete alcança o método privado sem recorrer a `any` (ver docblock do arquivo)
+		const result = await FileProcessor["processData"](
+			rows,
+			"upload-4",
+			"SUPPLIER_PRODUCTS",
+			"company-1",
+		);
+
+		expect(result.errors).toEqual([
+			{
+				row: 2,
+				field: "Preço",
+				message: "Valor inválido no campo Preço",
+				value: "-1",
+			},
+		]);
 	});
 });

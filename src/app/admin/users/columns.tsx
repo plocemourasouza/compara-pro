@@ -126,7 +126,7 @@ export function getUsersColumns({
 				}
 				if (row.original.pending) {
 					return (
-						<Badge className="border-transparent bg-amber-500/10 text-amber-600">
+						<Badge className="border-transparent bg-warning/10 text-warning">
 							Pendente
 						</Badge>
 					);

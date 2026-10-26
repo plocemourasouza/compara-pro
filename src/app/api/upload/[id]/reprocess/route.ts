@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { getRepresentedSupplierIds, ownsUploadCompany } from "@/lib/auth-scope";
 import { getCurrentUser } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
 
@@ -15,10 +16,7 @@ export async function POST(
 		}
 
 		const upload = await prisma.uploadHistory.findUnique({
-			where: {
-				id: resolvedParams.id,
-				companyId: user.company?.id,
-			},
+			where: { id: resolvedParams.id },
 		});
 
 		if (!upload) {
@@ -26,6 +24,14 @@ export async function POST(
 				{ error: "Upload não encontrado" },
 				{ status: 404 },
 			);
+		}
+
+		const representedIds =
+			user.area === "REPRESENTATIVE"
+				? await getRepresentedSupplierIds(user)
+				: [];
+		if (!ownsUploadCompany(user, upload.companyId, representedIds)) {
+			return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
 		}
 
 		if (upload.status !== "FAILED") {

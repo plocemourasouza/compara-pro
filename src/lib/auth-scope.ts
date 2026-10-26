@@ -13,6 +13,22 @@ export type ScopeUser = {
  * da agência compartilham o mesmo conjunto. Sem agência ou sem vínculos → [].
  * Use para escopar produtos, uploads, pré-pedidos e carteira.
  */
+/**
+ * ADMIN vê qualquer lista. Representante vê as dos fornecedores da agência.
+ * Demais papéis só a lista da própria empresa.
+ */
+export function ownsUploadCompany(
+	user: ScopeUser,
+	uploadCompanyId: string,
+	representedSupplierIds: string[],
+): boolean {
+	if (user.area === "ADMIN") return true;
+	if (user.area === "REPRESENTATIVE") {
+		return representedSupplierIds.includes(uploadCompanyId);
+	}
+	return user.company?.id === uploadCompanyId;
+}
+
 export async function getRepresentedSupplierIds(
 	user: ScopeUser,
 ): Promise<string[]> {

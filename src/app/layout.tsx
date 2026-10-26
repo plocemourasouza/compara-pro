@@ -56,7 +56,7 @@ export default function RootLayout({
 	children: React.ReactNode;
 }>) {
 	return (
-		<html lang="en">
+		<html lang="pt">
 			<head>
 				<Script
 					id="suppress-extension-errors"
@@ -66,7 +66,7 @@ export default function RootLayout({
 				/>
 			</head>
 			<body
-				className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+				className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}
 				suppressHydrationWarning={true}
 			>
 				<TooltipProvider delayDuration={200}>{children}</TooltipProvider>

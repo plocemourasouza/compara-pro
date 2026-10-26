@@ -1,7 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server";
-import type { Prisma } from "@/generated/prisma";
+import { getRepresentedSupplierIds, ownsUploadCompany } from "@/lib/auth-scope";
 import { getCurrentUser } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
+import { storedUploadErrors } from "@/lib/upload-row-error";
 
 export async function GET(
 	_request: NextRequest,
@@ -15,14 +16,8 @@ export async function GET(
 			return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
 		}
 
-		// Admin vê qualquer upload; demais só os da própria empresa.
-		const where: Prisma.UploadHistoryWhereInput = { id: resolvedParams.id };
-		if (user.area !== "ADMIN") {
-			where.companyId = user.company?.id;
-		}
-
 		const upload = await prisma.uploadHistory.findFirst({
-			where,
+			where: { id: resolvedParams.id },
 			include: {
 				products: {
 					take: 50, // Limite para não sobrecarregar
@@ -46,10 +41,18 @@ export async function GET(
 			);
 		}
 
+		const representedIds =
+			user.area === "REPRESENTATIVE"
+				? await getRepresentedSupplierIds(user)
+				: [];
+		if (!ownsUploadCompany(user, upload.companyId, representedIds)) {
+			return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
+		}
+
 		// Upload de fornecedor: produtos vêm do CATÁLOGO (`products` por lastUploadId),
 		// não mais do staging UploadedProduct (F6 — staging supplier descontinuado).
 		// Client mantém o staging (guarda targetPrice/quantity).
-		const { products: stagingProducts, ...uploadRest } = upload;
+		const { products: stagingProducts, errorDetails, ...uploadRest } = upload;
 		const products =
 			upload.uploadType === "SUPPLIER_PRODUCTS"
 				? await prisma.product.findMany({
@@ -67,17 +70,12 @@ export async function GET(
 					})
 				: stagingProducts;
 
-		// Simular erros (em uma implementação real, isso viria de uma tabela de erros)
-		const errors =
-			upload.errorRows > 0
-				? Array.from(
-						{ length: Math.min(upload.errorRows, 10) },
-						(_, index) => ({
-							row: index + 1,
-							error: `Erro na linha ${index + 1}: Campo obrigatório ausente`,
-						}),
-					)
-				: [];
+		const errors = storedUploadErrors(errorDetails).map((item) => ({
+			row: item.row,
+			field: item.field,
+			error: item.message,
+			value: item.value,
+		}));
 
 		return NextResponse.json({
 			upload: {

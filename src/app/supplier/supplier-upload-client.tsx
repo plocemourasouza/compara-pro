@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/select";
 import type { HeaderMapping } from "@/lib/file-mapping";
 import { autoMapHeaders, buildRows, SUPPLIER_FIELDS } from "@/lib/file-mapping";
+import { filesFromDropEvent } from "@/lib/files-from-drop";
 import { cn } from "@/lib/utils";
 
 type User = {
@@ -149,6 +150,7 @@ export default function SupplierUploadClient({
 		},
 		multiple: false,
 		disabled: uploading || !supplierCompanyId,
+		getFilesFromEvent: (event) => Promise.resolve(filesFromDropEvent(event)),
 		maxSize: 10 * 1024 * 1024,
 		onDropRejected: (rejections) => {
 			const reason = rejections[0]?.errors[0];

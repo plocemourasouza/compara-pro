@@ -25,13 +25,13 @@ export default async function ClientLayout({
 		<div className="h-screen overflow-hidden bg-muted">
 			<div className="flex h-full">
 				<ClientSidebar user={user} />
-				<main className="flex min-h-0 flex-1 flex-col ml-64">
+				<main className="flex min-h-0 min-w-0 flex-1 flex-col ml-64">
 					<AppHeader
 						user={user}
 						notificationsHref="/client/notifications"
 						settingsHref="/client/settings"
 					/>
-					<div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-8">
+					<div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto p-8">
 						<PageTransition>{children}</PageTransition>
 					</div>
 				</main>

@@ -266,7 +266,7 @@ export function UploadDetailModal({
 								</p>
 							)}
 
-							{detail.errors && detail.errors.length > 0 && (
+							{detail.errors && detail.errors.length > 0 ? (
 								<section className="space-y-3">
 									<h4 className="text-sm font-semibold text-destructive">
 										Erros Encontrados
@@ -278,25 +278,45 @@ export function UploadDetailModal({
 													<TableHead className="w-20 text-right">
 														Linha
 													</TableHead>
+													<TableHead className="w-40">Campo</TableHead>
 													<TableHead>Erro</TableHead>
+													<TableHead>Valor Atual</TableHead>
 												</TableRow>
 											</TableHeader>
 											<TableBody>
 												{detail.errors.map((err) => (
-													<TableRow key={err.row}>
+													<TableRow key={`${err.row}-${err.field ?? ""}`}>
 														<TableCell className="text-right tabular-nums text-muted-foreground">
 															{err.row}
 														</TableCell>
+														<TableCell className="font-medium">
+															{err.field ?? "—"}
+														</TableCell>
 														<TableCell className="whitespace-normal text-destructive">
 															{err.error}
+														</TableCell>
+														<TableCell className="whitespace-normal">
+															{err.value?.trim() ? err.value : "—"}
 														</TableCell>
 													</TableRow>
 												))}
 											</TableBody>
 										</Table>
 									</div>
+									{detail.errorRows > detail.errors.length && (
+										<p className="text-xs text-muted-foreground">
+											E mais {detail.errorRows - detail.errors.length} linhas
+											com erro.
+										</p>
+									)}
 								</section>
-							)}
+							) : detail.errorRows > 0 ? (
+								<p className="rounded-lg border border-dashed px-4 py-6 text-center text-sm text-muted-foreground">
+									Este envio tem {detail.errorRows} linhas com erro. O campo de
+									cada linha não foi registrado. Envie a lista novamente para
+									ver qual campo faltou.
+								</p>
+							) : null}
 						</div>
 					) : null}
 				</div>

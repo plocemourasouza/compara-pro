@@ -1,0 +1,390 @@
+.screen {
+	--background: #ffffff;
+	--foreground: #192b49;
+	--primary: #245bcf;
+	--primary-hover: #1747ab;
+	--primary-foreground: #ffffff;
+	--muted-foreground: #657187;
+	--border: #dce2ec;
+	--input: #dce2ec;
+	--ring: #245bcf;
+	position: relative;
+	isolation: isolate;
+	display: grid;
+	grid-template-columns: 1.15fr 1fr;
+	align-items: center;
+	gap: 4vw;
+	min-height: 100svh;
+	padding: 100px 7vw 85px;
+	background: #10223e;
+	color: var(--foreground);
+	color-scheme: light;
+	font-family: var(--font-geist-sans), sans-serif;
+}
+
+.screen::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	z-index: -1;
+	pointer-events: none;
+	background: linear-gradient(0deg, rgb(8 25 49 / 90%), transparent 48%),
+		linear-gradient(90deg, rgb(10 28 53 / 6%), rgb(10 28 53 / 16%));
+}
+
+.screen .backdrop {
+	z-index: -2;
+	object-fit: cover;
+	object-position: center;
+}
+
+.brand {
+	position: absolute;
+	top: 42px;
+	left: 5vw;
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
+	color: #ffffff;
+	font-size: 25px;
+	font-weight: 650;
+	letter-spacing: -1px;
+}
+
+.brand svg {
+	width: 34px;
+	height: 34px;
+	color: var(--primary);
+}
+
+.brand span {
+	font-weight: 400;
+}
+
+.brand:focus-visible {
+	outline: 2px solid #a6c3ff;
+	outline-offset: 6px;
+}
+
+.story {
+	align-self: end;
+	max-width: 540px;
+	padding-bottom: 28px;
+	color: #ffffff;
+}
+
+.eyebrow {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	font-size: 10px;
+	font-weight: 600;
+	letter-spacing: 2px;
+	text-transform: uppercase;
+}
+
+.eyebrow::before {
+	content: "";
+	width: 24px;
+	height: 2px;
+	flex-shrink: 0;
+	background: #a6c3ff;
+}
+
+.story h2 {
+	margin: 18px 0;
+	font-size: clamp(34px, 3.2vw, 52px);
+	font-weight: 550;
+	line-height: 1.12;
+	letter-spacing: -1.8px;
+}
+
+.storyCopy {
+	max-width: 390px;
+	color: #ccd8eb;
+	font-size: 14px;
+	line-height: 1.65;
+}
+
+.formArea {
+	width: 100%;
+	max-width: 460px;
+	min-width: 0;
+	justify-self: end;
+}
+
+.panel {
+	width: 100%;
+	padding: 38px 40px;
+	border: 1px solid rgb(255 255 255 / 23%);
+	border-radius: 14px;
+	background: #ffffff;
+	box-shadow: 0 24px 80px #07152d40;
+}
+
+.overline {
+	margin-bottom: 14px;
+	color: var(--primary);
+	font-size: 10px;
+	font-weight: 650;
+	letter-spacing: 1.5px;
+	text-transform: uppercase;
+}
+
+.panel h1 {
+	margin: 0 0 10px;
+	font-size: 30px;
+	font-weight: 600;
+	line-height: 1.1;
+	letter-spacing: -1.1px;
+}
+
+.subtitle {
+	margin: 0 0 25px;
+	color: var(--muted-foreground);
+	font-size: 13px;
+	line-height: 1.6;
+}
+
+.field {
+	display: grid;
+	gap: 7px;
+	margin-bottom: 17px;
+}
+
+.field label {
+	font-size: 12px;
+	font-weight: 550;
+	line-height: 1.5;
+}
+
+.field input[data-slot="input"] {
+	height: 46px;
+	padding: 0 12px;
+	border-color: var(--border);
+	border-radius: 6px;
+	background: #ffffff;
+	font-size: 14px;
+	box-shadow: none;
+}
+
+.field input::placeholder {
+	color: var(--muted-foreground);
+}
+
+.field input:focus-visible {
+	border-color: var(--primary);
+}
+
+.panel .submit {
+	justify-content: space-between;
+	width: 100%;
+	height: 47px;
+	margin-top: 6px;
+	padding: 0 17px;
+	border-radius: 6px;
+	font-size: 13px;
+	font-weight: 550;
+	box-shadow: none;
+}
+
+.secondaryCopy {
+	margin: 20px 0 0;
+	color: var(--muted-foreground);
+	font-size: 12px;
+	line-height: 1.8;
+	text-align: center;
+}
+
+.secondaryCopy a {
+	color: var(--primary);
+	font-weight: 550;
+	text-underline-offset: 3px;
+}
+
+.secondaryCopy a:hover {
+	color: var(--primary-hover);
+	text-decoration: underline;
+}
+
+.secondaryCopy a:focus-visible {
+	outline: 2px solid var(--primary);
+	outline-offset: 4px;
+}
+
+.separator {
+	margin: 23px 0 18px;
+	border: 0;
+	border-top: 1px solid #e9edf4;
+}
+
+.compact {
+	padding-top: 30px;
+	padding-bottom: 29px;
+}
+
+.compact .field {
+	margin-bottom: 12px;
+}
+
+.compact input[data-slot="input"] {
+	height: 42px;
+}
+
+.compact .subtitle {
+	margin-bottom: 20px;
+}
+
+.compact .secondaryCopy {
+	margin-top: 17px;
+}
+
+.otpGroup {
+	gap: 8px;
+}
+
+.otpGroup [data-slot="input-otp-slot"] {
+	width: 40px;
+	height: 44px;
+	border: 1px solid var(--border);
+	border-radius: 5px;
+	background: #ffffff;
+}
+
+.otpGroup [data-active="true"] {
+	border-color: var(--primary);
+}
+
+.loading {
+	display: grid;
+	min-height: 280px;
+	place-items: center;
+	color: var(--muted-foreground);
+	font-size: 13px;
+}
+
+.footer {
+	position: absolute;
+	right: 5vw;
+	bottom: 27px;
+	left: 5vw;
+	display: flex;
+	justify-content: space-between;
+	gap: 16px;
+	color: #c4d0e3;
+	font-size: 10px;
+	text-transform: uppercase;
+}
+
+.imageNote {
+	color: #b0bed4;
+	text-transform: none;
+}
+
+@media (min-height: 1000px) and (min-width: 761px) {
+	.screen {
+		padding-top: 160px;
+		padding-bottom: 180px;
+	}
+
+	.story {
+		padding-bottom: 12px;
+	}
+
+	.formArea {
+		transform: translateY(-25px);
+	}
+}
+
+@media (min-width: 761px) and (max-aspect-ratio: 13/10) {
+	.screen .backdrop {
+		max-height: 75%;
+		object-position: left top;
+	}
+
+	.screen::before {
+		background: linear-gradient(0deg, #10223e 0%, #10223e 25%, transparent 62%),
+			linear-gradient(90deg, rgb(10 28 53 / 10%), rgb(10 28 53 / 16%));
+	}
+
+	.story {
+		padding-bottom: 5px;
+	}
+}
+
+@media (max-width: 760px) {
+	.screen {
+		display: flex;
+		flex-direction: column;
+		gap: 32px;
+		padding: 106px 20px 100px;
+	}
+
+	.brand {
+		top: 26px;
+		left: 26px;
+		font-size: 22px;
+	}
+
+	.formArea {
+		order: 0;
+	}
+
+	.panel {
+		padding: 30px 26px;
+	}
+
+	.field input[data-slot="input"] {
+		font-size: 16px;
+	}
+
+	.secondaryCopy a,
+	.secondaryCopy button {
+		display: inline-flex;
+		align-items: center;
+		min-height: 44px;
+	}
+
+	.story {
+		order: 1;
+		align-self: center;
+		width: 100%;
+		max-width: 460px;
+		padding: 0 6px;
+	}
+
+	.story h2 {
+		font-size: 32px;
+	}
+
+	.storyCopy {
+		font-size: 12px;
+	}
+
+	.screen .backdrop {
+		object-position: 28% center;
+		opacity: 0.45;
+	}
+
+	.screen::before {
+		background: #0a1e3b80;
+	}
+
+	.footer {
+		right: 26px;
+		bottom: 20px;
+		left: 26px;
+		flex-wrap: wrap;
+		gap: 6px 16px;
+		font-size: 8px;
+	}
+
+	.otpGroup {
+		gap: 6px;
+	}
+
+	.otpGroup [data-slot="input-otp-slot"] {
+		width: clamp(28px, 8vw, 40px);
+		height: 42px;
+	}
+}

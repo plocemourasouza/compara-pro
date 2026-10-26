@@ -16,6 +16,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { filesFromDropEvent } from "@/lib/files-from-drop";
 
 type User = {
 	id: string;
@@ -110,6 +111,7 @@ export default function UploadClient({ user }: UploadClientProps) {
 			},
 			multiple: false,
 			disabled: uploading,
+			getFilesFromEvent: (event) => Promise.resolve(filesFromDropEvent(event)),
 		});
 
 	const getPriceChangeIcon = (indicator?: string) => {
@@ -119,7 +121,7 @@ export default function UploadClient({ user }: UploadClientProps) {
 			case "DOWN":
 				return <TrendingDown className="h-4 w-4 text-success" />;
 			case "SAME":
-				return <Minus className="h-4 w-4 text-yellow-500" />;
+				return <Minus className="h-4 w-4 text-muted-foreground" />;
 			default:
 				return null;
 		}

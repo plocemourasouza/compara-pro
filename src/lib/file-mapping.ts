@@ -277,12 +277,33 @@ export function detectHeaderRow(rows: unknown[][]): {
 		}
 	}
 
-	const headers = (rows[bestIndex] ?? []).map((c, idx) => {
-		const s = String(c ?? "").trim();
-		return s || `__col${idx}`;
-	});
+	const headers = uniqueHeaders(
+		(rows[bestIndex] ?? []).map((c, idx) => {
+			const s = String(c ?? "").trim();
+			return s || `__col${idx}`;
+		}),
+	);
 
 	return { headerIndex: bestIndex, headers };
+}
+
+/** First copy keeps the original text. Later copies name the spreadsheet column. */
+function uniqueHeaders(headers: string[]): string[] {
+	const used = new Set<string>();
+	return headers.map((header, index) => {
+		if (!used.has(header)) {
+			used.add(header);
+			return header;
+		}
+		let column = index + 1;
+		let candidate = `${header} (coluna ${column})`;
+		while (used.has(candidate)) {
+			column += 1;
+			candidate = `${header} (coluna ${column})`;
+		}
+		used.add(candidate);
+		return candidate;
+	});
 }
 
 /**
