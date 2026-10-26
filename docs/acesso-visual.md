@@ -9,7 +9,7 @@ Implementado após aprovação da prévia fotográfica no chat, em 26/10/2026.
   anteriores foram preservados nos três formulários.
 - `public/auth/fundo-acesso.webp` contém a fotografia aprovada: compradora e
   representante conferindo um pedido. Tem 1672 × 941 pixels e 70.416 bytes.
-  É decorativa, usa `next/image` e tem identificação como imagem gerada por IA.
+  É decorativa e usa `next/image`.
 - A composição usa azul, Geist e cartão branco. Em telas pequenas, o formulário
   aparece antes do texto de apresentação, com rolagem vertical normal.
 - As abas e os avisos de demonstração pertencem apenas à prévia. Não foram

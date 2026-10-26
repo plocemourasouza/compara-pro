@@ -34,9 +34,19 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
 			</section>
 			<div className={styles.formArea}>{children}</div>
 			<footer className={styles.footer}>
-				<span>Compara Pró · Comparação de preços no atacado</span>
-				<span className={styles.imageNote}>
-					Imagem ilustrativa gerada por IA
+				<span>
+					© {new Date().getFullYear()} Compara Pró · Comparação de preços no
+					atacado
+				</span>
+				<span className={styles.credit}>
+					Desenvolvido por{" "}
+					<a
+						href="https://osystems.com.br"
+						target="_blank"
+						rel="noreferrer noopener"
+					>
+						oSystems
+					</a>
 				</span>
 			</footer>
 		</main>

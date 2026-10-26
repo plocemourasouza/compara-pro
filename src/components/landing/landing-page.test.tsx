@@ -44,5 +44,15 @@ describe("landing pública aprovada", () => {
 		expect(
 			screen.queryByText(/acesso.*não está disponível nesta prévia/i),
 		).not.toBeInTheDocument();
+		expect(
+			screen.queryByText(/imagem ilustrativa gerada por ia/i),
+		).not.toBeInTheDocument();
+		expect(
+			screen.getByText(new RegExp(`© ${new Date().getFullYear()} Compara Pró`)),
+		).toBeInTheDocument();
+		expect(screen.getByRole("link", { name: "oSystems" })).toHaveAttribute(
+			"href",
+			"https://osystems.com.br",
+		);
 	});
 });

@@ -276,9 +276,14 @@
 	text-transform: uppercase;
 }
 
-.imageNote {
-	color: #b0bed4;
+.credit {
 	text-transform: none;
+}
+
+.credit a {
+	color: inherit;
+	text-decoration: underline;
+	text-underline-offset: 2px;
 }
 
 @media (min-height: 1000px) and (min-width: 761px) {

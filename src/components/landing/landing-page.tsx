@@ -130,9 +130,6 @@ export function LandingPage() {
 								<br />
 								Quem representa responde.
 							</strong>
-							<span className="photo-note">
-								Imagem ilustrativa gerada por IA
-							</span>
 						</figcaption>
 						<span className="photo-corner" aria-hidden="true">
 							↗
@@ -224,8 +221,7 @@ export function LandingPage() {
 									sizes="(max-width: 760px) 100vw, 50vw"
 								/>
 								<figcaption>
-									A lista orienta a compra. O representante responde.{" "}
-									<span>Imagem ilustrativa gerada por IA</span>
+									A lista orienta a compra. O representante responde.
 								</figcaption>
 							</figure>
 							<div className="workplace-head">
@@ -397,7 +393,22 @@ export function LandingPage() {
 						</svg>
 						compara<span>pró</span>
 					</a>
-					<p>Compara Pró · Comparação de preços para compras no atacado.</p>
+					<div className="footer-copy">
+						<p>
+							© {new Date().getFullYear()} Compara Pró · Comparação de preços
+							para compras no atacado.
+						</p>
+						<p>
+							Desenvolvido por{" "}
+							<a
+								href="https://osystems.com.br"
+								target="_blank"
+								rel="noreferrer noopener"
+							>
+								oSystems
+							</a>
+						</p>
+					</div>
 					<a href="#top">
 						Voltar ao topo{" "}
 						<svg className="arrow" aria-hidden="true">
