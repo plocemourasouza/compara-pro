@@ -54,7 +54,7 @@ describe("landing pública aprovada", () => {
 			screen.getByText(new RegExp(`© ${new Date().getFullYear()} Compara Pró`)),
 		).toBeInTheDocument();
 		expect(
-			screen.getByRole("link", { name: /Desenvolvido por oSystems/i }),
+			screen.getByRole("link", { name: /Desenvolvido\s+por\s+oSystems/i }),
 		).toHaveAttribute("href", "https://osystems.com.br");
 		const whatsapp = screen.getByRole("link", {
 			name: /Abrir conversa no WhatsApp/i,
