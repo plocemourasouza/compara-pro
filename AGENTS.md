@@ -10,10 +10,12 @@
 - Authenticated panels (admin, comprador, representante) should match the polish of the landing and login; replicate shared component properties rather than leaving internals less finished.
 - UI shadows must use shadcn utilities (`shadow-xs`, `shadow-sm`, `shadow-md`, `shadow-lg`), not custom shadow values.
 - Prefers free-tier hosting for validation demos (Vercel Hobby + free Postgres such as Supabase/Neon), not paid infra for early validation.
+- Landing WhatsApp commercial CTA may deep-link to chat, but must not display the phone number on the card.
+- Footer credit “Desenvolvido por oSystems” must stay on one line (no mid-phrase wrap).
 
 ## Learned Workspace Facts
 
-- App name: **Compara Pró** (`price-comparison-poc`) — B2B price comparison with three roles via `company.type`: `ADMIN`, `REPRESENTATIVE`, and `CLIENT` (Cliente/Comprador); `loja@demo.com` is an extra CLIENT demo account, not a fourth role.
+- App name / brand lockup: **Compara PRÓ** (`price-comparison-poc`) — B2B price comparison with three roles via `company.type`: `ADMIN`, `REPRESENTATIVE`, and `CLIENT` (Cliente/Comprador); `loja@demo.com` is an extra CLIENT demo account, not a fourth role. Brand assets live in `assets/` and `public/brand/`.
 - Local PostgreSQL runs in Docker container `price-comparison-db`, exposed on host port **5435** (host 5432 conflicted with other local Postgres instances).
 - Local dev uses Bun: `bun run dev` (Next.js 16 + Turbopack); README still documents npm.
 - Prisma migration history is out of order (`20250120000001_*` before `20250805173941_init`); fresh DBs may need `prisma db push` then `seed:demo` until fixed.
@@ -24,4 +26,4 @@
 - Buyer comparison uses the landing desk as the internal standard: suppliers in columns, lowest price in green, winner named in a “Melhor oferta” column. The same winning-price cell applies wherever an offer is marked, and the buyer can still choose a higher price.
 - On screen the object is **Pedido** / **Pedidos**. Do not show “pré-pedido”. Routes, models, and APIs stay `pre-order` / `PreOrder`.
 - Scope, UI, responsiveness, and secrets for every change are in `RULES.md`.
-- Production: Vercel project `compara-pro` at https://compara-pro.vercel.app with Supabase Postgres; build needs `DATABASE_URL` (pooler) and `DIRECT_URL` (direct `:5432` for `prisma migrate deploy`). Cloudflare-only hosting does not fit without rewriting off Postgres/Node.
+- Production: Vercel project `compara-pro` at https://compara-pro.vercel.app with Supabase Postgres; build needs `DATABASE_URL` (pooler) and `DIRECT_URL` (direct `:5432` for `prisma migrate deploy`). Do not deploy the `dev` branch on Vercel (`vercel.json`). Cloudflare-only hosting does not fit without rewriting off Postgres/Node.
