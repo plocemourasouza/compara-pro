@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { BrandMark } from "@/components/shared/brand-mark";
 import { ComparisonDesk } from "./comparison-desk";
 import "./landing.css";
 
@@ -15,13 +16,6 @@ export function LandingPage() {
 				<defs>
 					<symbol id="cp-arrow" viewBox="0 0 24 24">
 						<path d="M5 12h14m-6-6 6 6-6 6"></path>
-					</symbol>
-					<symbol id="cp-logo" viewBox="0 0 36 36">
-						<rect width="36" height="36" rx="8" fill="#245bcf"></rect>
-						<path
-							d="M9 23h4V13H9zm7 4h4V9h-4zm7-6h4v-8h-4z"
-							fill="#ffffff"
-						></path>
 					</symbol>
 					<symbol id="cp-file" viewBox="0 0 24 24">
 						<path d="M13 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9l-6-6Z"></path>
@@ -54,8 +48,7 @@ export function LandingPage() {
 						<path d="M15 12H3"></path>
 					</symbol>
 					<symbol id="cp-whatsapp" viewBox="0 0 24 24">
-						<path d="M12 3a9 9 0 0 0-7.8 13.4L3 21l4.7-1.2A9 9 0 1 0 12 3Z"></path>
-						<path d="M8.6 9.3c.2-.4.4-.4.6-.4h.5c.2 0 .4 0 .5.4l.7 1.7c.1.2 0 .4-.1.5l-.4.5c-.1.1-.1.3 0 .4.3.5.9 1.1 1.5 1.5.2.1.3.1.4 0l.5-.4c.2-.1.3-.1.5 0l1.6.8c.3.1.4.3.4.5v.5c0 .2 0 .4-.4.6A4.4 4.4 0 0 1 12 16a4.4 4.4 0 0 1-3.4-6.7Z"></path>
+						<path d="M12.04 2.04A9.94 9.94 0 0 0 2.1 12a9.9 9.9 0 0 0 1.4 5.1L2 22l4.98-1.3A9.96 9.96 0 1 0 12.04 2.04Zm0 1.82a8.12 8.12 0 0 1 8.14 8.14 8.12 8.12 0 0 1-8.14 8.14 8.08 8.08 0 0 1-3.9-1l-.28-.16-2.96.78.79-2.88-.18-.3a8.1 8.1 0 0 1-1.47-4.58 8.12 8.12 0 0 1 8-8.14Zm4.7 11.66c-.2-.1-1.2-.59-1.38-.66-.19-.07-.32-.1-.46.1-.14.2-.53.66-.65.8-.12.13-.24.15-.44.05-.2-.1-.85-.31-1.62-.99a6.05 6.05 0 0 1-1.12-1.4c-.12-.2-.01-.3.09-.4.09-.1.2-.24.3-.36.1-.12.13-.2.2-.34.07-.13.03-.25-.02-.35-.05-.1-.46-1.1-.63-1.5-.17-.4-.34-.34-.46-.34h-.4c-.14 0-.36.05-.55.26-.19.2-.72.7-.72 1.72s.74 2 0.84 2.14c.1.14 1.45 2.21 3.5 3.1 1.34.58 1.62.46 1.91.44.29-.02.97-.4 1.1-.78.14-.39.14-.72.1-.79-.04-.06-.18-.1-.38-.2Z"></path>
 					</symbol>
 				</defs>
 			</svg>
@@ -65,10 +58,8 @@ export function LandingPage() {
 			<header className="topbar">
 				<nav className="wrap nav" aria-label="Navegação principal">
 					<a className="brand" href="#top" aria-label="Compara Pró, início">
-						<svg aria-hidden="true">
-							<use href="#cp-logo"></use>
-						</svg>
-						compara<span>pró</span>
+						<BrandMark symbolOnly size={33} />
+						Compara <span>PRÓ</span>
 					</a>
 					<div className="nav-links">
 						<a href="#como-funciona">Como funciona</a>
@@ -398,18 +389,20 @@ export function LandingPage() {
 						</div>
 						<div className="hero-doors">
 							<a
-								className="button outline"
+								className="button whatsapp"
 								href="https://wa.me/555599611317"
 								target="_blank"
 								rel="noreferrer noopener"
 							>
 								<span className="button-lead">
-									<svg className="icon" aria-hidden="true">
-										<use href="#cp-whatsapp"></use>
-									</svg>
+									<span className="wa-badge" aria-hidden="true">
+										<svg className="wa-icon" viewBox="0 0 24 24">
+											<use href="#cp-whatsapp"></use>
+										</svg>
+									</span>
 									Falar no WhatsApp
 								</span>
-								<svg className="arrow" aria-hidden="true">
+								<svg className="arrow wa-arrow" aria-hidden="true">
 									<use href="#cp-arrow"></use>
 								</svg>
 							</a>
@@ -424,10 +417,8 @@ export function LandingPage() {
 						href="#top"
 						aria-label="Compara Pró, voltar ao início"
 					>
-						<svg aria-hidden="true">
-							<use href="#cp-logo"></use>
-						</svg>
-						compara<span>pró</span>
+						<BrandMark symbolOnly size={25} />
+						Compara <span>PRÓ</span>
 					</a>
 					<div className="footer-copy">
 						<p>

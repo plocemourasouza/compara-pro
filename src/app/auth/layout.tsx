@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import styles from "@/components/auth/auth-screen.module.css";
+import { BrandMark } from "@/components/shared/brand-mark";
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
 	return (
@@ -15,11 +16,8 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
 				className={styles.backdrop}
 			/>
 			<Link href="/" className={styles.brand} aria-label="Compara Pró, início">
-				<svg viewBox="0 0 36 36" aria-hidden="true">
-					<rect width="36" height="36" rx="8" fill="currentColor" />
-					<path d="M9 23h4V13H9zm7 4h4V9h-4zm7-6h4v-8h-4z" fill="white" />
-				</svg>
-				compara <span>pró</span>
+				<BrandMark symbolOnly size={34} />
+				Compara <span>PRÓ</span>
 			</Link>
 			<section className={styles.story} aria-labelledby="auth-story-title">
 				<p className={styles.eyebrow}>Compras e representação comercial</p>
