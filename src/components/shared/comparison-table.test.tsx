@@ -52,7 +52,7 @@ describe("mesa de comparação", () => {
 		const beta = screen.getByRole("button", {
 			name: /menor preço de Fornecedor Beta/,
 		});
-		expect(beta).toHaveClass("bg-success/10", "text-success");
+		expect(beta).toHaveClass("bg-[#edf6ef]", "text-[#1f6041]");
 		expect(beta).toHaveTextContent("Menor preço");
 
 		const alfa = screen.getByRole("button", {
@@ -60,7 +60,7 @@ describe("mesa de comparação", () => {
 		});
 		expect(alfa).not.toHaveTextContent("Menor preço");
 		expect(alfa).toHaveClass("ring-primary");
-		expect(alfa).not.toHaveClass("bg-success/10");
+		expect(alfa).not.toHaveClass("bg-[#edf6ef]");
 
 		const parafuso = screen.getByRole("row", { name: /Parafuso M6/ });
 		expect(within(parafuso).getByText("Fornecedor Beta")).toBeInTheDocument();

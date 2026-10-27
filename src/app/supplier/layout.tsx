@@ -22,9 +22,9 @@ export default async function SupplierLayout({
 	}
 
 	return (
-		<div className="h-dvh overflow-hidden bg-muted">
+		<div className="h-dvh overflow-hidden bg-background">
 			<div className="flex h-full">
-				<SupplierSidebar user={user} />
+				<SupplierSidebar />
 				<main className="flex min-h-0 min-w-0 flex-1 flex-col lg:ml-64">
 					<AppHeader
 						user={user}

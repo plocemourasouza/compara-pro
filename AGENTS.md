@@ -5,6 +5,9 @@
 - Expects autonomous full-stack recovery: ensure Docker Desktop and the PostgreSQL container are up, then restart the dev server without extra prompts.
 - When presenting design direction or model options, keep all options available and let the user choose; do not discard options unilaterally.
 - For Impeccable redesign/polish, prefers running stages sequentially in a loop until the surface is adequate, without stopping between stages for confirmation.
+- When asked to commit and push, update both `dev` and `main`.
+- Authenticated panels (admin, comprador, representante) should match the polish of the landing and login; replicate shared component properties rather than leaving internals less finished.
+- UI shadows must use shadcn utilities (`shadow-xs`, `shadow-sm`, `shadow-md`, `shadow-lg`), not custom shadow values.
 
 ## Learned Workspace Facts
 
@@ -17,7 +20,6 @@
 - Design system lives in `DESIGN.md` (canvas `#f7f8fc`, ink `#192b49`, primary `#245bcf`, Geist). Orange is not part of the identity, including warnings. Winning price stays green; errors stay red.
 - Dual-audience landing brief (comprador `CLIENT` vs representante `REPRESENTATIVE`) is in `docs/features-comprador-representante.md`; product context in `PRODUCT.md`.
 - Buyer comparison uses the landing desk as the internal standard: suppliers in columns, lowest price in green, winner named in a “Melhor oferta” column. The same winning-price cell applies wherever an offer is marked, and the buyer can still choose a higher price.
-- Landing hero and the closing “Vamos colocar os preços na mesa?” section use one “Começar agora” button to `/auth/login`, where the visitor can sign in or create an account. The header keeps a single “Entrar” action with an access icon to the same screen.
-- Do not caption images “Imagem ilustrativa gerada por IA”. The landing and auth screens (login, signup, activation) show a current-year copyright plus “Desenvolvido por oSystems” linking to https://osystems.com.br.
+- Landing and auth: hero and the closing “Vamos colocar os preços na mesa?” use one “Começar agora” button to `/auth/login`; header keeps a single “Entrar” action with an access icon. Do not caption images “Imagem ilustrativa gerada por IA”. Landing and auth screens show a current-year copyright plus “Desenvolvido por oSystems” linking to https://osystems.com.br.
 - On screen the object is **Pedido** / **Pedidos**. Do not show “pré-pedido”. Routes, models, and APIs stay `pre-order` / `PreOrder`.
 - Scope, UI, responsiveness, and secrets for every change are in `RULES.md`.

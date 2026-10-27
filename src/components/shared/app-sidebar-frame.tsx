@@ -42,7 +42,7 @@ function SidebarPanel({ children }: AppSidebarFrameProps) {
 			)}
 			<div
 				className={cn(
-					"fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-border bg-background transition-transform",
+					"fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-border bg-card transition-transform",
 					open
 						? "translate-x-0"
 						: "max-lg:-translate-x-full max-lg:invisible lg:translate-x-0 lg:visible",

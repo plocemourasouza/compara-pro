@@ -53,10 +53,13 @@ npm install
 
 # 2. Variáveis de ambiente
 cp .env.example .env.local
-#   - DATABASE_URL (Postgres)
+#   - DATABASE_URL (Postgres; local Docker ou pooler Supabase :6543 em runtime)
+#   - DIRECT_URL   (obrigatória no deploy se DATABASE_URL for pooler :6543 —
+#                  connection string Direct do Supabase, porta 5432; usada no migrate)
 #   - JWT_SECRET
 #   - AI_CONFIG_ENCRYPTION_KEY  ->  openssl rand -base64 32   (necessária p/ configurar IA)
 #   - AWS_* / S3_* (storage de avatar no S3; sem elas o upload falha — fail-secure)
+#   - APP_URL (URL pública em produção, ex. https://seu-app.vercel.app)
 
 # 3. Banco (Postgres via docker-compose) + schema
 docker compose up -d

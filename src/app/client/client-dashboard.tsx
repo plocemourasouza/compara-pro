@@ -16,6 +16,7 @@ import {
 	AttentionQueue,
 	type QueueRow,
 } from "@/components/dashboard/attention-queue";
+import { DeskPreview } from "@/components/dashboard/desk-preview";
 import { FunnelCard } from "@/components/dashboard/funnel-card";
 import { LeaderboardCard } from "@/components/dashboard/leaderboard-card";
 import { MatchingQualityCard } from "@/components/dashboard/matching-quality-card";
@@ -50,6 +51,25 @@ interface DashboardMetrics {
 		id: string;
 		supplierName: string;
 		status: string;
+		totalAmount: number;
+		createdAt: string;
+	}>;
+	desk: {
+		comparisonId: string;
+		fileName: string;
+		totalProducts: number;
+		matchedProducts: number;
+		suppliers: string[];
+		rows: Array<{
+			id: string;
+			name: string;
+			offers: Array<{ supplierName: string; price: number }>;
+			winner: string | null;
+		}>;
+	} | null;
+	waitingOrders: Array<{
+		id: string;
+		supplierName: string;
 		totalAmount: number;
 		createdAt: string;
 	}>;
@@ -173,7 +193,7 @@ export default function ClientDashboard({ user }: { user: { name: string } }) {
 		<div className="space-y-6">
 			<div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
 				<div>
-					<h1 className="font-bold text-2xl tracking-tight">
+					<h1 className="text-2xl font-semibold tracking-[-0.04em]">
 						Olá, {user.name}
 					</h1>
 					<p className="text-muted-foreground">
@@ -188,6 +208,86 @@ export default function ClientDashboard({ user }: { user: { name: string } }) {
 						Enviar lista
 					</Link>
 				</Button>
+			</div>
+
+			<div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+				<Card className="lg:col-span-2">
+					<CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+						<div>
+							<CardTitle className="text-lg">Lista na mesa</CardTitle>
+							<CardDescription>
+								{metrics?.desk
+									? `${metrics.desk.fileName} · ${metrics.desk.matchedProducts} de ${metrics.desk.totalProducts} com oferta`
+									: "A comparação mais recente da sua demanda."}
+							</CardDescription>
+						</div>
+						<Button asChild variant="outline" className="shrink-0">
+							<Link href="/client/compare">Abrir comparação</Link>
+						</Button>
+					</CardHeader>
+					<CardContent>
+						{loading ? (
+							<Skeleton className="h-40 w-full" />
+						) : !metrics?.desk || metrics.desk.rows.length === 0 ? (
+							<p className="text-muted-foreground text-sm">
+								Envie uma lista para ver os preços na mesa.
+							</p>
+						) : (
+							<>
+								<DeskPreview
+									suppliers={metrics.desk.suppliers}
+									rows={metrics.desk.rows}
+								/>
+								{metrics.desk.totalProducts > metrics.desk.rows.length && (
+									<p className="mt-3 text-muted-foreground text-xs">
+										Mostrando {metrics.desk.rows.length} de{" "}
+										{metrics.desk.totalProducts} itens.
+									</p>
+								)}
+							</>
+						)}
+					</CardContent>
+				</Card>
+
+				<Card>
+					<CardHeader>
+						<CardTitle className="text-lg">Aguardando resposta</CardTitle>
+						<CardDescription>Pedidos ainda sem retorno.</CardDescription>
+					</CardHeader>
+					<CardContent className="space-y-3">
+						{loading ? (
+							<Skeleton className="h-24 w-full" />
+						) : !metrics || metrics.waitingOrders.length === 0 ? (
+							<p className="text-muted-foreground text-sm">
+								Nenhum pedido aguardando resposta.
+							</p>
+						) : (
+							<ul className="divide-y">
+								{metrics.waitingOrders.map((order) => (
+									<li
+										key={order.id}
+										className="flex items-center justify-between gap-3 py-3"
+									>
+										<div className="min-w-0">
+											<p className="truncate font-medium text-sm">
+												{order.supplierName}
+											</p>
+											<p className="text-muted-foreground text-xs">
+												{formatters.date(order.createdAt)}
+											</p>
+										</div>
+										<span className="shrink-0 font-medium text-sm">
+											{formatters.currency(order.totalAmount)}
+										</span>
+									</li>
+								))}
+							</ul>
+						)}
+						<Button asChild variant="ghost" className="w-full">
+							<Link href="/client/pre-orders">Ver pedidos</Link>
+						</Button>
+					</CardContent>
+				</Card>
 			</div>
 
 			<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -277,8 +377,8 @@ export default function ClientDashboard({ user }: { user: { name: string } }) {
 				</div>
 			)}
 
-			<div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-				<Card className="lg:col-span-2">
+			<div className="grid grid-cols-1 gap-4">
+				<Card>
 					<CardHeader>
 						<CardTitle className="text-lg">Pedidos recentes</CardTitle>
 						<CardDescription>Últimos pedidos enviados.</CardDescription>
@@ -319,35 +419,6 @@ export default function ClientDashboard({ user }: { user: { name: string } }) {
 								})}
 							</ul>
 						)}
-					</CardContent>
-				</Card>
-
-				<Card>
-					<CardHeader>
-						<CardTitle className="text-lg">Comparar preços</CardTitle>
-						<CardDescription>
-							Case sua demanda com os fornecedores da carteira.
-						</CardDescription>
-					</CardHeader>
-					<CardContent className="space-y-3">
-						<p className="text-muted-foreground text-sm">
-							Envie uma lista de demanda e compare os melhores preços dos seus
-							fornecedores.
-						</p>
-						<div className="flex flex-col gap-2">
-							<Button asChild variant="outline" className="w-full">
-								<Link href="/client/compare">
-									<BarChart3 className="mr-2 h-4 w-4" />
-									Comparar preços
-								</Link>
-							</Button>
-							<Button asChild variant="ghost" className="w-full">
-								<Link href="/client/suppliers">
-									<Building2 className="mr-2 h-4 w-4" />
-									Meus fornecedores
-								</Link>
-							</Button>
-						</div>
 					</CardContent>
 				</Card>
 			</div>

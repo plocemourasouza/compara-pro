@@ -176,12 +176,12 @@ export default function AppHeader({
 	};
 
 	return (
-		<header className="sticky top-0 z-30 w-full border-b bg-background">
+		<header className="sticky top-0 z-30 w-full border-b bg-card">
 			<div className="flex h-16 items-center justify-between pr-4 pl-14 lg:px-6">
 				<div className="flex min-w-0 items-center">
 					{/* Chrome de navegação, não título do conteúdo: o <h1> da página é o
 					    da área, e dois <h1> quebram a semântica e os seletores de teste. */}
-					<div className="truncate font-semibold text-foreground text-xl">
+					<div className="truncate text-xl font-semibold tracking-[-0.04em] text-foreground">
 						{heading}
 					</div>
 				</div>

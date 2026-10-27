@@ -2,7 +2,7 @@ import { Check } from "lucide-react";
 import { formatCurrency } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-const winningClass = "bg-success/10 font-semibold text-success";
+const winningClass = "bg-[#edf6ef] font-mono font-semibold text-[#1f6041]";
 
 export function WinningPrice({
 	price,
@@ -22,8 +22,10 @@ export function WinningPrice({
 			)}
 		>
 			{formatCurrency(price)}
-			<span className="inline-flex items-center gap-1 text-xs font-medium">
-				<Check className="size-3.5" aria-hidden />
+			<span className="inline-flex items-center gap-1 font-sans text-[10px] font-medium text-[#2f674c]">
+				<span className="inline-grid size-[15px] place-items-center rounded-full bg-[#d7ebdc]">
+					<Check className="size-2.5" aria-hidden />
+				</span>
 				{label}
 			</span>
 		</span>
@@ -61,8 +63,10 @@ export function PriceOffer({
 		>
 			{formatCurrency(price)}
 			{best && (
-				<span className="inline-flex items-center gap-1 text-xs font-medium">
-					<Check className="size-3.5" aria-hidden />
+				<span className="inline-flex items-center gap-1 font-sans text-[10px] font-medium text-[#2f674c]">
+					<span className="inline-grid size-[15px] place-items-center rounded-full bg-[#d7ebdc]">
+						<Check className="size-2.5" aria-hidden />
+					</span>
 					Menor preço
 				</span>
 			)}

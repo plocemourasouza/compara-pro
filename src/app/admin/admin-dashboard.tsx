@@ -3,7 +3,6 @@
 import {
 	AlertTriangle,
 	CheckCircle,
-	ClipboardList,
 	Link2,
 	Percent,
 	PiggyBank,
@@ -182,11 +181,52 @@ export default function AdminDashboard({ user: _user }: AdminDashboardProps) {
 		};
 	}, []);
 
+	const actionRows: QueueRow[] = [
+		...(insights
+			? [
+					{
+						icon: ShoppingCart,
+						label: "Pedidos aguardando resposta",
+						subtitle: `${insights.attention.preOrdersBreakdown.clients} clientes · ${insights.attention.preOrdersBreakdown.suppliers} fornecedores · ${insights.attention.preOrdersBreakdown.products} produtos · ${formatCurrency(insights.attention.preOrdersBreakdown.totalValue)}`,
+						count: insights.attention.activePreOrders,
+						href: "/admin/pre-orders",
+					} satisfies QueueRow,
+				]
+			: []),
+		...(metrics
+			? [
+					{
+						icon: AlertTriangle,
+						label: "Listas com falha",
+						subtitle: "Envios que não concluíram",
+						count: metrics.uploads.byStatus.failed,
+						href: "/admin/history",
+						warn: metrics.uploads.byStatus.failed > 0,
+					} satisfies QueueRow,
+				]
+			: []),
+		...(insights
+			? [
+					{
+						icon: Link2,
+						label: "Solicitações de carteira pendentes",
+						detail:
+							insights.attention.agingLinkRequests > 0
+								? `${insights.attention.agingLinkRequests} aguardando há mais de 7 dias`
+								: undefined,
+						count: insights.attention.pendingLinkRequests,
+						href: "/admin/companies",
+						warn: insights.attention.agingLinkRequests > 0,
+					} satisfies QueueRow,
+				]
+			: []),
+	];
+
 	return (
 		<div className="space-y-6">
 			<div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
 				<div>
-					<h1 className="text-2xl font-bold tracking-tight">
+					<h1 className="text-2xl font-semibold tracking-[-0.04em]">
 						Dashboard Administrativo
 					</h1>
 					<p className="text-muted-foreground">
@@ -200,6 +240,16 @@ export default function AdminDashboard({ user: _user }: AdminDashboardProps) {
 					</p>
 				</div>
 			</div>
+
+			{(loading || insightsLoading) && actionRows.length === 0 ? (
+				<Skeleton className="h-40 w-full" />
+			) : (
+				<AttentionQueue
+					title="Fila para agir"
+					description="Pedidos sem resposta e listas que falharam."
+					rows={actionRows}
+				/>
+			)}
 
 			{/* Métricas principais (KPIs) */}
 			{loading ? (
@@ -345,41 +395,9 @@ export default function AdminDashboard({ user: _user }: AdminDashboardProps) {
 						/>
 					</div>
 
-					{/* Funil + qualidade do matching + fila de atenção */}
-					<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+					<div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
 						<FunnelCard funnel={insights.funnel} />
 						<MatchingQualityCard matching={insights.matching} />
-						<AttentionQueue
-							rows={
-								[
-									{
-										icon: ClipboardList,
-										label: "Listas ativas",
-										subtitle: `${insights.attention.listsBreakdown.representatives} representantes · ${insights.attention.listsBreakdown.suppliers} fornecedores · ${insights.attention.listsBreakdown.products} produtos · ${formatCurrency(insights.attention.listsBreakdown.totalValue)}`,
-										count: metrics?.uploads.activeLists ?? 0,
-										href: "/admin/history",
-									},
-									{
-										icon: ShoppingCart,
-										label: "Pedidos aguardando resposta",
-										subtitle: `${insights.attention.preOrdersBreakdown.clients} clientes · ${insights.attention.preOrdersBreakdown.suppliers} fornecedores · ${insights.attention.preOrdersBreakdown.products} produtos · ${formatCurrency(insights.attention.preOrdersBreakdown.totalValue)}`,
-										count: insights.attention.activePreOrders,
-										href: "/admin/pre-orders",
-									},
-									{
-										icon: Link2,
-										label: "Solicitações de carteira pendentes",
-										detail:
-											insights.attention.agingLinkRequests > 0
-												? `${insights.attention.agingLinkRequests} aguardando há mais de 7 dias`
-												: undefined,
-										count: insights.attention.pendingLinkRequests,
-										href: "/admin/companies",
-										warn: insights.attention.agingLinkRequests > 0,
-									},
-								] satisfies QueueRow[]
-							}
-						/>
 					</div>
 
 					{/* Tendência */}

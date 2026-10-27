@@ -60,6 +60,18 @@ interface DashboardMetrics {
 	suppliers: number;
 	pendingRequests: number;
 	savings: number;
+	catalogs: Array<{
+		fileName: string;
+		uploadedAt: string;
+		supplierName: string;
+	}>;
+	waitingOrders: Array<{
+		id: string;
+		clientName: string;
+		supplierName: string;
+		totalAmount: number;
+		createdAt: string;
+	}>;
 	recentPreOrders: Array<{
 		id: string;
 		clientName: string;
@@ -165,9 +177,7 @@ export default function SupplierDashboard({
 		{
 			label: "Valor aprovado",
 			value: metrics ? formatters.currency(metrics.preOrders.totalValue) : "—",
-			hint: metrics
-				? `${metrics.preOrders.approved} pedidos aprovados`
-				: "",
+			hint: metrics ? `${metrics.preOrders.approved} pedidos aprovados` : "",
 			icon: ArrowUpRight,
 			href: "/supplier/pre-orders",
 		},
@@ -214,7 +224,7 @@ export default function SupplierDashboard({
 		<div className="space-y-6 pb-6">
 			<div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
 				<div>
-					<h1 className="font-bold text-2xl tracking-tight">
+					<h1 className="text-2xl font-semibold tracking-[-0.04em]">
 						Olá, {user.name}
 					</h1>
 					<p className="text-muted-foreground">
@@ -229,6 +239,89 @@ export default function SupplierDashboard({
 						Enviar catálogo
 					</Link>
 				</Button>
+			</div>
+
+			<div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+				<Card className="lg:col-span-2">
+					<CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+						<div>
+							<CardTitle className="text-lg">Catálogos vigentes</CardTitle>
+							<CardDescription>
+								Listas de preço ativas da carteira.
+							</CardDescription>
+						</div>
+						<Button asChild variant="outline" className="shrink-0">
+							<Link href="/supplier/history">Ver listas</Link>
+						</Button>
+					</CardHeader>
+					<CardContent>
+						{loading ? (
+							<Skeleton className="h-24 w-full" />
+						) : !metrics || metrics.catalogs.length === 0 ? (
+							<p className="text-muted-foreground text-sm">
+								Nenhum catálogo ativo. Envie sua lista de preços.
+							</p>
+						) : (
+							<ul className="divide-y">
+								{metrics.catalogs.map((catalog) => (
+									<li
+										key={`${catalog.supplierName}-${catalog.fileName}`}
+										className="py-3"
+									>
+										<p className="font-medium text-sm">{catalog.fileName}</p>
+										<p className="text-muted-foreground text-xs">
+											{catalog.supplierName} · enviado em{" "}
+											{formatters.date(catalog.uploadedAt)}
+										</p>
+									</li>
+								))}
+							</ul>
+						)}
+					</CardContent>
+				</Card>
+
+				<Card>
+					<CardHeader>
+						<CardTitle className="text-lg">Para aprovar</CardTitle>
+						<CardDescription>
+							Pedidos aguardando a sua resposta.
+						</CardDescription>
+					</CardHeader>
+					<CardContent className="space-y-3">
+						{loading ? (
+							<Skeleton className="h-24 w-full" />
+						) : !metrics || metrics.waitingOrders.length === 0 ? (
+							<p className="text-muted-foreground text-sm">
+								Nenhum pedido aguardando resposta.
+							</p>
+						) : (
+							<ul className="divide-y">
+								{metrics.waitingOrders.map((order) => (
+									<li
+										key={order.id}
+										className="flex items-center justify-between gap-3 py-3"
+									>
+										<div className="min-w-0">
+											<p className="truncate font-medium text-sm">
+												{order.clientName}
+											</p>
+											<p className="truncate text-muted-foreground text-xs">
+												{order.supplierName} ·{" "}
+												{formatters.date(order.createdAt)}
+											</p>
+										</div>
+										<span className="shrink-0 font-medium text-sm">
+											{formatters.currency(order.totalAmount)}
+										</span>
+									</li>
+								))}
+							</ul>
+						)}
+						<Button asChild variant="ghost" className="w-full">
+							<Link href="/supplier/pre-orders">Ver pedidos</Link>
+						</Button>
+					</CardContent>
+				</Card>
 			</div>
 
 			{metrics && metrics.pendingRequests > 0 && (
@@ -387,8 +480,8 @@ export default function SupplierDashboard({
 				</Card>
 			)}
 
-			<div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-				<Card className="lg:col-span-2">
+			<div className="grid grid-cols-1 gap-4">
+				<Card>
 					<CardHeader>
 						<CardTitle className="text-lg">Pedidos recentes</CardTitle>
 						<CardDescription>Últimos pedidos recebidos.</CardDescription>
@@ -429,38 +522,6 @@ export default function SupplierDashboard({
 								})}
 							</ul>
 						)}
-					</CardContent>
-				</Card>
-
-				<Card>
-					<CardHeader>
-						<CardTitle className="text-lg">Catálogo ativo</CardTitle>
-						<CardDescription>Lista de preços vigente.</CardDescription>
-					</CardHeader>
-					<CardContent className="space-y-3">
-						{loading ? (
-							<p className="text-muted-foreground text-sm">Carregando…</p>
-						) : metrics?.activeCatalog ? (
-							<div>
-								<p className="font-medium text-sm">
-									{metrics.activeCatalog.fileName}
-								</p>
-								<p className="text-muted-foreground text-xs">
-									{metrics.activeCatalog.supplierName} · enviado em{" "}
-									{formatters.date(metrics.activeCatalog.uploadedAt)}
-								</p>
-							</div>
-						) : (
-							<p className="text-muted-foreground text-sm">
-								Nenhum catálogo ativo. Envie sua lista de preços.
-							</p>
-						)}
-						<Button asChild variant="outline" className="w-full">
-							<Link href="/supplier/upload">
-								<Upload className="mr-2 h-4 w-4" />
-								Enviar catálogo
-							</Link>
-						</Button>
 					</CardContent>
 				</Card>
 			</div>

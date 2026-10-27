@@ -22,6 +22,8 @@ export async function GET() {
 					pendingRequests: 0,
 					savings: 0,
 					recentPreOrders: [],
+					catalogs: [],
+					waitingOrders: [],
 				},
 			});
 		}
@@ -39,6 +41,8 @@ export async function GET() {
 			recent,
 			pendingRequests,
 			savingsItems,
+			activeCatalogs,
+			waiting,
 		] = await Promise.all([
 			prisma.product.count({
 				where: { companyId, isActive: true, deletedAt: null },
@@ -93,6 +97,31 @@ export async function GET() {
 				},
 				select: { baselinePrice: true, price: true, quantity: true },
 			}),
+			prisma.uploadHistory.findMany({
+				where: {
+					companyId,
+					uploadType: "SUPPLIER_PRODUCTS",
+					isActive: true,
+				},
+				select: {
+					fileName: true,
+					uploadedAt: true,
+					company: { select: { name: true } },
+				},
+				orderBy: { uploadedAt: "desc" },
+			}),
+			prisma.preOrder.findMany({
+				where: { supplierId: companyId, status: "ACTIVE" },
+				orderBy: { createdAt: "desc" },
+				take: 5,
+				select: {
+					id: true,
+					totalAmount: true,
+					createdAt: true,
+					client: { select: { name: true } },
+					supplier: { select: { name: true } },
+				},
+			}),
 		]);
 
 		const count = (s: string) =>
@@ -131,6 +160,18 @@ export async function GET() {
 					clientName: p.client.name,
 					supplierName: p.supplier.name,
 					status: p.status,
+					totalAmount: Number(p.totalAmount) || 0,
+					createdAt: p.createdAt.toISOString(),
+				})),
+				catalogs: activeCatalogs.map((catalog) => ({
+					fileName: catalog.fileName,
+					uploadedAt: catalog.uploadedAt,
+					supplierName: catalog.company.name,
+				})),
+				waitingOrders: waiting.map((p) => ({
+					id: p.id,
+					clientName: p.client.name,
+					supplierName: p.supplier.name,
 					totalAmount: Number(p.totalAmount) || 0,
 					createdAt: p.createdAt.toISOString(),
 				})),

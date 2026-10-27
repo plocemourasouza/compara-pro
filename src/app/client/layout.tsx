@@ -22,9 +22,9 @@ export default async function ClientLayout({
 	}
 
 	return (
-		<div className="h-dvh overflow-hidden bg-muted">
+		<div className="h-dvh overflow-hidden bg-background">
 			<div className="flex h-full">
-				<ClientSidebar user={user} />
+				<ClientSidebar />
 				<main className="flex min-h-0 min-w-0 flex-1 flex-col lg:ml-64">
 					<AppHeader
 						user={user}

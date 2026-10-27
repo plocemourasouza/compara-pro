@@ -2,11 +2,9 @@
 
 import { motion } from "framer-motion";
 import {
-	BarChart3,
 	Building2,
 	FileText,
 	Home,
-	LogOut,
 	Package,
 	Settings,
 	ShoppingCart,
@@ -17,27 +15,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AppSidebarFrame } from "@/components/shared/app-sidebar-frame";
-import { UserAvatar } from "@/components/shared/user-avatar";
+import { BrandMark } from "@/components/shared/brand-mark";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-
-type User = {
-	id: string;
-	name: string;
-	email: string;
-	area: string;
-	avatarUrl?: string | null;
-	company: {
-		id: string;
-		name: string;
-		type: string;
-	} | null;
-};
-
-interface SupplierSidebarProps {
-	user: User;
-}
 
 type BadgeKey = "pending";
 
@@ -66,7 +46,7 @@ const navigation: Array<{
 	{ name: "Configurações", href: "/supplier/settings", icon: Settings },
 ];
 
-export default function SupplierSidebar({ user }: SupplierSidebarProps) {
+export default function SupplierSidebar() {
 	const pathname = usePathname();
 	const [counts, setCounts] = useState<{ pending: number }>({
 		pending: 0,
@@ -87,36 +67,15 @@ export default function SupplierSidebar({ user }: SupplierSidebarProps) {
 		};
 	}, []);
 
-	const handleLogout = () => {
-		// biome-ignore lint/suspicious/noDocumentCookie: clears the auth_token cookie on logout
-		document.cookie = "auth_token=; Max-Age=0; path=/";
-		localStorage.removeItem("user");
-		window.location.href = "/auth/login";
-	};
-
 	return (
 		<AppSidebarFrame>
 			<div className="flex h-full min-h-0 flex-col">
-				{/* Logo */}
-				<div className="flex items-center h-16 px-6 border-b border-border">
-					<BarChart3 className="h-8 w-8 text-success" />
-					<div className="ml-3">
-						<div className="text-lg font-semibold text-foreground">
-							Compara Pró
-						</div>
-						<div className="text-xs text-muted-foreground">
-							Painel do Representante
-						</div>
-					</div>
+				<div className="flex h-16 items-center border-b border-border px-6">
+					<BrandMark />
 				</div>
 
-				{/* Navigation */}
 				<nav className="min-h-0 flex-1 space-y-2 overflow-y-auto px-4 py-6">
-					<div className="border-t border-border pt-4">
-						<div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-							Representante
-						</div>
-
+					<div>
 						{navigation.map((item) => {
 							const isActive =
 								item.href === "/supplier"
@@ -129,16 +88,16 @@ export default function SupplierSidebar({ user }: SupplierSidebarProps) {
 									key={item.name}
 									href={item.href}
 									className={cn(
-										"group relative flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
+										"group relative flex items-center rounded-md px-3 py-2 text-[13px] font-medium transition-colors",
 										isActive
-											? "text-success"
+											? "text-primary"
 											: "text-muted-foreground hover:bg-muted hover:text-foreground",
 									)}
 								>
 									{isActive && (
 										<motion.span
 											layoutId="supplier-nav-active"
-											className="absolute inset-0 rounded-md bg-success/10"
+											className="absolute inset-0 rounded-md bg-primary/10"
 											transition={{
 												type: "spring",
 												stiffness: 380,
@@ -150,7 +109,7 @@ export default function SupplierSidebar({ user }: SupplierSidebarProps) {
 										className={cn(
 											"relative z-10 mr-3 h-5 w-5",
 											isActive
-												? "text-success"
+												? "text-primary"
 												: "text-muted-foreground group-hover:text-muted-foreground",
 										)}
 										aria-hidden="true"
@@ -166,38 +125,6 @@ export default function SupplierSidebar({ user }: SupplierSidebarProps) {
 						})}
 					</div>
 				</nav>
-
-				{/* User Info */}
-				<div className="border-t border-border p-4">
-					<Link
-						href="/perfil"
-						className="-m-2 flex items-center rounded-md p-2 transition-colors hover:bg-muted"
-					>
-						<UserAvatar
-							name={user.name}
-							avatarUrl={user.avatarUrl}
-							role={user.area}
-							className="h-9 w-9"
-						/>
-						<div className="ml-3 min-w-0">
-							<p className="truncate text-sm font-medium text-foreground">
-								{user.name}
-							</p>
-							<p className="truncate text-xs text-muted-foreground">
-								{user.email}
-							</p>
-						</div>
-					</Link>
-					<Button
-						onClick={handleLogout}
-						variant="ghost"
-						size="sm"
-						className="w-full mt-3 text-muted-foreground hover:text-foreground"
-					>
-						<LogOut className="mr-2 h-4 w-4" />
-						Sair
-					</Button>
-				</div>
 			</div>
 		</AppSidebarFrame>
 	);
