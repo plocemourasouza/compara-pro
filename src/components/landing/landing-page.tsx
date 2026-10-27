@@ -413,17 +413,8 @@ export function LandingPage() {
 								<span className="contact-pulse" aria-hidden="true" />
 								<span>Atendimento comercial no WhatsApp</span>
 							</div>
-							<p className="contact-desk-kicker">Número do comercial</p>
-							<a
-								className="contact-phone"
-								href="https://wa.me/555599611317"
-								target="_blank"
-								rel="noreferrer noopener"
-							>
-								+55 55 9961-1317
-							</a>
 							<p className="contact-desk-note">
-								Toque no número ou no botão abaixo e a conversa abre na hora.
+								Toque no botão abaixo e a conversa abre na hora.
 							</p>
 							<a
 								className="button whatsapp whatsapp-lg"

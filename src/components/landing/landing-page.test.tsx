@@ -61,9 +61,7 @@ describe("landing pública aprovada", () => {
 			name: /Abrir conversa no WhatsApp/i,
 		});
 		expect(whatsapp).toHaveAttribute("href", "https://wa.me/555599611317");
-		expect(
-			screen.getByRole("link", { name: "+55 55 9961-1317" }),
-		).toHaveAttribute("href", "https://wa.me/555599611317");
+		expect(screen.queryByText("+55 55 9961-1317")).not.toBeInTheDocument();
 		expect(
 			screen.getByRole("heading", {
 				name: /Quer conversar antes de entrar/i,
