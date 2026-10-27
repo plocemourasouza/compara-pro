@@ -1022,25 +1022,29 @@ html:has(.compara-landing) {
 	gap: 4px;
 	justify-items: center;
 	text-align: center;
-	min-width: 0
+	flex: 1 1 auto;
+	min-width: max-content
 }
 .compara-landing .footer p {
 	font-size: 10px;
 	color: var(--muted)
 }
 .compara-landing .footer-credit {
-	white-space: nowrap
-}
-.compara-landing .footer-copy a {
+	display: inline-block;
+	white-space: nowrap;
 	color: var(--primary);
 	text-decoration: underline;
 	text-underline-offset: 2px
 }
-.compara-landing .footer a:last-child {
+.compara-landing .footer-credit:hover {
+	color: var(--primary-hover)
+}
+.compara-landing .footer-inner > a:last-of-type {
 	font-size: 10px;
 	display: flex;
 	align-items: center;
-	gap: 10px
+	gap: 10px;
+	flex-shrink: 0
 }
 .compara-landing .footer .arrow {
 	transform: rotate(-90deg);
@@ -1490,7 +1494,12 @@ html:has(.compara-landing) {
 	}
 	.compara-landing .footer-copy {
 		order: 3;
-		flex-basis: 100%
+		flex-basis: 100%;
+		min-width: 0;
+		justify-items: center
+	}
+	.compara-landing .footer-credit {
+		white-space: nowrap
 	}
 	.compara-landing .footer p {
 		font-size: 9px

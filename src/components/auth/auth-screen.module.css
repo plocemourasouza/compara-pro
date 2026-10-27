@@ -278,11 +278,10 @@
 }
 
 .credit {
+	display: inline-block;
+	flex-shrink: 0;
 	text-transform: none;
 	white-space: nowrap;
-}
-
-.credit a {
 	color: inherit;
 	text-decoration: underline;
 	text-underline-offset: 2px;

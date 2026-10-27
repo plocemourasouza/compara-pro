@@ -453,14 +453,14 @@ export function LandingPage() {
 							© {new Date().getFullYear()} Compara Pró · Comparação de preços
 							para compras no atacado.
 						</p>
-						<p className="footer-credit">
-							Desenvolvido&nbsp;por&nbsp;
+						<p>
 							<a
+								className="footer-credit"
 								href="https://osystems.com.br"
 								target="_blank"
 								rel="noreferrer noopener"
 							>
-								oSystems
+								Desenvolvido&nbsp;por&nbsp;oSystems
 							</a>
 						</p>
 					</div>

@@ -36,16 +36,14 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
 					© {new Date().getFullYear()} Compara Pró · Comparação de preços no
 					atacado
 				</span>
-				<span className={styles.credit}>
-					Desenvolvido&nbsp;por&nbsp;
-					<a
-						href="https://osystems.com.br"
-						target="_blank"
-						rel="noreferrer noopener"
-					>
-						oSystems
-					</a>
-				</span>
+				<a
+					className={styles.credit}
+					href="https://osystems.com.br"
+					target="_blank"
+					rel="noreferrer noopener"
+				>
+					Desenvolvido&nbsp;por&nbsp;oSystems
+				</a>
 			</footer>
 		</main>
 	);
