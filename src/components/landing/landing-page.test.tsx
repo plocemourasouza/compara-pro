@@ -57,8 +57,17 @@ describe("landing pública aprovada", () => {
 			"href",
 			"https://osystems.com.br",
 		);
-		const whatsapp = screen.getByRole("link", { name: /Falar no WhatsApp/i });
+		const whatsapp = screen.getByRole("link", {
+			name: /Abrir conversa no WhatsApp/i,
+		});
 		expect(whatsapp).toHaveAttribute("href", "https://wa.me/555599611317");
-		expect(screen.getByText("+55 55 9961-1317")).toBeInTheDocument();
+		expect(
+			screen.getByRole("link", { name: "+55 55 9961-1317" }),
+		).toHaveAttribute("href", "https://wa.me/555599611317");
+		expect(
+			screen.getByRole("heading", {
+				name: /Quer conversar antes de entrar/i,
+			}),
+		).toBeInTheDocument();
 	});
 });

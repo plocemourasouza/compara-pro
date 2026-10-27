@@ -376,20 +376,57 @@ export function LandingPage() {
 						</div>
 					</section>
 					<section
-						className="closing closing-contact"
-						aria-label="Falar com o comercial"
+						className="contact-desk"
+						aria-labelledby="contact-desk-title"
 					>
-						<div>
-							<p className="label">ATENDIMENTO COMERCIAL</p>
-							<h2>Quer saber mais antes de começar?</h2>
-							<p className="closing-contact-copy">
-								Fale direto com o comercial no WhatsApp{" "}
-								<span className="closing-phone">+55 55 9961-1317</span>.
+						<div className="contact-desk-copy">
+							<h2 id="contact-desk-title">Quer conversar antes de entrar?</h2>
+							<p>
+								Chame o comercial no WhatsApp e fale com uma pessoa real. Tire
+								dúvidas de comprador ou representante, entenda o fluxo e veja se
+								o Compara&nbsp;PRÓ cabe na sua operação — sem formulário e sem
+								fila de ticket.
 							</p>
+							<ul className="contact-points">
+								<li>
+									<svg aria-hidden="true">
+										<use href="#cp-whatsapp"></use>
+									</svg>
+									<span>WhatsApp direto com o atendimento comercial</span>
+								</li>
+								<li>
+									<svg aria-hidden="true">
+										<use href="#cp-person"></use>
+									</svg>
+									<span>Atendimento humano para comprador e representante</span>
+								</li>
+								<li>
+									<svg aria-hidden="true">
+										<use href="#cp-checklist"></use>
+									</svg>
+									<span>Explicação do produto e do próximo passo</span>
+								</li>
+							</ul>
 						</div>
-						<div className="hero-doors">
+						<aside className="contact-desk-card" aria-label="Contato WhatsApp">
+							<div className="contact-desk-status">
+								<span className="contact-pulse" aria-hidden="true" />
+								<span>Atendimento comercial no WhatsApp</span>
+							</div>
+							<p className="contact-desk-kicker">Número do comercial</p>
 							<a
-								className="button whatsapp"
+								className="contact-phone"
+								href="https://wa.me/555599611317"
+								target="_blank"
+								rel="noreferrer noopener"
+							>
+								+55 55 9961-1317
+							</a>
+							<p className="contact-desk-note">
+								Toque no número ou no botão abaixo e a conversa abre na hora.
+							</p>
+							<a
+								className="button whatsapp whatsapp-lg"
 								href="https://wa.me/555599611317"
 								target="_blank"
 								rel="noreferrer noopener"
@@ -400,13 +437,13 @@ export function LandingPage() {
 											<use href="#cp-whatsapp"></use>
 										</svg>
 									</span>
-									Falar no WhatsApp
+									Abrir conversa no WhatsApp
 								</span>
 								<svg className="arrow wa-arrow" aria-hidden="true">
 									<use href="#cp-arrow"></use>
 								</svg>
 							</a>
-						</div>
+						</aside>
 					</section>
 				</div>
 			</main>

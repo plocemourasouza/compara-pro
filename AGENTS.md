@@ -5,7 +5,8 @@
 - Expects autonomous full-stack recovery: ensure Docker Desktop and the PostgreSQL container are up, then restart the dev server without extra prompts.
 - When presenting design direction or model options, keep all options available and let the user choose; do not discard options unilaterally.
 - For Impeccable redesign/polish, prefers running stages sequentially in a loop until the surface is adequate, without stopping between stages for confirmation.
-- When asked to commit and push, update both `dev` and `main`.
+- When committing and pushing, update both `dev` and `main`.
+- After finishing work, commit and push by default (both branches). Stay local-only only when the user explicitly asks for that.
 - Authenticated panels (admin, comprador, representante) should match the polish of the landing and login; replicate shared component properties rather than leaving internals less finished.
 - UI shadows must use shadcn utilities (`shadow-xs`, `shadow-sm`, `shadow-md`, `shadow-lg`), not custom shadow values.
 - Prefers free-tier hosting for validation demos (Vercel Hobby + free Postgres such as Supabase/Neon), not paid infra for early validation.
