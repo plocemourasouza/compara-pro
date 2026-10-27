@@ -53,6 +53,10 @@ export function LandingPage() {
 						<path d="m10 17 5-5-5-5"></path>
 						<path d="M15 12H3"></path>
 					</symbol>
+					<symbol id="cp-whatsapp" viewBox="0 0 24 24">
+						<path d="M12 3a9 9 0 0 0-7.8 13.4L3 21l4.7-1.2A9 9 0 1 0 12 3Z"></path>
+						<path d="M8.6 9.3c.2-.4.4-.4.6-.4h.5c.2 0 .4 0 .5.4l.7 1.7c.1.2 0 .4-.1.5l-.4.5c-.1.1-.1.3 0 .4.3.5.9 1.1 1.5 1.5.2.1.3.1.4 0l.5-.4c.2-.1.3-.1.5 0l1.6.8c.3.1.4.3.4.5v.5c0 .2 0 .4-.4.6A4.4 4.4 0 0 1 12 16a4.4 4.4 0 0 1-3.4-6.7Z"></path>
+					</symbol>
 				</defs>
 			</svg>
 			<a className="skip" href="#conteudo">
@@ -253,8 +257,7 @@ export function LandingPage() {
 								<h3>Compare os preços da sua próxima compra.</h3>
 								<p>
 									Envie a lista, veja quem oferece o menor preço de cada item e
-									gere o pedido sem montar a comparação em uma planilha
-									manual.
+									gere o pedido sem montar a comparação em uma planilha manual.
 								</p>
 								<Link className="role-link" href="/auth/register">
 									Criar conta de comprador{" "}
@@ -327,8 +330,8 @@ export function LandingPage() {
 						<details>
 							<summary>O pedido confirma a compra?</summary>
 							<p>
-								Não. O pedido reúne as ofertas que você selecionou. Depois
-								do envio, o representante aprova ou rejeita. Você acompanha o
+								Não. O pedido reúne as ofertas que você selecionou. Depois do
+								envio, o representante aprova ou rejeita. Você acompanha o
 								status: pendente, aprovado, rejeitado ou expirado.
 							</p>
 						</details>
@@ -366,20 +369,53 @@ export function LandingPage() {
 						</details>
 					</div>
 				</section>
-				<section className="closing wrap" aria-label="Acessar o Compara Pró">
-					<div>
-						<p className="label">ESCOLHA COMO USAR O COMPARA PRÓ</p>
-						<h2>Vamos colocar os preços na mesa?</h2>
-					</div>
-					<div className="hero-doors">
-						<Link className="button" href="/auth/login">
-							Começar agora{" "}
-							<svg className="arrow" aria-hidden="true">
-								<use href="#cp-arrow"></use>
-							</svg>
-						</Link>
-					</div>
-				</section>
+				<div className="closing-stack wrap">
+					<section className="closing" aria-label="Acessar o Compara Pró">
+						<div>
+							<p className="label">ESCOLHA COMO USAR O COMPARA PRÓ</p>
+							<h2>Vamos colocar os preços na mesa?</h2>
+						</div>
+						<div className="hero-doors">
+							<Link className="button" href="/auth/login">
+								Começar agora{" "}
+								<svg className="arrow" aria-hidden="true">
+									<use href="#cp-arrow"></use>
+								</svg>
+							</Link>
+						</div>
+					</section>
+					<section
+						className="closing closing-contact"
+						aria-label="Falar com o comercial"
+					>
+						<div>
+							<p className="label">ATENDIMENTO COMERCIAL</p>
+							<h2>Quer saber mais antes de começar?</h2>
+							<p className="closing-contact-copy">
+								Fale direto com o comercial no WhatsApp{" "}
+								<span className="closing-phone">+55 55 9961-1317</span>.
+							</p>
+						</div>
+						<div className="hero-doors">
+							<a
+								className="button outline"
+								href="https://wa.me/555599611317"
+								target="_blank"
+								rel="noreferrer noopener"
+							>
+								<span className="button-lead">
+									<svg className="icon" aria-hidden="true">
+										<use href="#cp-whatsapp"></use>
+									</svg>
+									Falar no WhatsApp
+								</span>
+								<svg className="arrow" aria-hidden="true">
+									<use href="#cp-arrow"></use>
+								</svg>
+							</a>
+						</div>
+					</section>
+				</div>
 			</main>
 			<footer className="footer">
 				<div className="wrap footer-inner">
@@ -398,8 +434,8 @@ export function LandingPage() {
 							© {new Date().getFullYear()} Compara Pró · Comparação de preços
 							para compras no atacado.
 						</p>
-						<p>
-							Desenvolvido por{" "}
+						<p className="footer-credit">
+							Desenvolvido&nbsp;por&nbsp;
 							<a
 								href="https://osystems.com.br"
 								target="_blank"

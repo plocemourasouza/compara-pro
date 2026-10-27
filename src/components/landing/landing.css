@@ -782,6 +782,11 @@ html:has(.compara-landing) {
 	padding-bottom: 21px;
 	max-width: 460px
 }
+.compara-landing .closing-stack {
+	display: grid;
+	gap: 16px;
+	margin-bottom: 65px
+}
 .compara-landing .closing {
 	border: 1px solid #dce2ec;
 	background: #eaf0ff;
@@ -791,7 +796,34 @@ html:has(.compara-landing) {
 	justify-content: space-between;
 	gap: 35px;
 	align-items: center;
-	margin-bottom: 65px
+	margin-bottom: 0
+}
+.compara-landing .closing-contact {
+	background: var(--white);
+	align-items: flex-end
+}
+.compara-landing .closing-contact-copy {
+	margin-top: 10px;
+	max-width: 42ch;
+	font-size: 14px;
+	line-height: 1.55;
+	color: var(--muted)
+}
+.compara-landing .closing-phone {
+	color: var(--ink);
+	font-weight: 600;
+	white-space: nowrap
+}
+.compara-landing .closing .button-lead {
+	display: inline-flex;
+	align-items: center;
+	gap: 10px
+}
+.compara-landing .closing .button-lead .icon {
+	width: 16px;
+	height: 16px;
+	stroke: none;
+	fill: currentColor
 }
 .compara-landing .closing .label {
 	font-size: 9px;
@@ -839,11 +871,15 @@ html:has(.compara-landing) {
 	display: grid;
 	gap: 4px;
 	justify-items: center;
-	text-align: center
+	text-align: center;
+	min-width: 0
 }
 .compara-landing .footer p {
 	font-size: 10px;
 	color: var(--muted)
+}
+.compara-landing .footer-credit {
+	white-space: nowrap
 }
 .compara-landing .footer-copy a {
 	color: var(--primary);
@@ -1261,10 +1297,16 @@ html:has(.compara-landing) {
 		font-size: 13px;
 		padding: 19px 0
 	}
+	.compara-landing .closing-stack {
+		margin-bottom: 43px
+	}
 	.compara-landing .closing {
 		display: block;
 		padding: 27px 22px;
-		margin-bottom: 43px
+		margin-bottom: 0
+	}
+	.compara-landing .closing-contact {
+		align-items: stretch
 	}
 	.compara-landing .closing h2 {
 		font-size: 29px
@@ -1947,8 +1989,7 @@ html:has(.compara-landing) {
 	margin-top: 30px;
 	padding: 17px 20px;
 	border: 1px solid var(--line);
-	border-left: 3px solid var(--primary);
-	border-radius: 0 8px 8px 0;
+	border-radius: 8px;
 	font-size: 13px;
 	line-height: 1.7;
 	color: var(--muted);

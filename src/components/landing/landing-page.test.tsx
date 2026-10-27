@@ -26,7 +26,10 @@ describe("landing pública aprovada", () => {
 		const nav = screen.getByRole("navigation", { name: "Navegação principal" });
 		const headerLogin = within(nav).getByRole("link", { name: /^Entrar$/ });
 		expect(headerLogin).toHaveAttribute("href", "/auth/login");
-		expect(headerLogin.querySelector("use")).toHaveAttribute("href", "#cp-login");
+		expect(headerLogin.querySelector("use")).toHaveAttribute(
+			"href",
+			"#cp-login",
+		);
 		expect(
 			within(nav).queryByRole("link", { name: /Criar conta/ }),
 		).not.toBeInTheDocument();
@@ -54,5 +57,8 @@ describe("landing pública aprovada", () => {
 			"href",
 			"https://osystems.com.br",
 		);
+		const whatsapp = screen.getByRole("link", { name: /Falar no WhatsApp/i });
+		expect(whatsapp).toHaveAttribute("href", "https://wa.me/555599611317");
+		expect(screen.getByText("+55 55 9961-1317")).toBeInTheDocument();
 	});
 });

@@ -39,7 +39,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
 					atacado
 				</span>
 				<span className={styles.credit}>
-					Desenvolvido por{" "}
+					Desenvolvido&nbsp;por&nbsp;
 					<a
 						href="https://osystems.com.br"
 						target="_blank"

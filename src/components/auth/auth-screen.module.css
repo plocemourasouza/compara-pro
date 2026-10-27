@@ -278,6 +278,7 @@
 
 .credit {
 	text-transform: none;
+	white-space: nowrap;
 }
 
 .credit a {
