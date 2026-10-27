@@ -254,11 +254,19 @@ export function UploadDetailModal({
 											</TableBody>
 										</Table>
 									</div>
-									{detail.products.length > 10 && (
-										<p className="text-xs text-muted-foreground">
-											E mais {detail.products.length - 10} produtos...
-										</p>
-									)}
+									{(() => {
+										const shown = Math.min(10, detail.products.length);
+										const catalogSize =
+											detail.processedRows > 0
+												? detail.processedRows
+												: detail.products.length;
+										const remaining = catalogSize - shown;
+										return remaining > 0 ? (
+											<p className="text-xs text-muted-foreground">
+												E mais {remaining.toLocaleString("pt-BR")} produtos...
+											</p>
+										) : null;
+									})()}
 								</section>
 							) : (
 								<p className="rounded-lg border border-dashed py-6 text-center text-sm text-muted-foreground">

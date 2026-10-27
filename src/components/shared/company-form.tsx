@@ -251,15 +251,18 @@ export function CompanyForm({
 			});
 
 			if (response.ok) {
+				const representative = values.type === "REPRESENTATIVE";
 				toast.success(
 					mode === "edit"
-						? "Empresa atualizada com sucesso!"
-						: "Empresa criada com sucesso!",
+						? representative
+							? "Representante atualizado com sucesso!"
+							: "Empresa atualizada com sucesso!"
+						: representative
+							? "Representante criado com sucesso!"
+							: "Empresa criada com sucesso!",
 				);
 				router.push(
-					values.type === "REPRESENTATIVE"
-						? "/admin/representatives"
-						: "/admin/companies",
+					representative ? "/admin/representatives" : "/admin/companies",
 				);
 				router.refresh();
 				return;
@@ -284,6 +287,10 @@ export function CompanyForm({
 	};
 
 	const isSubmitting = form.formState.isSubmitting;
+	const isRepresentative = hideType && defaultValues?.type === "REPRESENTATIVE";
+	const listPath = isRepresentative
+		? "/admin/representatives"
+		: "/admin/companies";
 
 	return (
 		<div className="space-y-6">
@@ -293,11 +300,19 @@ export function CompanyForm({
 				</Button>
 				<div>
 					<h1 className="text-2xl font-bold tracking-tight">
-						{mode === "edit" ? "Editar Empresa" : "Cadastrar Nova Empresa"}
+						{isRepresentative
+							? mode === "edit"
+								? "Editar Representante"
+								: "Cadastrar Novo Representante"
+							: mode === "edit"
+								? "Editar Empresa"
+								: "Cadastrar Nova Empresa"}
 					</h1>
 					<p className="text-muted-foreground">
 						{mode === "edit"
-							? "Atualize os dados da empresa"
+							? isRepresentative
+								? "Atualize os dados do representante"
+								: "Atualize os dados da empresa"
 							: "Informe o CNPJ para preencher automaticamente os dados"}
 					</p>
 				</div>
@@ -309,7 +324,9 @@ export function CompanyForm({
 						<CardHeader>
 							<CardTitle className="flex items-center gap-2 text-lg">
 								<Building2 className="h-5 w-5" />
-								Dados da Empresa
+								{isRepresentative
+									? "Dados do Representante"
+									: "Dados da Empresa"}
 							</CardTitle>
 							<CardDescription>
 								{locked
@@ -728,7 +745,7 @@ export function CompanyForm({
 						<Button
 							type="button"
 							variant="outline"
-							onClick={() => router.push("/admin/companies")}
+							onClick={() => router.push(listPath)}
 							disabled={isSubmitting}
 						>
 							Cancelar
@@ -739,7 +756,9 @@ export function CompanyForm({
 								? "Salvando..."
 								: mode === "edit"
 									? "Salvar Alterações"
-									: "Criar Empresa"}
+									: isRepresentative
+										? "Criar Representante"
+										: "Criar Empresa"}
 						</Button>
 					</div>
 				</form>

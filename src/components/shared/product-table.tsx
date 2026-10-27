@@ -18,6 +18,8 @@ export interface Product {
 	category?: string;
 	unit?: string;
 	company: { id: string; name: string; type: string };
+	/** Faz parte da lista vigente do fornecedor. */
+	isActive?: boolean;
 	/** Date+time of the price list this product's current price came from. */
 	lastListDate?: string | null;
 	/** % variation of current price vs the previous list (negative = cheaper). */
@@ -155,7 +157,7 @@ export function getProductColumns({
 				>
 					<HintTooltip
 						label="Excluir produto"
-						description="Remove o produto do catálogo. Itens já usados em pré-pedidos não podem ser excluídos."
+						description="Remove o produto do catálogo. Itens já usados em pedidos não podem ser excluídos."
 						side="left"
 					>
 						<Button

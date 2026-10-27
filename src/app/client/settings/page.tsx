@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { dashboardForArea } from "@/lib/area";
 import { getCurrentUser } from "@/lib/auth-server";
+import { prisma } from "@/lib/db";
 import SettingsClient from "./settings-client";
 
 export default async function SettingsPage() {
@@ -14,5 +15,14 @@ export default async function SettingsPage() {
 		redirect(dashboardForArea(user.area));
 	}
 
-	return <SettingsClient user={user} />;
+	const record = await prisma.user.findUnique({
+		where: { id: user.id },
+		select: { createdAt: true },
+	});
+	const createdLabel = (record?.createdAt ?? new Date()).toLocaleDateString(
+		"pt-BR",
+		{ day: "numeric", month: "long", year: "numeric" },
+	);
+
+	return <SettingsClient user={user} createdLabel={createdLabel} />;
 }

@@ -101,7 +101,7 @@ export default function NotificationsClient() {
 				<CardHeader>
 					<CardTitle className="text-lg">Atividade</CardTitle>
 					<CardDescription>
-						Pré-pedidos, uploads e avisos do sistema.
+						Pedidos, uploads e avisos do sistema.
 					</CardDescription>
 				</CardHeader>
 				<CardContent>

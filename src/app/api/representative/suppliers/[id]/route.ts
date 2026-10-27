@@ -33,6 +33,7 @@ export async function GET(_request: Request, { params }: RouteParams) {
 					email: true,
 					phone: true,
 					zipCode: true,
+					addressType: true,
 					street: true,
 					number: true,
 					neighborhood: true,
@@ -41,7 +42,11 @@ export async function GET(_request: Request, { params }: RouteParams) {
 					responsibleName: true,
 					responsibleEmail: true,
 					responsiblePhone: true,
-					_count: { select: { products: true } },
+					_count: {
+						select: {
+							products: { where: { isActive: true, deletedAt: null } },
+						},
+					},
 				},
 			}),
 			prisma.uploadHistory.findFirst({
@@ -93,6 +98,7 @@ export async function GET(_request: Request, { params }: RouteParams) {
 				email: supplier.email,
 				phone: supplier.phone,
 				zipCode: supplier.zipCode,
+				addressType: supplier.addressType,
 				street: supplier.street,
 				number: supplier.number,
 				neighborhood: supplier.neighborhood,

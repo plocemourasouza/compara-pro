@@ -17,3 +17,7 @@
 - Design system lives in `DESIGN.md` (canvas `#f7f8fc`, ink `#192b49`, primary `#245bcf`, Geist). Orange is not part of the identity, including warnings. Winning price stays green; errors stay red.
 - Dual-audience landing brief (comprador `CLIENT` vs representante `REPRESENTATIVE`) is in `docs/features-comprador-representante.md`; product context in `PRODUCT.md`.
 - Buyer comparison uses the landing desk as the internal standard: suppliers in columns, lowest price in green, winner named in a “Melhor oferta” column. The same winning-price cell applies wherever an offer is marked, and the buyer can still choose a higher price.
+- Landing hero and the closing “Vamos colocar os preços na mesa?” section use one “Começar agora” button to `/auth/login`, where the visitor can sign in or create an account. The header keeps a single “Entrar” action with an access icon to the same screen.
+- Do not caption images “Imagem ilustrativa gerada por IA”. The landing and auth screens (login, signup, activation) show a current-year copyright plus “Desenvolvido por oSystems” linking to https://osystems.com.br.
+- On screen the object is **Pedido** / **Pedidos**. Do not show “pré-pedido”. Routes, models, and APIs stay `pre-order` / `PreOrder`.
+- Scope, UI, responsiveness, and secrets for every change are in `RULES.md`.

@@ -49,7 +49,7 @@ export function getPreOrderColumns(opts?: {
 }): ColumnDef<PreOrder>[] {
 	const ref: ColumnDef<PreOrder> = {
 		id: "ref",
-		header: "Pré-pedido",
+		header: "Pedido",
 		accessorFn: (row) => row.id,
 		filterFn: (row, _id, value) => {
 			const o = row.original;

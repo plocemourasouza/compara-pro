@@ -95,7 +95,7 @@ export function LandingPage() {
 						<p className="hero-copy">
 							Envie sua lista em Excel ou CSV. Compare os preços dos
 							fornecedores da sua carteira, escolha a oferta de cada item e gere
-							o pré-pedido. O representante recebe e aprova ou rejeita.
+							o pedido. O representante recebe e aprova ou rejeita.
 						</p>
 						<div className="hero-doors">
 							<Link className="button" href="/auth/login">
@@ -145,7 +145,7 @@ export function LandingPage() {
 								<h2>
 									Da sua lista de compras
 									<br />
-									ao pré-pedido.
+									ao pedido.
 								</h2>
 							</div>
 							<p>
@@ -190,17 +190,17 @@ export function LandingPage() {
 										<use href="#cp-checklist"></use>
 									</svg>
 								</div>
-								<h3>Prepare o pré-pedido.</h3>
+								<h3>Prepare o pedido.</h3>
 								<p>
-									Gere um ou mais pré-pedidos com as ofertas selecionadas. O
-									representante recebe cada pré-pedido e aprova ou rejeita.
+									Gere um ou mais pedidos com as ofertas selecionadas. O
+									representante recebe cada pedido e aprova ou rejeita.
 								</p>
 								<span className="step-tag">Resposta do representante</span>
 							</article>
 						</div>
 						<p className="handoff">
 							<strong>
-								A comparação vira pré-pedido. O representante dá a resposta.
+								A comparação vira pedido. O representante dá a resposta.
 							</strong>
 							<br />O comprador acompanha o que está pendente, aprovado,
 							rejeitado ou expirado.
@@ -238,7 +238,7 @@ export function LandingPage() {
 								</div>
 								<p>
 									O comprador compara os fornecedores da sua carteira. O
-									representante publica os catálogos e responde aos pré-pedidos.
+									representante publica os catálogos e responde aos pedidos.
 								</p>
 							</div>
 						</div>
@@ -253,7 +253,7 @@ export function LandingPage() {
 								<h3>Compare os preços da sua próxima compra.</h3>
 								<p>
 									Envie a lista, veja quem oferece o menor preço de cada item e
-									gere o pré-pedido sem montar a comparação em uma planilha
+									gere o pedido sem montar a comparação em uma planilha
 									manual.
 								</p>
 								<Link className="role-link" href="/auth/register">
@@ -273,7 +273,7 @@ export function LandingPage() {
 								<h3>Organize sua rotina comercial.</h3>
 								<p>
 									Publique os catálogos das empresas que representa, veja a
-									demanda dos clientes e aprove ou rejeite os pré-pedidos.
+									demanda dos clientes e aprove ou rejeite os pedidos.
 								</p>
 								<Link className="role-link" href="/auth/login">
 									Entrar como representante{" "}
@@ -295,7 +295,7 @@ export function LandingPage() {
 						</h2>
 						<p>
 							Entenda como a lista vira uma comparação e qual é o papel do
-							pré-pedido.
+							pedido.
 						</p>
 					</div>
 					<div className="faqs">
@@ -325,9 +325,9 @@ export function LandingPage() {
 							</p>
 						</details>
 						<details>
-							<summary>O pré-pedido confirma a compra?</summary>
+							<summary>O pedido confirma a compra?</summary>
 							<p>
-								Não. O pré-pedido reúne as ofertas que você selecionou. Depois
+								Não. O pedido reúne as ofertas que você selecionou. Depois
 								do envio, o representante aprova ou rejeita. Você acompanha o
 								status: pendente, aprovado, rejeitado ou expirado.
 							</p>
@@ -337,7 +337,7 @@ export function LandingPage() {
 							<p>
 								Use a opção Entrar para acessar uma organização existente. O
 								representante atua por uma ou mais empresas fornecedoras e
-								gerencia catálogos, clientes e pré-pedidos.
+								gerencia catálogos, clientes e pedidos.
 							</p>
 						</details>
 						<details>

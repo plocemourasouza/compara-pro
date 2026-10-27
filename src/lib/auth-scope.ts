@@ -11,7 +11,7 @@ export type ScopeUser = {
  * IDs das empresas fornecedoras (Company type SUPPLIER) que a AGÊNCIA do usuário
  * (Company type REPRESENTATIVE = `user.company.id`) representa. Todos os usuários
  * da agência compartilham o mesmo conjunto. Sem agência ou sem vínculos → [].
- * Use para escopar produtos, uploads, pré-pedidos e carteira.
+ * Use para escopar produtos, uploads, pedidos e carteira.
  */
 /**
  * ADMIN vê qualquer lista. Representante vê as dos fornecedores da agência.

@@ -102,7 +102,7 @@ export function SupplierBars({ data }: SupplierBarsProps) {
 	if (data.length === 0) {
 		return (
 			<div className="flex h-[280px] items-center justify-center text-muted-foreground">
-				Sem pré-pedidos.
+				Sem pedidos.
 			</div>
 		);
 	}

@@ -140,7 +140,7 @@ export default function SupplierDashboard({
 			href: "/supplier/products",
 		},
 		{
-			label: "Pré-pedidos pendentes",
+			label: "Pedidos pendentes",
 			value: metrics ? `${metrics.preOrders.pending}` : "—",
 			hint: metrics
 				? `${metrics.preOrders.approved} aprovados · ${metrics.preOrders.rejected} rejeitados`
@@ -166,7 +166,7 @@ export default function SupplierDashboard({
 			label: "Valor aprovado",
 			value: metrics ? formatters.currency(metrics.preOrders.totalValue) : "—",
 			hint: metrics
-				? `${metrics.preOrders.approved} pré-pedidos aprovados`
+				? `${metrics.preOrders.approved} pedidos aprovados`
 				: "",
 			icon: ArrowUpRight,
 			href: "/supplier/pre-orders",
@@ -174,7 +174,7 @@ export default function SupplierDashboard({
 		{
 			label: "Economia gerada",
 			value: metrics ? formatters.currency(metrics.savings) : "—",
-			hint: "Em pré-pedidos aprovados",
+			hint: "Em pedidos aprovados",
 			icon: Wallet,
 			href: "/supplier/pre-orders",
 		},
@@ -191,7 +191,7 @@ export default function SupplierDashboard({
 				},
 				{
 					icon: ShoppingCart,
-					label: "Pré-pedidos aguardando resposta",
+					label: "Pedidos aguardando resposta",
 					subtitle: `${insights.attention.preOrdersBreakdown.clients} clientes · ${insights.attention.preOrdersBreakdown.products} produtos · ${formatCurrency(insights.attention.preOrdersBreakdown.totalValue)}`,
 					count: insights.attention.activePreOrders,
 					href: "/supplier/pre-orders",
@@ -218,7 +218,7 @@ export default function SupplierDashboard({
 						Olá, {user.name}
 					</h1>
 					<p className="text-muted-foreground">
-						Resumo do seu catálogo, carteira e pré-pedidos.
+						Resumo do seu catálogo, carteira e pedidos.
 						{lastUpdate &&
 							` · Atualizado às ${lastUpdate.toLocaleTimeString("pt-BR")}`}
 					</p>
@@ -304,7 +304,7 @@ export default function SupplierDashboard({
 			) : insights ? (
 				<div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
 					<StatCard
-						title="Pré-pedidos em aberto"
+						title="Pedidos em aberto"
 						icon={ShoppingCart}
 						value={formatCurrency(insights.gmv.openValue)}
 						hint={`${insights.attention.activePreOrders} aguardando resposta`}
@@ -313,7 +313,7 @@ export default function SupplierDashboard({
 						title="Valor finalizado"
 						icon={CheckCircle}
 						value={formatCurrency(insights.gmv.finalizedValue)}
-						hint="Pré-pedidos aprovados"
+						hint="Pedidos aprovados"
 					/>
 					<StatCard
 						title="Taxa de aprovação"
@@ -347,14 +347,14 @@ export default function SupplierDashboard({
 				<div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
 					<LeaderboardCard
 						title="Top fornecedores"
-						description="Por valor de pré-pedidos finalizados"
+						description="Por valor de pedidos finalizados"
 						items={insights.leaderboards.topSuppliers.map((s) => ({
 							id: s.supplierId,
 							name: s.name,
 							value: s.finalizedValue,
 						}))}
 						valueFormatter={formatCurrency}
-						emptyLabel="Nenhum pré-pedido finalizado."
+						emptyLabel="Nenhum pedido finalizado."
 					/>
 					<LeaderboardCard
 						title="Top clientes"
@@ -365,7 +365,7 @@ export default function SupplierDashboard({
 							value: c.spend,
 						}))}
 						valueFormatter={formatCurrency}
-						emptyLabel="Nenhum pré-pedido finalizado."
+						emptyLabel="Nenhum pedido finalizado."
 					/>
 				</div>
 			)}
@@ -390,7 +390,7 @@ export default function SupplierDashboard({
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
 				<Card className="lg:col-span-2">
 					<CardHeader>
-						<CardTitle className="text-lg">Pré-pedidos recentes</CardTitle>
+						<CardTitle className="text-lg">Pedidos recentes</CardTitle>
 						<CardDescription>Últimos pedidos recebidos.</CardDescription>
 					</CardHeader>
 					<CardContent>
@@ -398,7 +398,7 @@ export default function SupplierDashboard({
 							<p className="text-muted-foreground text-sm">Carregando…</p>
 						) : !metrics || metrics.recentPreOrders.length === 0 ? (
 							<p className="text-muted-foreground text-sm">
-								Nenhum pré-pedido ainda.
+								Nenhum pedido ainda.
 							</p>
 						) : (
 							<ul className="divide-y">

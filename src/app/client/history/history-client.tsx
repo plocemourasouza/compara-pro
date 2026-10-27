@@ -46,10 +46,23 @@ export default function HistoryClient({ user: _user }: HistoryClientProps) {
 	const fetchHistory = async () => {
 		try {
 			setLoading(true);
-			const response = await fetch("/api/upload/history");
-			if (!response.ok) throw new Error("Erro ao carregar histórico");
-			const data = await response.json();
-			setUploads(data.uploads ?? []);
+			const pageSize = 100;
+			const collected: Upload[] = [];
+			let page = 1;
+			let total = 0;
+			do {
+				const response = await fetch(
+					`/api/upload/history?page=${page}&limit=${pageSize}`,
+				);
+				if (!response.ok) throw new Error("Erro ao carregar histórico");
+				const data = await response.json();
+				const batch: Upload[] = data.uploads ?? [];
+				total = data.pagination?.total ?? collected.length + batch.length;
+				collected.push(...batch);
+				if (batch.length === 0) break;
+				page += 1;
+			} while (collected.length < total && page <= 100);
+			setUploads(collected);
 		} catch (error) {
 			console.error("Erro ao carregar histórico:", error);
 		} finally {

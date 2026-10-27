@@ -43,6 +43,7 @@ interface ClientInfo {
 	email: string | null;
 	phone: string | null;
 	zipCode: string | null;
+	addressType: string | null;
 	street: string | null;
 	number: string | null;
 	neighborhood: string | null;
@@ -131,7 +132,12 @@ export default function ClientDetailClient({ clientId }: { clientId: string }) {
 		);
 	}
 
-	const addressLine = [client.street, client.number].filter(Boolean).join(", ");
+	const addressLine = [
+		[client.addressType, client.street].filter(Boolean).join(" "),
+		client.number,
+	]
+		.filter(Boolean)
+		.join(", ");
 	const cityLine = [client.city, client.state].filter(Boolean).join("/");
 
 	return (

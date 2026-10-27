@@ -16,6 +16,7 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { AppSidebarFrame } from "@/components/shared/app-sidebar-frame";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -51,7 +52,7 @@ const navigation: Array<{
 	{ name: "Comparar Preços", href: "/client/compare", icon: BarChart3 },
 	{ name: "Meus Fornecedores", href: "/client/suppliers", icon: Building2 },
 	{
-		name: "Pré-pedidos",
+		name: "Pedidos",
 		href: "/client/pre-orders",
 		icon: ShoppingCart,
 		badgeKey: "pending",
@@ -89,8 +90,8 @@ export default function ClientSidebar({ user }: ClientSidebarProps) {
 	};
 
 	return (
-		<div className="fixed inset-y-0 left-0 z-50 w-64 bg-background border-r border-border">
-			<div className="flex flex-col h-full">
+		<AppSidebarFrame>
+			<div className="flex h-full min-h-0 flex-col">
 				{/* Logo */}
 				<div className="flex items-center h-16 px-6 border-b border-border">
 					<BarChart3 className="h-8 w-8 text-primary" />
@@ -103,7 +104,7 @@ export default function ClientSidebar({ user }: ClientSidebarProps) {
 				</div>
 
 				{/* Navigation */}
-				<nav className="flex-1 px-4 py-6 space-y-2">
+				<nav className="min-h-0 flex-1 space-y-2 overflow-y-auto px-4 py-6">
 					<div className="border-t border-border pt-4">
 						<div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
 							Cliente
@@ -191,6 +192,6 @@ export default function ClientSidebar({ user }: ClientSidebarProps) {
 					</Button>
 				</div>
 			</div>
-		</div>
+		</AppSidebarFrame>
 	);
 }

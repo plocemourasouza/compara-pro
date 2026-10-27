@@ -47,7 +47,7 @@ export default function PreOrderModal({
 			<DialogContent className="w-[calc(100vw-2rem)] sm:max-w-5xl">
 				<DialogHeader>
 					<DialogTitle className="flex items-center justify-between">
-						Itens do Pré-pedido
+						Itens do Pedido
 						<Badge variant={status === "ACTIVE" ? "default" : "secondary"}>
 							{status === "ACTIVE" ? "Ativo" : "Finalizado"}
 						</Badge>
@@ -84,7 +84,7 @@ export default function PreOrderModal({
 
 				<div className="flex justify-between pt-4">
 					<Button variant="destructive" onClick={onDelete}>
-						Excluir Pré-pedido
+						Excluir Pedido
 					</Button>
 					{status === "ACTIVE" && (
 						<Button onClick={onFinalize}>Marcar como Finalizado</Button>

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createOrderCsv, DEMO_PRODUCTS } from "./comparison-data";
 
-describe("CSV do pré-pedido ilustrativo", () => {
+describe("CSV do pedido ilustrativo", () => {
 	it("exporta só os itens escolhidos, com fornecedor e subtotal em português", () => {
 		const csv = createOrderCsv(
 			DEMO_PRODUCTS.filter((p) => p.id === 1 || p.id === 2),

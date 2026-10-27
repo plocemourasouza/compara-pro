@@ -14,7 +14,7 @@ interface ColumnActions {
 
 /**
  * Colunas da lista de Representantes (agências). Difere de Empresas: sem Tipo e
- * sem Responsável; CNPJ anonimizado (LGPD) com cópia; e colunas Pré-pedidos e Status.
+ * sem Responsável; CNPJ anonimizado (LGPD) com cópia; e colunas Pedidos e Status.
  */
 export function getRepresentativesColumns({
 	onDelete,
@@ -62,7 +62,7 @@ export function getRepresentativesColumns({
 		},
 		{
 			id: "preOrders",
-			header: "Pré-pedidos",
+			header: "Pedidos",
 			enableSorting: false,
 			cell: ({ row }) => (
 				<div className="flex items-center gap-1 text-sm">

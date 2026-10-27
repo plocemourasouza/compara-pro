@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import { loginAs } from "./helpers/auth";
 
 // #2 (F6 AC-07) match manual de produto sem correspondência pela UI, e
-// #3 (T-08) parecer renderiza no fluxo + override de fornecedor confirma pré-pedido.
+// #3 (T-08) parecer renderiza no fluxo + override de fornecedor confirma pedido.
 // Ambos partem do mesmo setup: comprador roda a comparação em /client/compare.
 
 async function runComparison(page: import("@playwright/test").Page) {
@@ -51,7 +51,7 @@ test("match manual associa produto sem correspondência (F6 AC-07)", async ({
 	).toHaveCount(0, { timeout: 15_000 });
 });
 
-test("parecer renderiza no fluxo e override confirma pré-pedido (T-08)", async ({
+test("parecer renderiza no fluxo e override confirma pedido (T-08)", async ({
 	page,
 }) => {
 	await runComparison(page);
@@ -76,9 +76,9 @@ test("parecer renderiza no fluxo e override confirma pré-pedido (T-08)", async 
 	}
 	expect(picked).toBe(true);
 
-	// Confirma o pré-pedido com o override aplicado.
-	await page.getByRole("button", { name: /confirmar pré-pedido/i }).click();
-	await expect(page.getByText(/pré-pedido/i).first()).toBeVisible({
+	// Confirma o pedido com o override aplicado.
+	await page.getByRole("button", { name: /confirmar pedido/i }).click();
+	await expect(page.getByText(/pedido/i).first()).toBeVisible({
 		timeout: 15_000,
 	});
 });

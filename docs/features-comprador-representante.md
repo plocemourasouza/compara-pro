@@ -2,11 +2,11 @@
 
 Documento para quem vai melhorar a landing pública com ajuda externa. Descreve o que o produto faz hoje para **comprador** e **representante**, e o desenho que a página precisa respeitar.
 
-A landing vende as duas portas no mesmo peso. A prova é o próprio produto: lista real, preço ao lado de preço, pré-pedido. Não há clientes nomeados, logos, percentual de economia nem prazo de teste para citar.
+A landing vende as duas portas no mesmo peso. A prova é o próprio produto: lista real, preço ao lado de preço, pedido. Não há clientes nomeados, logos, percentual de economia nem prazo de teste para citar.
 
 ## O que se vende
 
-O Compara Pró é uma plataforma B2B de comparação de preços. O comprador sobe a lista de compras. A plataforma cruza os itens com os catálogos dos fornecedores da carteira dele, marca a melhor oferta de cada linha e deixa sair o pré-pedido. O representante, do outro lado, mantém fornecedores, catálogos e clientes, e responde a esses pré-pedidos.
+O Compara Pró é uma plataforma B2B de comparação de preços. O comprador sobe a lista de compras. A plataforma cruza os itens com os catálogos dos fornecedores da carteira dele, marca a melhor oferta de cada linha e deixa sair o pedido. O representante, do outro lado, mantém fornecedores, catálogos e clientes, e responde a esses pedidos.
 
 Não é uma vitrine nem um marketplace aberto. Só entra na comparação o fornecedor que já está na carteira do comprador.
 
@@ -25,30 +25,30 @@ Evitar: “eleve”, “revolucionário”, “next-gen”, “IA”, “14 dias
 1. O comprador envia a lista (Excel ou CSV, com template).
 2. A plataforma casa os itens com o catálogo (SKU, código, nome, ou ajuste manual).
 3. A comparação mostra os fornecedores lado a lado e a melhor oferta de cada linha.
-4. O comprador gera o pré-pedido.
+4. O comprador gera o pedido.
 5. O representante aprova ou rejeita.
 
-Estados do pré-pedido: pendente, aprovado, rejeitado, expirado.
+Estados do pedido: pendente, aprovado, rejeitado, expirado.
 
 ## Comprador
 
 Papel interno: `CLIENT`. Área depois do login: `/client`.
 
-Ele compra para uma empresa. Vê só a própria organização. A saudação do painel é “Suas demandas, comparações e pré-pedidos.” O botão principal do painel é **Enviar lista**.
+Ele compra para uma empresa. Vê só a própria organização. A saudação do painel é “Suas demandas, comparações e pedidos.” O botão principal do painel é **Enviar lista**.
 
 | Função | Onde | O que ele faz | O que ganha |
 | --- | --- | --- | --- |
-| Painel | `/client` | Vê demandas enviadas, comparações, pré-pedidos pendentes, aprovados e rejeitados, fornecedores da carteira e a economia calculada nas comparações dele. | Sabe o que está parado antes de abrir cada tela. |
+| Painel | `/client` | Vê demandas enviadas, comparações, pedidos pendentes, aprovados e rejeitados, fornecedores da carteira e a economia calculada nas comparações dele. | Sabe o que está parado antes de abrir cada tela. |
 | Upload de lista | `/client/upload` | Sobe a lista de compras. Pode baixar o template para o arquivo sair no formato certo. | A lista real vira a base da comparação. Sem lista, não há oferta. |
-| Comparar preços | `/client/compare` | Escolhe uma lista já enviada. Vê os fornecedores da carteira em colunas, filtra por nome, SKU ou código, ajusta um casamento na mão e escolhe a oferta de cada linha. | O menor preço fica verde na célula, com o visto e o nome na coluna Melhor oferta. Dali ele gera um ou mais pré-pedidos. |
+| Comparar preços | `/client/compare` | Escolhe uma lista já enviada. Vê os fornecedores da carteira em colunas, filtra por nome, SKU ou código, ajusta um casamento na mão e escolhe a oferta de cada linha. | O menor preço fica verde na célula, com o visto e o nome na coluna Melhor oferta. Dali ele gera um ou mais pedidos. |
 | Meus fornecedores | `/client/suppliers` | Vê a carteira. Só esses fornecedores entram na comparação. Pede a entrada de um fornecedor novo; o representante precisa aprovar. | A comparação fica restrita a quem ele realmente compra. |
-| Pré-pedidos | `/client/pre-orders` | Acompanha o que enviou. O menu marca quantos estão pendentes. | O pedido não se perde depois da comparação. |
+| Pedidos | `/client/pre-orders` | Acompanha o que enviou. O menu marca quantos estão pendentes. | O pedido não se perde depois da comparação. |
 | Histórico | `/client/history` | Revê os uploads já feitos. | Uma lista antiga pode ser comparada de novo. |
 | Usuários | `/client/usuarios` | Gente da própria empresa compradora. | Mais de uma pessoa opera a mesma lista. |
 | Configurações | `/client/settings` | Dados da conta e da operação. | A empresa compradora permanece identificável. |
-| Notificações | `/client/notifications` | Avisos da operação. | Resposta de pré-pedido e de carteira não dependem de ele estar na tela certa. |
+| Notificações | `/client/notifications` | Avisos da operação. | Resposta de pedido e de carteira não dependem de ele estar na tela certa. |
 
-No painel, a fila de atenção aponta três coisas: pré-pedidos aguardando resposta, comparações que ainda não viraram pré-pedido, e pedidos de fornecedor pendentes.
+No painel, a fila de atenção aponta três coisas: pedidos aguardando resposta, comparações que ainda não viraram pedido, e pedidos de fornecedor pendentes.
 
 A “economia estimada” do painel é um número calculado nas comparações daquela empresa. Não é uma promessa de marketing.
 
@@ -56,28 +56,28 @@ A “economia estimada” do painel é um número calculado nas comparações da
 
 Papel interno: `REPRESENTATIVE`. Área depois do login: `/supplier`.
 
-Ele não é o fornecedor em si. Representa uma ou mais empresas fornecedoras e atende uma carteira de compradores. A saudação do painel é “Resumo do seu catálogo, carteira e pré-pedidos.” O botão principal do painel é **Enviar catálogo**.
+Ele não é o fornecedor em si. Representa uma ou mais empresas fornecedoras e atende uma carteira de compradores. A saudação do painel é “Resumo do seu catálogo, carteira e pedidos.” O botão principal do painel é **Enviar catálogo**.
 
 | Função | Onde | O que ele faz | O que ganha |
 | --- | --- | --- | --- |
-| Painel | `/supplier` | Vê produtos ativos, pré-pedidos pendentes, fornecedores que representa, clientes na carteira, valor aprovado e a economia registrada em pré-pedidos aprovados. | Enxerga catálogo, carteira e fila no mesmo lugar. |
+| Painel | `/supplier` | Vê produtos ativos, pedidos pendentes, fornecedores que representa, clientes na carteira, valor aprovado e a economia registrada em pedidos aprovados. | Enxerga catálogo, carteira e fila no mesmo lugar. |
 | Fornecedores | `/supplier/fornecedores` | Cadastra e edita as empresas que representa. Cada lista de preços sai em nome de uma delas. | O preço do comprador chega com o fornecedor certo. |
 | Listas de preço | `/supplier/history` | Histórico das listas de preço enviadas. | Sabe qual catálogo está valendo. |
 | Produtos | `/supplier/products` | Mantém o catálogo de produtos. | Sem produto publicado, o comprador não tem com o que comparar. |
 | Upload de catálogo | `/supplier/upload` | Envia a lista de preços do fornecedor. | O catálogo entra na comparação das carteiras ligadas a ele. |
-| Pré-pedidos | `/supplier/pre-orders` | Recebe os pré-pedidos dos compradores e aprova ou rejeita. O menu marca os pendentes. | A venda para quando ele responde, não quando o comprador compara. |
+| Pedidos | `/supplier/pre-orders` | Recebe os pedidos dos compradores e aprova ou rejeita. O menu marca os pendentes. | A venda para quando ele responde, não quando o comprador compara. |
 | Clientes | `/supplier/clients` | Carteira de compradores. Adiciona cliente, edita ficha, filtra por estado e cidade. Aprova quem pediu para entrar. | Só compara com quem está ligado a ele. |
 | Indicações | `/supplier/clients/[id]/indicacoes/[uploadId]` | Cruza o catálogo dele com uma lista de demanda daquele cliente. | Vê, na lista do comprador, onde o catálogo dele cabe. |
 | Usuários | `/supplier/usuarios` | Gente da operação do representante. | A carteira não depende de uma pessoa só. |
 | Configurações | `/supplier/settings` | Dados da conta. | A representação permanece identificável. |
-| Notificações | `/supplier/notifications` | Avisos da operação. | Pré-pedido novo e pedido de carteira aparecem sem ele reabrir a lista. |
+| Notificações | `/supplier/notifications` | Avisos da operação. | Pedido novo e pedido de carteira aparecem sem ele reabrir a lista. |
 
-No painel, a fila de atenção aponta catálogos ativos, pré-pedidos aguardando resposta e solicitações de carteira. Pedido parado há mais de sete dias ganha destaque.
+No painel, a fila de atenção aponta catálogos ativos, pedidos aguardando resposta e solicitações de carteira. Pedido parado há mais de sete dias ganha destaque.
 
 ## O que cada um ganha, em uma frase
 
-- **Comprador:** manda a lista, vê quem ganha em cada item e fecha o pré-pedido sem montar a planilha na mão.
-- **Representante:** publica o catálogo dos fornecedores que representa, enxerga a demanda do cliente e responde o pré-pedido.
+- **Comprador:** manda a lista, vê quem ganha em cada item e fecha o pedido sem montar a planilha na mão.
+- **Representante:** publica o catálogo dos fornecedores que representa, enxerga a demanda do cliente e responde o pedido.
 
 ## Desenho
 
@@ -136,7 +136,7 @@ Há uma direção nova já escolhida e ainda não construída: o padrão de cate
 ### O que a página nova precisa carregar
 
 - As duas frases da seção “O que cada um ganha”.
-- O laço lista → comparação lado a lado → pré-pedido, com **Criar conta** no comprador e **Entrar** no representante.
+- O laço lista → comparação lado a lado → pedido, com **Criar conta** no comprador e **Entrar** no representante.
 - Um exemplo de lista com preços reais de demonstração, marcado como exemplo. O menor valor se destaca em verde.
 - O material desta seção: fundo `#f7f8fc`, tinta `#192b49`, azul `#245bcf`, Geist e Geist Mono.
 
@@ -145,4 +145,4 @@ Há uma direção nova já escolhida e ainda não construída: o padrão de cate
 - Administrador como protagonista.
 - Trial, preço de assinatura, percentual de economia, logo e depoimento.
 - Jargão de interface: “matching”, “SKU” como título, “dashboard”.
-- Três cartões idênticos só com ícone, se a direção escolhida for outra que não o padrão de categoria. No padrão de categoria, os três cartões são o próprio formato, e o conteúdo deles são os passos do laço: enviar a lista, cruzar fornecedores, fechar o pré-pedido.
+- Três cartões idênticos só com ícone, se a direção escolhida for outra que não o padrão de categoria. No padrão de categoria, os três cartões são o próprio formato, e o conteúdo deles são os passos do laço: enviar a lista, cruzar fornecedores, fechar o pedido.

@@ -21,6 +21,7 @@ export async function GET(
 			include: {
 				products: {
 					take: 50, // Limite para não sobrecarregar
+					orderBy: { name: "asc" },
 					select: {
 						id: true,
 						sku: true,
@@ -58,6 +59,7 @@ export async function GET(
 				? await prisma.product.findMany({
 						where: { lastUploadId: upload.id, deletedAt: null },
 						take: 50,
+						orderBy: { name: "asc" },
 						select: {
 							id: true,
 							sku: true,

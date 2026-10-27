@@ -121,7 +121,7 @@ export default function ClientDashboard({ user }: { user: { name: string } }) {
 			href: "/client/upload",
 		},
 		{
-			label: "Pré-pedidos pendentes",
+			label: "Pedidos pendentes",
 			value: metrics ? `${metrics.preOrders.pending}` : "—",
 			hint: metrics
 				? `${metrics.preOrders.approved} aprovados · ${metrics.preOrders.rejected} rejeitados`
@@ -149,13 +149,13 @@ export default function ClientDashboard({ user }: { user: { name: string } }) {
 		? [
 				{
 					icon: ShoppingCart,
-					label: "Pré-pedidos aguardando resposta",
+					label: "Pedidos aguardando resposta",
 					count: insights.attention.activePreOrders,
 					href: "/client/pre-orders",
 				},
 				{
 					icon: BarChart3,
-					label: "Comparações sem pré-pedido",
+					label: "Comparações sem pedido",
 					subtitle: "Comparações geradas que ainda não viraram pedido",
 					count: insights.attention.comparisonsNotConverted ?? 0,
 					href: "/client/compare",
@@ -177,7 +177,7 @@ export default function ClientDashboard({ user }: { user: { name: string } }) {
 						Olá, {user.name}
 					</h1>
 					<p className="text-muted-foreground">
-						Suas demandas, comparações e pré-pedidos.
+						Suas demandas, comparações e pedidos.
 						{lastUpdate &&
 							` · Atualizado às ${lastUpdate.toLocaleTimeString("pt-BR")}`}
 					</p>
@@ -215,13 +215,13 @@ export default function ClientDashboard({ user }: { user: { name: string } }) {
 
 			{/* Insights KPIs — ênfase em economia */}
 			{insightsLoading ? (
-				<div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-					{[0, 1, 2, 3].map((i) => (
+				<div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+					{[0, 1, 2].map((i) => (
 						<Skeleton key={i} className="h-28 w-full" />
 					))}
 				</div>
 			) : insights ? (
-				<div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+				<div className="grid grid-cols-1 gap-6 md:grid-cols-3">
 					<StatCard
 						title="Economia finalizada"
 						icon={PiggyBank}
@@ -234,16 +234,10 @@ export default function ClientDashboard({ user }: { user: { name: string } }) {
 						hint={`${insights.savings.itemsWithBaseline} itens com preço-base`}
 					/>
 					<StatCard
-						title="Economia estimada"
-						icon={PiggyBank}
-						value={formatCurrency(insights.savings.estimatedSavings ?? 0)}
-						hint="Projetada nas comparações"
-					/>
-					<StatCard
 						title="Valor finalizado"
 						icon={CheckCircle}
 						value={formatCurrency(insights.gmv.finalizedValue)}
-						hint="Pré-pedidos aprovados"
+						hint="Pedidos aprovados"
 					/>
 					<StatCard
 						title="Taxa de aprovação"
@@ -278,7 +272,7 @@ export default function ClientDashboard({ user }: { user: { name: string } }) {
 							value: s.finalizedValue,
 						}))}
 						valueFormatter={formatCurrency}
-						emptyLabel="Nenhum pré-pedido finalizado."
+						emptyLabel="Nenhum pedido finalizado."
 					/>
 				</div>
 			)}
@@ -286,7 +280,7 @@ export default function ClientDashboard({ user }: { user: { name: string } }) {
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
 				<Card className="lg:col-span-2">
 					<CardHeader>
-						<CardTitle className="text-lg">Pré-pedidos recentes</CardTitle>
+						<CardTitle className="text-lg">Pedidos recentes</CardTitle>
 						<CardDescription>Últimos pedidos enviados.</CardDescription>
 					</CardHeader>
 					<CardContent>
@@ -294,7 +288,7 @@ export default function ClientDashboard({ user }: { user: { name: string } }) {
 							<p className="text-muted-foreground text-sm">Carregando…</p>
 						) : !metrics || metrics.recentPreOrders.length === 0 ? (
 							<p className="text-muted-foreground text-sm">
-								Nenhum pré-pedido ainda.
+								Nenhum pedido ainda.
 							</p>
 						) : (
 							<ul className="divide-y">

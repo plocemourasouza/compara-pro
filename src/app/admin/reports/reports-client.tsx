@@ -45,7 +45,12 @@ interface Metrics {
 		active: number;
 		byRole: { admin: number; supplier: number; client: number };
 	};
-	companies: { total: number; suppliers: number; clients: number };
+	companies: {
+		total: number;
+		suppliers: number;
+		clients: number;
+		representatives: number;
+	};
 	uploads: { total: number };
 	preOrders: {
 		total: number;
@@ -69,7 +74,7 @@ function formatCurrency(value: number): string {
 	}).format(value);
 }
 
-const COMPANY_COLORS = ["#9fbbe0", "#1f8a65"];
+const COMPANY_COLORS = ["#9fbbe0", "#1f8a65", "#245bcf"];
 const PREORDER_COLORS = ["#245bcf", "#1f8a65", "#d4574e"];
 
 export function ReportsClient({ user: _user }: ReportsClientProps) {
@@ -98,12 +103,13 @@ export function ReportsClient({ user: _user }: ReportsClientProps) {
 			["Empresas (total)", metrics.companies.total],
 			["Empresas fornecedoras", metrics.companies.suppliers],
 			["Empresas clientes", metrics.companies.clients],
+			["Empresas representantes", metrics.companies.representatives],
 			["Uploads (total)", metrics.uploads.total],
-			["Pré-pedidos (total)", metrics.preOrders.total],
-			["Pré-pedidos pendentes", metrics.preOrders.pending],
-			["Pré-pedidos aprovados", metrics.preOrders.approved],
-			["Pré-pedidos rejeitados", metrics.preOrders.rejected],
-			["Valor total em pré-pedidos (R$)", metrics.preOrders.totalValue],
+			["Pedidos (total)", metrics.preOrders.total],
+			["Pedidos pendentes", metrics.preOrders.pending],
+			["Pedidos aprovados", metrics.preOrders.approved],
+			["Pedidos rejeitados", metrics.preOrders.rejected],
+			["Valor total em pedidos (R$)", metrics.preOrders.totalValue],
 		];
 		const csv = rows
 			.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","))
@@ -123,7 +129,8 @@ export function ReportsClient({ user: _user }: ReportsClientProps) {
 		? [
 				{ name: "Clientes", value: metrics.companies.clients },
 				{ name: "Fornecedores", value: metrics.companies.suppliers },
-			]
+				{ name: "Representantes", value: metrics.companies.representatives },
+			].filter((entry) => entry.value > 0)
 		: [];
 	const preOrderData = metrics
 		? [
@@ -198,7 +205,8 @@ export function ReportsClient({ user: _user }: ReportsClientProps) {
 										</p>
 										<p className="text-xs text-muted-foreground mt-1">
 											{metrics.companies.clients} clientes ·{" "}
-											{metrics.companies.suppliers} fornec.
+											{metrics.companies.suppliers} fornec. ·{" "}
+											{metrics.companies.representatives} repres.
 										</p>
 									</div>
 									<div className="p-2 bg-success/10 rounded-full">
@@ -213,14 +221,15 @@ export function ReportsClient({ user: _user }: ReportsClientProps) {
 								<div className="flex items-center justify-between">
 									<div>
 										<p className="text-sm font-medium text-muted-foreground">
-											Pré-pedidos
+											Pedidos
 										</p>
 										<p className="text-2xl font-bold">
 											{metrics.preOrders.total}
 										</p>
 										<p className="text-xs text-muted-foreground mt-1">
 											{metrics.preOrders.pending} pendentes ·{" "}
-											{metrics.preOrders.approved} aprovados
+											{metrics.preOrders.approved} aprovados ·{" "}
+											{metrics.preOrders.rejected} rejeitados
 										</p>
 									</div>
 									<div className="p-2 bg-chart-4/10 rounded-full">
@@ -235,7 +244,7 @@ export function ReportsClient({ user: _user }: ReportsClientProps) {
 								<div className="flex items-center justify-between">
 									<div>
 										<p className="text-sm font-medium text-muted-foreground">
-											Valor em pré-pedidos
+											Valor em pedidos
 										</p>
 										<p className="text-2xl font-bold">
 											{formatCurrency(metrics.preOrders.totalValue)}
@@ -254,7 +263,7 @@ export function ReportsClient({ user: _user }: ReportsClientProps) {
 							<CardHeader>
 								<CardTitle>Distribuição de Empresas</CardTitle>
 								<CardDescription>
-									Clientes e fornecedores cadastrados
+									Clientes, fornecedores e representantes
 								</CardDescription>
 							</CardHeader>
 							<CardContent>
@@ -285,9 +294,9 @@ export function ReportsClient({ user: _user }: ReportsClientProps) {
 
 						<Card>
 							<CardHeader>
-								<CardTitle>Pré-pedidos por Status</CardTitle>
+								<CardTitle>Pedidos por Status</CardTitle>
 								<CardDescription>
-									Situação atual dos pré-pedidos
+									Situação atual dos pedidos
 								</CardDescription>
 							</CardHeader>
 							<CardContent>
@@ -319,7 +328,7 @@ export function ReportsClient({ user: _user }: ReportsClientProps) {
 
 					<Card>
 						<CardHeader>
-							<CardTitle>Top produtos em pré-pedidos</CardTitle>
+							<CardTitle>Top produtos em pedidos</CardTitle>
 							<CardDescription>
 								Produtos com maior valor acumulado
 							</CardDescription>
@@ -327,7 +336,7 @@ export function ReportsClient({ user: _user }: ReportsClientProps) {
 						<CardContent>
 							{metrics.topProductsInPreOrders.length === 0 ? (
 								<p className="text-sm text-muted-foreground">
-									Ainda não há pré-pedidos.
+									Ainda não há pedidos.
 								</p>
 							) : (
 								<div className="space-y-3">

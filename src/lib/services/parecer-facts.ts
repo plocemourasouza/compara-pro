@@ -142,7 +142,7 @@ export function fallbackNarrative(facts: ParecerFacts): {
 		t.fornecedorMaisVantajoso
 			? `Possibilidade de consolidar pedidos em ${t.fornecedorMaisVantajoso.nome}.`
 			: "Comparação entre múltiplos fornecedores num só lugar.",
-		"Você pode ajustar a indicação por produto antes de confirmar o pré-pedido.",
+		"Você pode ajustar a indicação por produto antes de confirmar o pedido.",
 	];
 
 	return { resumo, vantagens };

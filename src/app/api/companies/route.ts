@@ -92,7 +92,7 @@ export async function GET(request: NextRequest) {
 			},
 		});
 
-		// Contagem de pré-pedidos recebidos pelos fornecedores que cada agência
+		// Contagem de pedidos recebidos pelos fornecedores que cada agência
 		// representa — só faz sentido p/ representantes presentes no resultado.
 		const repIds = companies
 			.filter((c) => c.type === "REPRESENTATIVE")

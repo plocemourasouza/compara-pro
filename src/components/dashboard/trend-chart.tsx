@@ -46,7 +46,7 @@ export function TrendChart({ trend }: TrendChartProps) {
 			<CardHeader>
 				<CardTitle>Atividade nos últimos 30 dias</CardTitle>
 				<CardDescription>
-					Uploads de representantes, de clientes e pré-pedidos por dia
+					Uploads de representantes, de clientes e pedidos por dia
 				</CardDescription>
 			</CardHeader>
 			<CardContent>
@@ -133,7 +133,7 @@ export function TrendChart({ trend }: TrendChartProps) {
 							<Area
 								type="monotone"
 								dataKey="preOrders"
-								name="Pré-pedidos"
+								name="Pedidos"
 								stroke={TREND_COLORS.preOrders}
 								fill="url(#gradPreOrders)"
 								strokeWidth={2}

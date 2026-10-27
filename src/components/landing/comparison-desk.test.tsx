@@ -6,11 +6,11 @@ import { fireEvent, render, screen } from "@/test/react";
 import { ComparisonDesk } from "./comparison-desk";
 
 describe("comparação ilustrativa da landing", () => {
-	it("organiza o pré-pedido por fornecedor e permite fechar a demonstração", () => {
+	it("organiza o pedido por fornecedor e permite fechar a demonstração", () => {
 		render(<ComparisonDesk />);
-		const trigger = screen.getByRole("button", { name: "Ver pré-pedido" });
+		const trigger = screen.getByRole("button", { name: "Ver pedido" });
 		fireEvent.click(trigger);
-		const dialog = screen.getByRole("dialog", { name: "Seu pré-pedido." });
+		const dialog = screen.getByRole("dialog", { name: "Seu pedido." });
 		expect(
 			within(dialog).getByRole("heading", {
 				name: /Distribuidora Norte.*632,32/,
@@ -21,11 +21,11 @@ describe("comparação ilustrativa da landing", () => {
 		).toBeInTheDocument();
 		expect(within(dialog).getByText(/R\$\s*1\.117,62/)).toBeInTheDocument();
 		fireEvent.click(
-			within(dialog).getByRole("button", { name: "Fechar pré-pedido" }),
+			within(dialog).getByRole("button", { name: "Fechar pedido" }),
 		);
 		expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 	});
-	it("recalcula por quantidade e impede um pré-pedido sem itens", () => {
+	it("recalcula por quantidade e impede um pedido sem itens", () => {
 		render(<ComparisonDesk />);
 		expect(screen.getByText(/R\$\s*1\.117,62/)).toBeInTheDocument();
 		fireEvent.click(
@@ -44,7 +44,7 @@ describe("comparação ilustrativa da landing", () => {
 		);
 		expect(screen.getByText(/R\$\s*0,00/)).toBeInTheDocument();
 		expect(
-			screen.getByRole("button", { name: "Ver pré-pedido" }),
+			screen.getByRole("button", { name: "Ver pedido" }),
 		).toBeDisabled();
 	});
 

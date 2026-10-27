@@ -129,7 +129,7 @@ export default function CreatePreOrderDialog({
 
 			if (!response.ok) {
 				const errorData = await response.json();
-				throw new Error(errorData.error || "Erro ao criar pré-pedido");
+				throw new Error(errorData.error || "Erro ao criar pedido");
 			}
 
 			onSuccess();
@@ -160,7 +160,7 @@ export default function CreatePreOrderDialog({
 				<DialogHeader>
 					<DialogTitle className="flex items-center gap-2">
 						<ShoppingCart className="h-5 w-5" />
-						Criar Pré-pedido - {supplier.name}
+						Criar Pedido - {supplier.name}
 					</DialogTitle>
 				</DialogHeader>
 
@@ -316,7 +316,7 @@ export default function CreatePreOrderDialog({
 					>
 						{loading
 							? "Criando..."
-							: `Criar Pré-pedido (${selectedMatches.length} itens)`}
+							: `Criar Pedido (${selectedMatches.length} itens)`}
 					</Button>
 				</DialogFooter>
 			</DialogContent>

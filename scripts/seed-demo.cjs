@@ -418,7 +418,7 @@ const daysAgo = (n) => new Date(Date.now() - n * 86_400_000);
 					baselinePrice: BASELINE[p.name] ?? null,
 				};
 			});
-		// Pré-pedido em aberto (ACTIVE) — demonstra "Pré-pedidos em aberto".
+		// Pedido em aberto (ACTIVE) — demonstra "Pedidos em aberto".
 		const openItems = buildItems();
 		await prisma.preOrder.create({
 			data: {
@@ -427,11 +427,11 @@ const daysAgo = (n) => new Date(Date.now() - n * 86_400_000);
 				representativeId: agency.id,
 				status: "ACTIVE",
 				totalAmount: openItems.reduce((s, it) => s + it.totalPrice, 0),
-				notes: "Pré-pedido de demonstração (em aberto).",
+				notes: "Pedido de demonstração (em aberto).",
 				items: { create: openItems },
 			},
 		});
-		// Pré-pedido finalizado — demonstra "finalizados" + "valor economizado".
+		// Pedido finalizado — demonstra "finalizados" + "valor economizado".
 		const finalizedItems = buildItems();
 		await prisma.preOrder.create({
 			data: {
@@ -440,7 +440,7 @@ const daysAgo = (n) => new Date(Date.now() - n * 86_400_000);
 				representativeId: agency.id,
 				status: "FINALIZED",
 				totalAmount: finalizedItems.reduce((s, it) => s + it.totalPrice, 0),
-				notes: "Pré-pedido de demonstração (finalizado).",
+				notes: "Pedido de demonstração (finalizado).",
 				respondedAt: new Date(),
 				items: { create: finalizedItems },
 			},

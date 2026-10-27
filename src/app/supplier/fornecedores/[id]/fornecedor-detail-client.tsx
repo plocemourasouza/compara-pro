@@ -39,6 +39,7 @@ interface SupplierDetail {
 	email: string | null;
 	phone: string | null;
 	zipCode: string | null;
+	addressType: string | null;
 	street: string | null;
 	number: string | null;
 	neighborhood: string | null;
@@ -164,7 +165,12 @@ export default function FornecedorDetailClient({
 						<Field label="Responsável" value={supplier.responsibleName} />
 						<Field
 							label="Endereço"
-							value={[supplier.street, supplier.number]
+							value={[
+								[supplier.addressType, supplier.street]
+									.filter(Boolean)
+									.join(" "),
+								supplier.number,
+							]
 								.filter(Boolean)
 								.join(", ")}
 						/>

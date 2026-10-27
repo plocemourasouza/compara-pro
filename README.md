@@ -4,7 +4,7 @@ Plataforma **B2B de comparação de preços**. Compradores sobem suas listas de 
 comerciais sobem as listas de preços de seus fornecedores, e o sistema **cruza** os dois automaticamente.
 Um **agente de IA** avalia o cruzamento e emite um **parecer** (melhores oportunidades, economia e
 recomendação de fornecedor). Na mesma tela o comprador ajusta as escolhas por produto e cria
-**pré-pedidos agrupados** por fornecedor, que o representante aprova ou rejeita.
+**pedidos agrupados** por fornecedor, que o representante aprova ou rejeita.
 
 ## Funcionalidades
 
@@ -14,19 +14,19 @@ recomendação de fornecedor). Na mesma tela o comprador ajusta as escolhas por 
 - **Representante → N fornecedores** — cada representante representa vários fornecedores; cada lista de
   preços é enviada em nome de um fornecedor de origem. A lista de fornecedores representados mostra
   também quantas listas de preço cada um enviou.
-- **Pré-pedido com representante vinculado** — todo pré-pedido tem exatamente **1 cliente e 1
+- **Pedido com representante vinculado** — todo pedido tem exatamente **1 cliente e 1
   representante** (a agência que cadastrou o cliente na carteira daquele fornecedor); a lista
-  administrativa de pré-pedidos traz o Representante na primeira coluna.
+  administrativa de pedidos traz o Representante na primeira coluna.
 - **Upload + parsing** de planilhas (XLSX/CSV) de necessidades e de catálogos de preço.
 - **Motor de matching** em 4 níveis: SKU → código → nome exato → nome fuzzy (Fuse.js + Jaccard).
 - **Parecer por IA (híbrido)** — números calculados de forma determinística + narrativa escrita pela IA.
   Config multi-provedor (**Anthropic / OpenAI**) com validação de chave, seleção de modelo e **prompt
   configurável**; chave **criptografada em repouso** (AES-256-GCM) e nunca devolvida ao cliente.
   Degrada graciosamente para análise determinística quando não há IA configurada.
-- **Override + pré-pedido agrupado** — o comprador troca fornecedor/quantidade por produto e confirma um
-  pré-pedido por fornecedor numa ação só (transacional). Vê a **economia** (vs. preço-alvo informado) por
+- **Override + pedido agrupado** — o comprador troca fornecedor/quantidade por produto e confirma um
+  pedido por fornecedor numa ação só (transacional). Vê a **economia** (vs. preço-alvo informado) por
   item e total no momento da decisão.
-- **Fluxo do representante** — fornecedores representados, lista de pré-pedidos recebidos, aprovar/rejeitar
+- **Fluxo do representante** — fornecedores representados, lista de pedidos recebidos, aprovar/rejeitar
   (com motivo).
 - **Área administrativa** — usuários, empresas, produtos (suporte: edita/exclui, sem cadastrar),
   histórico de uploads, relatórios (métricas reais + export CSV), configurações (perfil/senha/
@@ -94,7 +94,7 @@ npm run dev                    # http://localhost:3150
 
 ```
 src/app              rotas (App Router): admin, supplier, client, api
-src/lib/services     matching, pré-pedido, parecer (IA), file-processor
+src/lib/services     matching, pedido, parecer (IA), file-processor
 src/lib/ai           abstração de provedores de IA + config criptografada
 src/components       UI (shadcn) + componentes de domínio
 prisma/schema.prisma modelo de dados

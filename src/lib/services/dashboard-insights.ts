@@ -73,7 +73,7 @@ export interface AttentionData {
 		products: number;
 		totalValue: number;
 	};
-	/** Comparações sem pré-pedido gerado (só CLIENT). */
+	/** Comparações sem pedido gerado (só CLIENT). */
 	comparisonsNotConverted?: number;
 }
 
@@ -529,6 +529,18 @@ async function buildRepresentativeInsights(
 	const now = new Date();
 	const { windowStart, agingBefore } = trendWindow(now);
 	const supplierWhere: Prisma.PreOrderWhereInput = { supplierId: { in: ids } };
+	const portfolio = await prisma.supplierClient.findMany({
+		where: { supplierCompanyId: { in: ids } },
+		distinct: ["clientCompanyId"],
+		select: { clientCompanyId: true },
+	});
+	const portfolioClientIds = portfolio.map((row) => row.clientCompanyId);
+	const demandWhere: Prisma.UploadedProductWhereInput = {
+		upload: {
+			uploadType: "CLIENT_REQUIREMENTS",
+			companyId: { in: portfolioClientIds },
+		},
+	};
 	const matchReach: Prisma.ComparisonMatchWhereInput = {
 		supplierMatches: {
 			some: { supplierCompanyId: { in: ids }, isActive: true },
@@ -536,7 +548,7 @@ async function buildRepresentativeInsights(
 	};
 
 	const [
-		catalogUploads,
+		clientLists,
 		comparisons,
 		preOrdersCreated,
 		preOrdersByStatus,
@@ -544,7 +556,6 @@ async function buildRepresentativeInsights(
 		gmvFinalized,
 		gmvOpen,
 		savingsItems,
-		reachableMatches,
 		matchesByType,
 		lowConfidenceCount,
 		pendingLinkRequests,
@@ -563,9 +574,14 @@ async function buildRepresentativeInsights(
 		activePoSuppliers,
 		activePoItems,
 		supplierBars,
+		demandItems,
+		coveredDemandItems,
 	] = await Promise.all([
 		prisma.uploadHistory.count({
-			where: { companyId: { in: ids }, uploadType: "SUPPLIER_PRODUCTS" },
+			where: {
+				companyId: { in: portfolioClientIds },
+				uploadType: "CLIENT_REQUIREMENTS",
+			},
 		}),
 		prisma.comparison.count({
 			where: { matches: { some: matchReach } },
@@ -596,7 +612,6 @@ async function buildRepresentativeInsights(
 			},
 			select: { baselinePrice: true, price: true, quantity: true },
 		}),
-		prisma.comparisonMatch.count({ where: matchReach }),
 		prisma.comparisonMatch.groupBy({
 			by: ["matchType"],
 			_count: { matchType: true },
@@ -672,6 +687,19 @@ async function buildRepresentativeInsights(
 			where: { preOrder: { ...supplierWhere, status: "ACTIVE" } },
 		}),
 		buildSupplierBars(supplierWhere),
+		prisma.uploadedProduct.count({ where: demandWhere }),
+		prisma.uploadedProduct.count({
+			where: {
+				...demandWhere,
+				clientMatches: {
+					some: {
+						supplierMatches: {
+							some: { supplierCompanyId: { in: ids }, isActive: true },
+						},
+					},
+				},
+			},
+		}),
 	]);
 
 	const statusCount = (s: "ACTIVE" | "FINALIZED" | "REJECTED") =>
@@ -709,7 +737,7 @@ async function buildRepresentativeInsights(
 
 	return {
 		funnel: {
-			requirementUploads: catalogUploads,
+			requirementUploads: clientLists,
 			comparisons,
 			preOrdersCreated,
 			preOrdersFinalized: finalized,
@@ -723,10 +751,11 @@ async function buildRepresentativeInsights(
 		},
 		savings: { finalizedSavings, itemsWithBaseline: savingsItems.length },
 		matching: {
-			// Sem denominador global honesto sem vazar outros fornecedores → null.
-			totalProducts: reachableMatches,
-			matchedProducts: reachableMatches,
-			matchRatePct: null,
+			// Cobertura das demandas da carteira pelo catálogo representado.
+			// Não usa o total de matches de outros fornecedores.
+			totalProducts: demandItems,
+			matchedProducts: coveredDemandItems,
+			matchRatePct: pct(coveredDemandItems, demandItems),
 			byType: {
 				SKU: typeCount("SKU"),
 				CODE: typeCount("CODE"),
@@ -784,6 +813,18 @@ async function buildClientInsights(cid: string): Promise<DashboardInsights> {
 	const { windowStart } = trendWindow(now);
 	const clientWhere: Prisma.PreOrderWhereInput = { clientId: cid };
 	const comparisonWhere: Prisma.ComparisonWhereInput = { clientId: cid };
+	// A taxa usa a comparação mais recente de cada lista. Rodadas antigas
+	// da mesma demanda não entram de novo no numerador nem no denominador.
+	const latestComparisons = await prisma.comparison.findMany({
+		where: comparisonWhere,
+		distinct: ["clientUploadId"],
+		orderBy: [{ clientUploadId: "asc" }, { createdAt: "desc" }],
+		select: { id: true, totalProducts: true },
+	});
+	const latestComparisonIds = latestComparisons.map((row) => row.id);
+	const latestMatchWhere: Prisma.ComparisonMatchWhereInput = {
+		comparisonId: { in: latestComparisonIds },
+	};
 
 	const [
 		requirementUploads,
@@ -795,7 +836,6 @@ async function buildClientInsights(cid: string): Promise<DashboardInsights> {
 		gmvOpen,
 		savingsItems,
 		estimatedRows,
-		comparisonTotals,
 		matchesByType,
 		lowConfidenceCount,
 		pendingLinkRequests,
@@ -841,18 +881,14 @@ async function buildClientInsights(cid: string): Promise<DashboardInsights> {
 			where: { ...comparisonWhere, previousTotal: { not: null } },
 			select: { previousTotal: true, bestPriceTotal: true },
 		}),
-		prisma.comparison.aggregate({
-			_sum: { totalProducts: true, matchedProducts: true },
-			where: comparisonWhere,
-		}),
 		prisma.comparisonMatch.groupBy({
 			by: ["matchType"],
 			_count: { matchType: true },
-			where: { comparison: comparisonWhere },
+			where: latestMatchWhere,
 		}),
 		prisma.comparisonMatch.count({
 			where: {
-				comparison: comparisonWhere,
+				...latestMatchWhere,
 				confidence: { lt: LOW_CONFIDENCE },
 			},
 		}),
@@ -911,8 +947,15 @@ async function buildClientInsights(cid: string): Promise<DashboardInsights> {
 		0,
 	);
 
-	const totalProducts = comparisonTotals._sum.totalProducts || 0;
-	const matchedProducts = comparisonTotals._sum.matchedProducts || 0;
+	const totalProducts = latestComparisons.reduce(
+		(sum, row) => sum + row.totalProducts,
+		0,
+	);
+	const matchedProducts =
+		typeCount("SKU") +
+		typeCount("CODE") +
+		typeCount("NAME") +
+		typeCount("MANUAL");
 
 	const supplierIds = topSuppliersRaw.map((r) => r.supplierId);
 	const companies = supplierIds.length

@@ -178,7 +178,7 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
 		if (usedInPreOrder) {
 			return NextResponse.json(
 				{
-					error: "Não é possível excluir um produto usado em pré-pedidos",
+					error: "Não é possível excluir um produto usado em pedidos",
 				},
 				{ status: 400 },
 			);

@@ -254,7 +254,7 @@ export function ComparisonDesk() {
 									type="button"
 									disabled={chosen.length === 0}
 								>
-									Ver pré-pedido <LandingIcon name="arrow" className="arrow" />
+									Ver pedido <LandingIcon name="arrow" className="arrow" />
 								</button>
 							</DialogTrigger>
 						</div>
@@ -265,12 +265,12 @@ export function ComparisonDesk() {
 					showCloseButton={false}
 				>
 					<div className="modal-top">
-						<DialogTitle>Seu pré-pedido.</DialogTitle>
+						<DialogTitle>Seu pedido.</DialogTitle>
 						<DialogClose asChild>
 							<button
 								className="close"
 								type="button"
-								aria-label="Fechar pré-pedido"
+								aria-label="Fechar pedido"
 							>
 								×
 							</button>
@@ -278,7 +278,7 @@ export function ComparisonDesk() {
 					</div>
 					<DialogDescription className="modal-note">
 						Exemplo com o menor preço dos itens selecionados. Na plataforma, o
-						representante aprova ou rejeita o pré-pedido enviado. Os valores
+						representante aprova ou rejeita o pedido enviado. Os valores
 						desta demonstração são ilustrativos e nada será enviado.
 					</DialogDescription>
 					{(["Norte", "Sul"] as const).map((name) => {
@@ -327,7 +327,7 @@ export function ComparisonDesk() {
 				<span>
 					Itens, fornecedores e valores ilustrativos.
 					<br />
-					Selecione os itens para ver o pré-pedido de exemplo.
+					Selecione os itens para ver o pedido de exemplo.
 				</span>
 			</div>
 		</section>

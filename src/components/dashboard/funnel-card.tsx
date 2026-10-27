@@ -30,8 +30,8 @@ export function FunnelCard({ funnel }: FunnelCardProps) {
 	const stages = [
 		{ label: "Listas de clientes enviadas", value: funnel.requirementUploads },
 		{ label: "Comparações geradas", value: funnel.comparisons },
-		{ label: "Pré-pedidos criados", value: funnel.preOrdersCreated },
-		{ label: "Pré-pedidos finalizados", value: funnel.preOrdersFinalized },
+		{ label: "Pedidos criados", value: funnel.preOrdersCreated },
+		{ label: "Pedidos finalizados", value: funnel.preOrdersFinalized },
 	];
 	const max = Math.max(...stages.map((s) => s.value), 1);
 	const isEmpty = stages.every((s) => s.value === 0);
@@ -44,7 +44,7 @@ export function FunnelCard({ funnel }: FunnelCardProps) {
 					Funil de conversão
 				</CardTitle>
 				<CardDescription>
-					Do upload do cliente ao pré-pedido finalizado
+					Do upload do cliente ao pedido finalizado
 				</CardDescription>
 			</CardHeader>
 			<CardContent>
@@ -75,9 +75,14 @@ export function FunnelCard({ funnel }: FunnelCardProps) {
 											}}
 										/>
 									</div>
-									{conv !== null && (
+									{conv !== null && conv <= 100 && (
 										<p className="text-xs text-muted-foreground mt-1">
 											{formatPct(conv)} do estágio anterior
+										</p>
+									)}
+									{conv !== null && conv > 100 && (
+										<p className="text-xs text-muted-foreground mt-1">
+											Mais registros que o estágio anterior
 										</p>
 									)}
 								</div>

@@ -2,7 +2,7 @@
 
 ## O que é
 
-**Compara Pró** é uma plataforma **B2B SaaS** de comparação de preços e apoio à compra. Compradores enviam listas de necessidades (planilhas); representantes comerciais enviam catálogos de preços dos fornecedores que representam; o sistema **cruza** automaticamente as duas bases, destaca as melhores oportunidades e permite criar **pré-pedidos** que o representante aprova ou rejeita.
+**Compara Pró** é uma plataforma **B2B SaaS** de comparação de preços e apoio à compra. Compradores enviam listas de necessidades (planilhas); representantes comerciais enviam catálogos de preços dos fornecedores que representam; o sistema **cruza** automaticamente as duas bases, destaca as melhores oportunidades e permite criar **pedidos** que o representante aprova ou rejeita.
 
 O objetivo é eliminar a troca manual de arquivos entre comprador e fornecedor, reduzir o tempo de cotação e dar visibilidade clara de economia e melhor fornecedor por item.
 
@@ -16,7 +16,7 @@ Em compras recorrentes (varejo, atacado, distribuição), o fluxo tradicional co
 2. Envia por e-mail ou WhatsApp para vários fornecedores ou representantes.
 3. Recebe planilhas de volta, compara manualmente e decide.
 
-Esse processo é lento, sujeito a erro e difícil de auditar. O Compara Pró centraliza upload, matching, comparação, parecer e pré-pedido em um único ambiente web, sem instalação local.
+Esse processo é lento, sujeito a erro e difícil de auditar. O Compara Pró centraliza upload, matching, comparação, parecer e pedido em um único ambiente web, sem instalação local.
 
 ---
 
@@ -35,8 +35,8 @@ O sistema organiza o acesso em **três áreas** (derivadas do vínculo do usuár
 | Área | Quem é | O que faz na plataforma |
 |------|--------|-------------------------|
 | **Administrador** | Usuário sem empresa vinculada (`companyId` nulo) | Gestão global: empresas, produtos, histórico, relatórios, configurações do sistema (incl. IA) e administradores |
-| **Representante** | Usuário de uma **agência** (`Company` tipo `REPRESENTATIVE`) | Faz upload de catálogos em nome dos fornecedores representados, acompanha histórico de preços e responde pré-pedidos |
-| **Cliente (comprador)** | Usuário de uma empresa compradora (`Company` tipo `CLIENT`) | Envia listas de necessidades, compara preços, associa itens manualmente quando necessário, cria pré-pedidos e acompanha status |
+| **Representante** | Usuário de uma **agência** (`Company` tipo `REPRESENTATIVE`) | Faz upload de catálogos em nome dos fornecedores representados, acompanha histórico de preços e responde pedidos |
+| **Cliente (comprador)** | Usuário de uma empresa compradora (`Company` tipo `CLIENT`) | Envia listas de necessidades, compara preços, associa itens manualmente quando necessário, cria pedidos e acompanha status |
 
 ### Tipos de empresa
 
@@ -67,18 +67,18 @@ A gestão de usuários é **por sessão**: administradores de clientes em `/clie
 2. O **motor de matching** associa cada item aos produtos dos fornecedores disponíveis.
 3. A tela de comparação exibe preços por fornecedor, economia estimada e um **parecer da operação** (IA + números determinísticos).
 4. Itens sem correspondência automática podem ser associados **manualmente** a produtos do catálogo.
-5. O comprador pode **trocar o fornecedor escolhido** por produto e confirmar **pré-pedidos agrupados por fornecedor** em uma ação transacional.
+5. O comprador pode **trocar o fornecedor escolhido** por produto e confirmar **pedidos agrupados por fornecedor** em uma ação transacional.
 
-### 3. Representante — pré-pedidos
+### 3. Representante — pedidos
 
-1. Recebe notificações de novos pré-pedidos dos clientes da carteira.
+1. Recebe notificações de novos pedidos dos clientes da carteira.
 2. Analisa itens, quantidades e valores.
 3. **Aprova** (converte em pedido confirmado) ou **rejeita** (com motivo).
 
 ### 4. Administrador — operação da plataforma
 
 - Cadastro e manutenção de empresas (fornecedores, clientes, agências).
-- Visão de uploads, produtos, pré-pedidos e métricas.
+- Visão de uploads, produtos, pedidos e métricas.
 - Relatórios e exportação.
 - Configuração de perfil, preferências e integração de **IA** para o parecer (chave criptografada em repouso).
 
@@ -106,7 +106,7 @@ A gestão de usuários é **por sessão**: administradores de clientes em `/clie
 - Chave de API **criptografada** (AES-256-GCM); nunca exposta ao cliente.
 - **Degradação graciosa**: sem IA configurada, exibe análise determinística.
 
-### Pré-pedidos
+### Pedidos
 
 - Agrupamento automático por fornecedor.
 - Registro de preço-alvo (`baselinePrice`) para cálculo de economia.
@@ -140,7 +140,7 @@ Estrutura principal do código:
 
 ```
 src/app/              Rotas: admin, supplier, client, auth, api
-src/lib/services/     Matching, pré-pedido, parecer, processamento de arquivos
+src/lib/services/     Matching, pedido, parecer, processamento de arquivos
 src/lib/ai/           Provedores de IA e config criptografada
 src/components/       UI compartilhada e componentes de domínio
 prisma/schema.prisma  Modelo de dados
@@ -196,9 +196,9 @@ Detalhes de setup e variáveis de ambiente estão no [README.md](README.md).
 
 **MVP funcional**, com:
 
-- Fluxo completo comprador → comparação → pré-pedido → representante.
+- Fluxo completo comprador → comparação → pedido → representante.
 - **243** testes unitários (Vitest) e **53** specs E2E (Playwright), incluindo gestão de usuários, match manual e o fluxo profundo comprador→representante pela UI.
-- A suíte E2E não deixa resíduo: o `global-setup` grava o instante da rodada e o teardown (`scripts/cleanup-e2e.cjs`) apaga só o que nasceu dessa janela — duas execuções seguidas fecham com as mesmas contagens de empresas, comparações, pré-pedidos e notificações.
+- A suíte E2E não deixa resíduo: o `global-setup` grava o instante da rodada e o teardown (`scripts/cleanup-e2e.cjs`) apaga só o que nasceu dessa janela — duas execuções seguidas fecham com as mesmas contagens de empresas, comparações, pedidos e notificações.
 - Scripts de verificação ponta a ponta (`verify:cycle`, `verify:parecer`).
 - Modelo de papéis **consolidado**: não existe `User.role` — a área vem de `Company.type` (`src/lib/area.ts`),
   com agências de representação representando fornecedores sem login.

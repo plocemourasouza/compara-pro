@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
 
 		if (user.area !== "REPRESENTATIVE") {
 			return NextResponse.json(
-				{ error: "Apenas representantes podem responder pré-pedidos" },
+				{ error: "Apenas representantes podem responder pedidos" },
 				{ status: 403 },
 			);
 		}
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
 
 		const { preOrderIds, action, notes } = validationResult.data;
 
-		// Pré-pedidos devem pertencer a um fornecedor representado e estar ativos.
+		// Pedidos devem pertencer a um fornecedor representado e estar ativos.
 		const preOrders = await prisma.preOrder.findMany({
 			where: {
 				id: { in: preOrderIds },
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
 			return NextResponse.json(
 				{
 					error:
-						"Alguns pré-pedidos não foram encontrados ou não podem ser modificados",
+						"Alguns pedidos não foram encontrados ou não podem ser modificados",
 				},
 				{ status: 400 },
 			);
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
-		// Atualizar todos os pré-pedidos
+		// Atualizar todos os pedidos
 		const newStatus = action === "APPROVE" ? "FINALIZED" : "REJECTED";
 
 		await prisma.preOrder.updateMany({
@@ -98,8 +98,8 @@ export async function POST(request: NextRequest) {
 				...new Set(clientPreOrders.map((p) => p.supplier.name)),
 			];
 			const plural = clientPreOrders.length > 1;
-			const title = `Pré-pedido${plural ? "s" : ""} ${action === "APPROVE" ? "aprovado" : "rejeitado"}${plural ? "s" : ""}`;
-			const message = `${clientPreOrders.length} pré-pedido${plural ? "s foram" : " foi"} ${action === "APPROVE" ? "aprovado" : "rejeitado"} por ${supplierNames.join(", ")}`;
+			const title = `Pedido${plural ? "s" : ""} ${action === "APPROVE" ? "aprovado" : "rejeitado"}${plural ? "s" : ""}`;
+			const message = `${clientPreOrders.length} pedido${plural ? "s foram" : " foi"} ${action === "APPROVE" ? "aprovado" : "rejeitado"} por ${supplierNames.join(", ")}`;
 
 			for (const clientUser of clientUsers) {
 				await prisma.notification.create({
@@ -132,7 +132,7 @@ export async function POST(request: NextRequest) {
 		}
 
 		return NextResponse.json({
-			message: `${preOrders.length} pré-pedido${preOrders.length > 1 ? "s" : ""} ${action === "APPROVE" ? "aprovado" : "rejeitado"}${preOrders.length > 1 ? "s" : ""} com sucesso`,
+			message: `${preOrders.length} pedido${preOrders.length > 1 ? "s" : ""} ${action === "APPROVE" ? "aprovado" : "rejeitado"}${preOrders.length > 1 ? "s" : ""} com sucesso`,
 			updatedCount: preOrders.length,
 		});
 	} catch (error) {

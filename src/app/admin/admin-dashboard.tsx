@@ -95,6 +95,7 @@ interface DashboardMetrics {
 		total: number;
 		suppliers: number;
 		clients: number;
+		representatives: number;
 	};
 	uploads: {
 		total: number;
@@ -247,7 +248,7 @@ export default function AdminDashboard({ user: _user }: AdminDashboardProps) {
 								<div className="flex flex-col leading-none">
 									<span>{metrics.uploads.today}</span>
 									<span className="text-[11px] font-normal text-muted-foreground mt-1">
-										Total
+										No dia
 									</span>
 								</div>
 								<div className="flex flex-col leading-none">
@@ -269,7 +270,7 @@ export default function AdminDashboard({ user: _user }: AdminDashboardProps) {
 								<span>{metrics.uploads.thisMonth} este mês</span>
 								<span className="flex items-center gap-1 ml-auto">
 									<AlertTriangle className="h-3 w-3 text-destructive" />
-									{metrics.uploads.byStatus.failed} falhas
+									{metrics.uploads.byStatus.failed} falhas no histórico
 									{(() => {
 										const rate =
 											metrics.uploads.total > 0
@@ -306,7 +307,7 @@ export default function AdminDashboard({ user: _user }: AdminDashboardProps) {
 				<>
 					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
 						<StatCard
-							title="Pré-pedidos em aberto"
+							title="Pedidos em aberto"
 							icon={ShoppingCart}
 							iconClassName="text-primary"
 							value={metrics?.preOrders.pending ?? 0}
@@ -315,7 +316,7 @@ export default function AdminDashboard({ user: _user }: AdminDashboardProps) {
 							}
 						/>
 						<StatCard
-							title="Pré-pedidos finalizados"
+							title="Pedidos finalizados"
 							icon={CheckCircle}
 							iconClassName="text-success"
 							value={metrics?.preOrders.approved ?? 0}
@@ -360,7 +361,7 @@ export default function AdminDashboard({ user: _user }: AdminDashboardProps) {
 									},
 									{
 										icon: ShoppingCart,
-										label: "Pré-pedidos aguardando resposta",
+										label: "Pedidos aguardando resposta",
 										subtitle: `${insights.attention.preOrdersBreakdown.clients} clientes · ${insights.attention.preOrdersBreakdown.suppliers} fornecedores · ${insights.attention.preOrdersBreakdown.products} produtos · ${formatCurrency(insights.attention.preOrdersBreakdown.totalValue)}`,
 										count: insights.attention.activePreOrders,
 										href: "/admin/pre-orders",
@@ -388,14 +389,14 @@ export default function AdminDashboard({ user: _user }: AdminDashboardProps) {
 					<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 						<LeaderboardCard
 							title="Top representantes"
-							description="Por valor de pré-pedidos finalizados"
+							description="Por valor de pedidos finalizados"
 							items={insights.leaderboards.topRepresentatives.map((r) => ({
 								id: r.representativeId,
 								name: r.name,
 								value: r.finalizedValue,
 							}))}
 							valueFormatter={formatCurrency}
-							emptyLabel="Nenhum pré-pedido finalizado."
+							emptyLabel="Nenhum pedido finalizado."
 						/>
 						<LeaderboardCard
 							title="Top clientes"
@@ -406,7 +407,7 @@ export default function AdminDashboard({ user: _user }: AdminDashboardProps) {
 								value: c.spend,
 							}))}
 							valueFormatter={formatCurrency}
-							emptyLabel="Nenhum pré-pedido finalizado."
+							emptyLabel="Nenhum pedido finalizado."
 						/>
 					</div>
 				</>
@@ -428,7 +429,7 @@ export default function AdminDashboard({ user: _user }: AdminDashboardProps) {
 						<CardHeader>
 							<CardTitle>Top fornecedores</CardTitle>
 							<CardDescription>
-								Por valor em pré-pedidos — cada coluna empilha os 10 maiores
+								Por valor em pedidos — cada coluna empilha os 10 maiores
 								produtos do fornecedor
 							</CardDescription>
 						</CardHeader>

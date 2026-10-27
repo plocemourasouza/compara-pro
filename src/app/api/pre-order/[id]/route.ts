@@ -27,12 +27,12 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
 
 		if (!preOrder) {
 			return NextResponse.json(
-				{ error: "Pré-pedido não encontrado" },
+				{ error: "Pedido não encontrado" },
 				{ status: 404 },
 			);
 		}
 
-		// Admin vê qualquer pré-pedido; cliente só os da própria empresa;
+		// Admin vê qualquer pedido; cliente só os da própria empresa;
 		// representante só os de fornecedores que representa.
 		if (user.area === "CLIENT" && preOrder.clientId !== user.company?.id) {
 			return NextResponse.json({ error: "Acesso negado" }, { status: 403 });

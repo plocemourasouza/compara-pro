@@ -8,7 +8,7 @@ a landing a pedido do usuário, mantendo Geist, imagens, conteúdo e navegação
 
 - `src/app/page.tsx`: entrada da rota e metadata específica da landing.
 - `src/components/landing/landing-page.tsx`: conteúdo renderizado no servidor.
-- `comparison-desk.tsx`: filtros, busca, seleção e pré-pedido demonstrativo.
+- `comparison-desk.tsx`: filtros, busca, seleção e pedido demonstrativo.
 - `comparison-data.ts`: preços em centavos e exportação do exemplo em CSV.
 - `landing.css`: estilos limitados ao contêiner `.compara-landing`.
 - `public/landing`: duas imagens WebP locais, consumidas por `next/image`.
@@ -23,7 +23,7 @@ representante usam `/auth/login`, via `next/link`. Os avisos de acesso da
 prévia HTML foram removidos; não é necessário configurar `APP_ORIGIN`.
 
 A demonstração permanece ilustrativa. Ela não importa listas, não consulta
-catálogos reais e não envia pré-pedidos. A seleção afeta o total e o CSV de
+catálogos reais e não envia pedidos. A seleção afeta o total e o CSV de
 exemplo. O total inicial é R$ 1.117,62; sem arroz, R$ 669,62. Os grupos são
 Norte R$ 632,32 e Sul R$ 485,30.
 

@@ -5,7 +5,7 @@ import { loginAs } from "./helpers/auth";
 // no nível de API). Cruza comprador → representante em sessões isoladas.
 test.describe
 	.serial("fluxo de negócio comprador→fornecedor (UI)", () => {
-		test("comprador compara, confirma pré-pedido; representante aprova", async ({
+		test("comprador compara, confirma pedido; representante aprova", async ({
 			browser,
 		}) => {
 			const buyerCtx = await browser.newContext();
@@ -37,13 +37,13 @@ test.describe
 					await expect(economia).toBeVisible();
 				}
 
-				// confirmar pré-pedido
+				// confirmar pedido
 				await buyer
-					.getByRole("button", { name: /confirmar pré-pedido/i })
+					.getByRole("button", { name: /confirmar pedido/i })
 					.click();
 
-				// sucesso (toast) — pré-pedido criado
-				await expect(buyer.getByText(/pré-pedido/i).first()).toBeVisible({
+				// sucesso (toast) — pedido criado
+				await expect(buyer.getByText(/pedido/i).first()).toBeVisible({
 					timeout: 15_000,
 				});
 
@@ -54,10 +54,10 @@ test.describe
 				await loginAs(sup, "representante@demo.com");
 				await sup.goto("/supplier/pre-orders");
 				await expect(
-					sup.getByRole("heading", { level: 1, name: /pré-pedidos/i }),
+					sup.getByRole("heading", { level: 1, name: /pedidos/i }),
 				).toBeVisible({ timeout: 15_000 });
 
-				// localizar um pré-pedido pendente → abrir detalhe → aprovar
+				// localizar um pedido pendente → abrir detalhe → aprovar
 				// (o detalhe navega para /supplier/pre-orders/{id}; deixou de ser
 				// modal no commit 3bd4d15, "Listas de Preço...".)
 				const row = sup

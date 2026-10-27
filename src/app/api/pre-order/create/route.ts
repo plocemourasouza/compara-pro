@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
-		// Criar pré-pedido
+		// Criar pedido
 		const preOrderId = await PreOrderService.createPreOrder(
 			validationResult.data,
 			user.company.id,
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
 		return NextResponse.json(
 			{
 				success: true,
-				message: "Pré-pedido criado com sucesso",
+				message: "Pedido criado com sucesso",
 				preOrderId,
 			},
 			{ status: 201 },

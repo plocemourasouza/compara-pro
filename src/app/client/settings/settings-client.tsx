@@ -33,9 +33,13 @@ type User = {
 
 interface SettingsClientProps {
 	user: User;
+	createdLabel: string;
 }
 
-export default function SettingsClient({ user }: SettingsClientProps) {
+export default function SettingsClient({
+	user,
+	createdLabel,
+}: SettingsClientProps) {
 	const prefs = (user.preferences ?? {}) as Partial<{
 		emailNotifications: boolean;
 		pushNotifications: boolean;
@@ -304,7 +308,7 @@ export default function SettingsClient({ user }: SettingsClientProps) {
 											Atualizações de Pedidos
 										</Label>
 										<p className="text-sm text-muted-foreground">
-											Status e atualizações dos seus pré-pedidos
+											Status e atualizações dos seus pedidos
 										</p>
 									</div>
 									<Switch
@@ -510,18 +514,9 @@ export default function SettingsClient({ user }: SettingsClientProps) {
 							<div className="space-y-4">
 								<div className="flex items-center justify-between">
 									<div>
-										<p className="font-medium">Último Login</p>
+										<p className="font-medium">Conta criada</p>
 										<p className="text-sm text-muted-foreground">
-											Hoje às 14:30 - IP: 192.168.1.1
-										</p>
-									</div>
-								</div>
-								<Separator />
-								<div className="flex items-center justify-between">
-									<div>
-										<p className="font-medium">Conta Criada</p>
-										<p className="text-sm text-muted-foreground">
-											15 de Janeiro de 2024
+											{createdLabel}
 										</p>
 									</div>
 								</div>

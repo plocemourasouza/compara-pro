@@ -129,8 +129,10 @@ export default function ProductsClient({ user: _user }: ProductsClientProps) {
 		const avgPrice = withPrice.length
 			? withPrice.reduce((sum, p) => sum + (p.price ?? 0), 0) / withPrice.length
 			: 0;
+		const active = products.filter((p) => p.isActive !== false).length;
 		return {
 			total: products.length,
+			active,
 			companies: new Set(products.map((p) => p.company.id)).size,
 			avgPrice,
 		};
@@ -154,6 +156,11 @@ export default function ProductsClient({ user: _user }: ProductsClientProps) {
 					title="Total de Produtos"
 					icon={Package}
 					value={stats.total}
+					hint={
+						stats.active < stats.total
+							? `${stats.active.toLocaleString("pt-BR")} na lista vigente`
+							: undefined
+					}
 				/>
 				<StatCard title="Categorias" icon={Tags} value={categories.length} />
 				<StatCard title="Empresas" icon={Building2} value={stats.companies} />

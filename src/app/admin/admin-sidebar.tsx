@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { AppSidebarFrame } from "@/components/shared/app-sidebar-frame";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -62,7 +63,7 @@ const navigation = [
 		current: false,
 	},
 	{
-		name: "Pré-pedidos",
+		name: "Pedidos",
 		href: "/admin/pre-orders",
 		icon: ShoppingCart,
 		current: false,
@@ -74,7 +75,7 @@ const navigation = [
 		current: false,
 	},
 	{
-		name: "Usuários",
+		name: "Administradores",
 		href: "/admin/users",
 		icon: Users,
 		current: false,
@@ -104,8 +105,8 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
 	};
 
 	return (
-		<div className="fixed inset-y-0 left-0 z-50 w-64 bg-background border-r border-border">
-			<div className="flex flex-col h-full">
+		<AppSidebarFrame>
+			<div className="flex h-full min-h-0 flex-col">
 				{/* Logo */}
 				<div className="flex items-center h-17 px-6 border-b border-border">
 					<BarChart3 className="h-8 w-8 text-primary" />
@@ -118,7 +119,7 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
 				</div>
 
 				{/* Navigation */}
-				<nav className="flex-1 px-4 py-6 space-y-2">
+				<nav className="min-h-0 flex-1 space-y-2 overflow-y-auto px-4 py-6">
 					<div className="border-t border-border pt-4">
 						<div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
 							Administração
@@ -196,6 +197,6 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
 					</Button>
 				</div>
 			</div>
-		</div>
+		</AppSidebarFrame>
 	);
 }

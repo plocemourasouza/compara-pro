@@ -91,7 +91,7 @@ export class PreOrderService {
 			});
 			if (!carteira) {
 				throw new Error(
-					"Fornecedor sem vínculo de carteira com o cliente — pré-pedido exige representante",
+					"Fornecedor sem vínculo de carteira com o cliente — pedido exige representante",
 				);
 			}
 
@@ -143,8 +143,8 @@ export class PreOrderService {
 			await PreOrderService.createNotification(
 				data.supplierId,
 				"PRE_ORDER_CREATED",
-				"Novo pré-pedido recebido",
-				`Você recebeu um novo pré-pedido de ${preOrder.client.name}`,
+				"Novo pedido recebido",
+				`Você recebeu um novo pedido de ${preOrder.client.name}`,
 				{ preOrderId: preOrder.id },
 			);
 
@@ -153,7 +153,7 @@ export class PreOrderService {
 			console.error("Create pre-order error:", error);
 			throw error instanceof Error
 				? error
-				: new Error("Erro ao criar pré-pedido");
+				: new Error("Erro ao criar pedido");
 		}
 	}
 
@@ -238,7 +238,7 @@ export class PreOrderService {
 				});
 				if (!carteira) {
 					throw new Error(
-						"Fornecedor sem vínculo de carteira com o cliente — pré-pedido exige representante",
+						"Fornecedor sem vínculo de carteira com o cliente — pedido exige representante",
 					);
 				}
 
@@ -264,7 +264,7 @@ export class PreOrderService {
 			}
 
 			if (results.length === 0) {
-				throw new Error("Nenhum produto válido para criar pré-pedido");
+				throw new Error("Nenhum produto válido para criar pedido");
 			}
 			return results;
 		});
@@ -273,8 +273,8 @@ export class PreOrderService {
 			await PreOrderService.createNotification(
 				r.supplierId,
 				"PRE_ORDER_CREATED",
-				"Novo pré-pedido recebido",
-				`Você recebeu um novo pré-pedido de ${r.clientName}`,
+				"Novo pedido recebido",
+				`Você recebeu um novo pedido de ${r.clientName}`,
 				{ preOrderId: r.id },
 			);
 		}
@@ -296,11 +296,11 @@ export class PreOrderService {
 			});
 
 			if (!preOrder || preOrder.supplierId !== supplierId) {
-				throw new Error("Pré-pedido não encontrado ou não autorizado");
+				throw new Error("Pedido não encontrado ou não autorizado");
 			}
 
 			if (preOrder.status !== "ACTIVE") {
-				throw new Error("Pré-pedido já foi respondido");
+				throw new Error("Pedido já foi respondido");
 			}
 
 			// Update pre-order status
@@ -321,11 +321,11 @@ export class PreOrderService {
 			const notificationType =
 				action === "APPROVE" ? "PRE_ORDER_APPROVED" : "PRE_ORDER_REJECTED";
 			const title =
-				action === "APPROVE" ? "Pré-pedido aprovado!" : "Pré-pedido rejeitado";
+				action === "APPROVE" ? "Pedido aprovado!" : "Pedido rejeitado";
 			const message =
 				action === "APPROVE"
-					? `Seu pré-pedido foi aprovado por ${preOrder.supplier.name}`
-					: `Seu pré-pedido foi rejeitado por ${preOrder.supplier.name}`;
+					? `Seu pedido foi aprovado por ${preOrder.supplier.name}`
+					: `Seu pedido foi rejeitado por ${preOrder.supplier.name}`;
 
 			await PreOrderService.createNotification(
 				preOrder.clientId,
@@ -338,7 +338,7 @@ export class PreOrderService {
 			console.error("Respond to pre-order error:", error);
 			throw error instanceof Error
 				? error
-				: new Error("Erro ao responder pré-pedido");
+				: new Error("Erro ao responder pedido");
 		}
 	}
 
@@ -375,7 +375,7 @@ export class PreOrderService {
 			});
 
 			if (!preOrder) {
-				throw new Error("Pré-pedido não encontrado");
+				throw new Error("Pedido não encontrado");
 			}
 
 			// Check authorization
@@ -391,7 +391,7 @@ export class PreOrderService {
 			console.error("Get pre-order error:", error);
 			throw error instanceof Error
 				? error
-				: new Error("Erro ao buscar pré-pedido");
+				: new Error("Erro ao buscar pedido");
 		}
 	}
 
@@ -431,7 +431,7 @@ export class PreOrderService {
 					respondedAt: po.respondedAt,
 					client: po.client,
 					supplier: po.supplier,
-					// Representante único vinculado ao pré-pedido (regra de negócio).
+					// Representante único vinculado ao pedido (regra de negócio).
 					representative: po.representative,
 				})),
 				pagination: {
@@ -443,7 +443,7 @@ export class PreOrderService {
 			};
 		} catch (error) {
 			console.error("List pre-orders error:", error);
-			throw new Error("Erro ao buscar pré-pedidos");
+			throw new Error("Erro ao buscar pedidos");
 		}
 	}
 

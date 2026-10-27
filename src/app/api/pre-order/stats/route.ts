@@ -6,7 +6,7 @@ import { preOrderScopeWhere } from "@/lib/services/pre-order-scope";
 
 type Bucket = { count: number; value: number };
 
-// Indicadores da lista de pré-pedidos: total + por status (pendente/aprovado/
+// Indicadores da lista de pedidos: total + por status (pendente/aprovado/
 // rejeitado), cada um com contagem e valor somado, no escopo do usuário.
 export async function GET() {
 	try {

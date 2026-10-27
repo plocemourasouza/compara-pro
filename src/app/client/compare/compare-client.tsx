@@ -143,12 +143,23 @@ export default function CompareClient({ user: _user }: CompareClientProps) {
 
 	async function fetchUploads() {
 		try {
-			const response = await fetch(
-				"/api/upload/history?type=CLIENT_REQUIREMENTS",
-			);
-			if (!response.ok) throw new Error("Erro ao carregar uploads");
-			const data = await response.json();
-			setUploads(data.uploads.filter((u: Upload) => u.status === "COMPLETED"));
+			const pageSize = 100;
+			const collected: Upload[] = [];
+			let page = 1;
+			let total = 0;
+			do {
+				const response = await fetch(
+					`/api/upload/history?page=${page}&limit=${pageSize}&type=CLIENT_REQUIREMENTS`,
+				);
+				if (!response.ok) throw new Error("Erro ao carregar uploads");
+				const data = await response.json();
+				const batch: Upload[] = data.uploads ?? [];
+				total = data.pagination?.total ?? collected.length + batch.length;
+				collected.push(...batch);
+				if (batch.length === 0) break;
+				page += 1;
+			} while (collected.length < total && page <= 100);
+			setUploads(collected.filter((u) => u.status === "COMPLETED"));
 		} catch (err) {
 			setError(err instanceof Error ? err.message : "Erro desconhecido");
 		}
@@ -396,13 +407,13 @@ export default function CompareClient({ user: _user }: CompareClientProps) {
 				preOrderIds?: string[];
 				error?: string;
 			};
-			if (!res.ok) throw new Error(data.error ?? "Erro ao criar pré-pedido");
+			if (!res.ok) throw new Error(data.error ?? "Erro ao criar pedido");
 			toast.success(
-				`${data.preOrderIds?.length ?? 0} pré-pedido(s) criado(s) com sucesso`,
+				`${data.preOrderIds?.length ?? 0} pedido(s) criado(s) com sucesso`,
 			);
 		} catch (err) {
 			toast.error(
-				err instanceof Error ? err.message : "Erro ao criar pré-pedido",
+				err instanceof Error ? err.message : "Erro ao criar pedido",
 			);
 		} finally {
 			setConfirming(false);
@@ -640,7 +651,7 @@ export default function CompareClient({ user: _user }: CompareClientProps) {
 							<CardTitle>Resultados da Comparação</CardTitle>
 							<p className="text-sm text-muted-foreground">
 								Ajuste o fornecedor, a quantidade ou desmarque itens antes de
-								confirmar o pré-pedido.
+								confirmar o pedido.
 							</p>
 						</CardHeader>
 						<CardContent>
@@ -682,10 +693,10 @@ export default function CompareClient({ user: _user }: CompareClientProps) {
 							<CardHeader>
 								<CardTitle className="flex items-center gap-2">
 									<ShoppingCart className="h-5 w-5 text-primary" />
-									Confirmar pré-pedido
+									Confirmar pedido
 								</CardTitle>
 								<p className="text-sm text-muted-foreground">
-									Suas escolhas geram {groups.length} pré-pedido(s), agrupados
+									Suas escolhas geram {groups.length} pedido(s), agrupados
 									por fornecedor.
 								</p>
 							</CardHeader>
@@ -722,7 +733,7 @@ export default function CompareClient({ user: _user }: CompareClientProps) {
 										onClick={confirmPreOrders}
 										disabled={confirming}
 									>
-										{confirming ? "Enviando..." : "Confirmar pré-pedido"}
+										{confirming ? "Enviando..." : "Confirmar pedido"}
 									</Button>
 								</div>
 							</CardContent>

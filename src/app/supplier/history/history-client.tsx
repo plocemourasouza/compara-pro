@@ -44,7 +44,6 @@ export default function HistoryClient({ user, suppliers }: HistoryClientProps) {
 	const [uploads, setUploads] = useState<Upload[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [statusFilter, setStatusFilter] = useState("all");
-	const [typeFilter, setTypeFilter] = useState("all");
 	const [selectedId, setSelectedId] = useState<string | null>(null);
 	const [detailOpen, setDetailOpen] = useState(false);
 	const [importOpen, setImportOpen] = useState(false);
@@ -62,10 +61,23 @@ export default function HistoryClient({ user, suppliers }: HistoryClientProps) {
 	const fetchHistory = async () => {
 		try {
 			setLoading(true);
-			const response = await fetch("/api/upload/history");
-			if (!response.ok) throw new Error("Erro ao carregar histórico");
-			const data = await response.json();
-			setUploads(data.uploads ?? []);
+			const pageSize = 100;
+			const collected: Upload[] = [];
+			let page = 1;
+			let total = 0;
+			do {
+				const response = await fetch(
+					`/api/upload/history?page=${page}&limit=${pageSize}&type=SUPPLIER_PRODUCTS`,
+				);
+				if (!response.ok) throw new Error("Erro ao carregar histórico");
+				const data = await response.json();
+				const batch: Upload[] = data.uploads ?? [];
+				total = data.pagination?.total ?? collected.length + batch.length;
+				collected.push(...batch);
+				if (batch.length === 0) break;
+				page += 1;
+			} while (collected.length < total && page <= 100);
+			setUploads(collected);
 		} catch (error) {
 			console.error("Erro ao carregar histórico:", error);
 		} finally {
@@ -92,13 +104,10 @@ export default function HistoryClient({ user, suppliers }: HistoryClientProps) {
 	const filteredUploads = useMemo(
 		() =>
 			uploads.filter((u) => {
-				const matchesStatus =
-					statusFilter === "all" ||
-					(statusFilter === "active" ? u.isActive : !u.isActive);
-				const matchesType = typeFilter === "all" || u.uploadType === typeFilter;
-				return matchesStatus && matchesType;
+				if (statusFilter === "all") return true;
+				return statusFilter === "active" ? u.isActive : !u.isActive;
 			}),
-		[uploads, statusFilter, typeFilter],
+		[uploads, statusFilter],
 	);
 
 	return (
@@ -161,32 +170,16 @@ export default function HistoryClient({ user, suppliers }: HistoryClientProps) {
 						isLoading={loading}
 						emptyState="Nenhuma lista encontrada."
 						toolbar={
-							<>
-								<Select value={statusFilter} onValueChange={setStatusFilter}>
-									<SelectTrigger className="w-40">
-										<SelectValue placeholder="Status" />
-									</SelectTrigger>
-									<SelectContent>
-										<SelectItem value="all">Todos os status</SelectItem>
-										<SelectItem value="active">Ativo</SelectItem>
-										<SelectItem value="inactive">Inativo</SelectItem>
-									</SelectContent>
-								</Select>
-								<Select value={typeFilter} onValueChange={setTypeFilter}>
-									<SelectTrigger className="w-44">
-										<SelectValue placeholder="Tipo" />
-									</SelectTrigger>
-									<SelectContent>
-										<SelectItem value="all">Todos os tipos</SelectItem>
-										<SelectItem value="SUPPLIER_PRODUCTS">
-											Produtos do Fornecedor
-										</SelectItem>
-										<SelectItem value="CLIENT_REQUIREMENTS">
-											Requisitos do Cliente
-										</SelectItem>
-									</SelectContent>
-								</Select>
-							</>
+							<Select value={statusFilter} onValueChange={setStatusFilter}>
+								<SelectTrigger className="w-40">
+									<SelectValue placeholder="Status" />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="all">Todos os status</SelectItem>
+									<SelectItem value="active">Ativo</SelectItem>
+									<SelectItem value="inactive">Inativo</SelectItem>
+								</SelectContent>
+							</Select>
 						}
 					/>
 				</CardContent>

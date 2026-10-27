@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import { loginAs } from "./helpers/auth";
 
 // Verifica os ajustes da lista de Representantes:
-// - colunas removidas (Tipo, Responsável) e adicionadas (Pré-pedidos, Status)
+// - colunas removidas (Tipo, Responsável) e adicionadas (Pedidos, Status)
 // - CNPJ anonimizado (LGPD): nunca exibe os 14 dígitos completos; cópia disponível
 test.describe("admin — lista de representantes", () => {
 	test.beforeEach(async ({ page }) => {
@@ -13,11 +13,11 @@ test.describe("admin — lista de representantes", () => {
 		).toBeVisible({ timeout: 15_000 });
 	});
 
-	test("colunas: +Pré-pedidos +Status, -Tipo -Responsável", async ({
+	test("colunas: +Pedidos +Status, -Tipo -Responsável", async ({
 		page,
 	}) => {
 		await expect(
-			page.getByRole("columnheader", { name: "Pré-pedidos" }),
+			page.getByRole("columnheader", { name: "Pedidos" }),
 		).toBeVisible();
 		await expect(
 			page.getByRole("columnheader", { name: "Status" }),

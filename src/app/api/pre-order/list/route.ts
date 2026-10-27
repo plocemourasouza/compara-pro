@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
 	try {
 		const user = await requireAuth(["CLIENT", "REPRESENTATIVE", "ADMIN"]);
 
-		// Não-admin precisa de empresa; admin enxerga todos os pré-pedidos.
+		// Não-admin precisa de empresa; admin enxerga todos os pedidos.
 		if (user.area !== "ADMIN" && !user.company) {
 			return NextResponse.json(
 				{ error: "Usuário deve estar associado a uma empresa" },

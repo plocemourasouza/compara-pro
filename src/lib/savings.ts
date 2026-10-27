@@ -4,7 +4,7 @@
  * Economia = max(0, targetPrice − precoEscolhido) × quantidade, somada sobre os
  * itens incluídos com fornecedor escolhido. Mesma fórmula de
  * `savings.finalizedSavings` no dashboard admin (base = targetPrice no cliente /
- * baselinePrice no snapshot do pré-pedido).
+ * baselinePrice no snapshot do pedido).
  *
  * Funções puras — sem dependência de UI; shapes mínimos p/ structural typing.
  */

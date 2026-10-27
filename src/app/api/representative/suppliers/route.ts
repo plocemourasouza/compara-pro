@@ -51,7 +51,12 @@ export async function GET() {
 					city: true,
 					state: true,
 					_count: {
-						select: { products: true, carteiraClientes: true },
+						select: {
+							products: {
+								where: { isActive: true, deletedAt: null },
+							},
+							carteiraClientes: true,
+						},
 					},
 				},
 			}),

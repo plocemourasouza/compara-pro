@@ -57,7 +57,7 @@ export function PreOrderDetailView({
 				if (active) setPreOrder(data.preOrder ?? null);
 			})
 			.catch(() => {
-				if (active) setError("Pré-pedido não encontrado ou acesso negado.");
+				if (active) setError("Pedido não encontrado ou acesso negado.");
 			})
 			.finally(() => {
 				if (active) setLoading(false);
@@ -93,7 +93,7 @@ export function PreOrderDetailView({
 			});
 			const data = (await res.json()) as { message?: string; error?: string };
 			if (!res.ok) throw new Error(data.error ?? "Erro");
-			toast.success(data.message ?? "Pré-pedido atualizado");
+			toast.success(data.message ?? "Pedido atualizado");
 			router.push(backHref);
 		} catch (err) {
 			toast.error(err instanceof Error ? err.message : "Erro");
@@ -117,7 +117,7 @@ export function PreOrderDetailView({
 				</Button>
 				<div className="flex items-center gap-3">
 					<h1 className="text-2xl font-bold tracking-tight">
-						Pré-pedido {preOrder ? `#${preOrder.id.slice(-8)}` : ""}
+						Pedido {preOrder ? `#${preOrder.id.slice(-8)}` : ""}
 					</h1>
 					{preOrder && (
 						<Badge className={PRE_ORDER_STATUS[preOrder.status].className}>
@@ -134,7 +134,7 @@ export function PreOrderDetailView({
 			) : error || !preOrder ? (
 				<Card>
 					<CardContent className="py-12 text-center text-sm text-muted-foreground">
-						{error ?? "Pré-pedido não encontrado."}
+						{error ?? "Pedido não encontrado."}
 					</CardContent>
 				</Card>
 			) : (

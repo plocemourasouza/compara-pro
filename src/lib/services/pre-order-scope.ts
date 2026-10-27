@@ -1,5 +1,5 @@
 /**
- * Puro: monta o filtro `where` de pré-pedidos por papel.
+ * Puro: monta o filtro `where` de pedidos por papel.
  * ADMIN vê todos; CLIENT só os da própria empresa; REPRESENTATIVE os de todos
  * os fornecedores que representa. Sem I/O — seguro para testar isolado.
  */

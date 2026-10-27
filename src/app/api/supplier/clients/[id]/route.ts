@@ -65,6 +65,7 @@ export async function GET(
 					email: true,
 					phone: true,
 					zipCode: true,
+					addressType: true,
 					street: true,
 					number: true,
 					neighborhood: true,

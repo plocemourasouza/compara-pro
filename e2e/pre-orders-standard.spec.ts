@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-// Fase 3 + detalhe com itens: pré-pedidos abrem o detalhe com a tabela
+// Fase 3 + detalhe com itens: pedidos abrem o detalhe com a tabela
 // de itens; supplier vê Aprovar/Rejeitar (ACTIVE); admin é read-only.
 //
 // O detalhe deixou de ser uma modal (commit 3bd4d15, "Listas de Preço..."):
@@ -21,7 +21,7 @@ test.describe("pre-orders — lista → detalhe (itens) → ação", () => {
 
 		await page.goto("/supplier/pre-orders");
 		await expect(
-			page.getByRole("heading", { level: 1, name: /pré-pedidos/i }),
+			page.getByRole("heading", { level: 1, name: /pedidos/i }),
 		).toBeVisible({ timeout: 15_000 });
 
 		const row = page
@@ -35,7 +35,7 @@ test.describe("pre-orders — lista → detalhe (itens) → ação", () => {
 			timeout: 15_000,
 		});
 		await expect(
-			page.getByRole("heading", { level: 1, name: /Pré-pedido #/ }),
+			page.getByRole("heading", { level: 1, name: /Pedido #/ }),
 		).toBeVisible();
 		// Tabela de itens carrega via /api/pre-order/[id] (nome do produto).
 		await expect(page.getByText("Parafuso M6")).toBeVisible({
@@ -44,7 +44,7 @@ test.describe("pre-orders — lista → detalhe (itens) → ação", () => {
 		await expect(page.getByRole("button", { name: /aprovar/i })).toBeVisible();
 	});
 
-	test("admin: lista mostra pré-pedidos e detalhe é read-only", async ({
+	test("admin: lista mostra pedidos e detalhe é read-only", async ({
 		page,
 	}) => {
 		await page.goto("/auth/login");
@@ -63,7 +63,7 @@ test.describe("pre-orders — lista → detalhe (itens) → ação", () => {
 
 		await page.waitForURL(/\/admin\/pre-orders\/[^/]+$/, { timeout: 15_000 });
 		await expect(
-			page.getByRole("heading", { level: 1, name: /Pré-pedido #/ }),
+			page.getByRole("heading", { level: 1, name: /Pedido #/ }),
 		).toBeVisible();
 		await expect(page.getByRole("button", { name: /aprovar/i })).toHaveCount(0);
 	});

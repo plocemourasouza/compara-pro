@@ -1,7 +1,7 @@
 /**
  * Seed RICO (aditivo) — roda POR CIMA do seed-demo p/ popular o dashboard admin
  * por completo: vários fornecedores/representantes/clientes, comparações e
- * pré-pedidos distribuídos em 30 dias, matching com baixa confiança, uploads com
+ * pedidos distribuídos em 30 dias, matching com baixa confiança, uploads com
  * falhas, e solicitações de carteira (incl. atrasadas).
  *
  * Pré-requisito: rodar `npm run seed:demo` antes (cria admin/alfa/beta/comprador).
@@ -304,7 +304,7 @@ async function main() {
 	}
 
 	// Mapa fornecedor -> agência (mais antiga) p/ herdar o representante na
-	// carteira e nos pré-pedidos. Cobre links de demo + full já criados.
+	// carteira e nos pedidos. Cobre links de demo + full já criados.
 	const repLinks = await prisma.representativeSupplier.findMany({
 		orderBy: [
 			{ supplierCompanyId: "asc" },
@@ -512,7 +512,7 @@ async function main() {
 		clients.push({ company, comparison, matchInfos });
 	}
 
-	// --- Pré-pedidos distribuídos (status + datas) ---
+	// --- Pedidos distribuídos (status + datas) ---
 	// Distribuição: mistura ACTIVE/FINALIZED/REJECTED ao longo de 30 dias.
 	const STATUS_CYCLE = [
 		"FINALIZED",
@@ -532,7 +532,7 @@ async function main() {
 				cl.matchInfos.flatMap((m) => m.offers.map((o) => o.companyId)),
 			),
 		];
-		// cria 1 pré-pedido por fornecedor (até 4) com datas escalonadas.
+		// cria 1 pedido por fornecedor (até 4) com datas escalonadas.
 		const chosenSuppliers = supplierSet.slice(0, 4);
 		for (let k = 0; k < chosenSuppliers.length; k++) {
 			const supplierId = chosenSuppliers[k];
@@ -567,7 +567,7 @@ async function main() {
 					representativeId,
 					status,
 					totalAmount: round2(items.reduce((s, it) => s + it.totalPrice, 0)),
-					notes: `Pré-pedido ${status.toLowerCase()} (demo rico).`,
+					notes: `Pedido ${status.toLowerCase()} (demo rico).`,
 					createdAt,
 					respondedAt: responded ? new Date(createdAt.getTime() + day) : null,
 					items: { create: items },

@@ -24,7 +24,13 @@ export async function GET() {
 							cnpj: true,
 							city: true,
 							state: true,
-							_count: { select: { products: true } },
+							_count: {
+								select: {
+									products: {
+										where: { isActive: true, deletedAt: null },
+									},
+								},
+							},
 						},
 					},
 				},

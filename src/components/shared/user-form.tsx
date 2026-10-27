@@ -158,12 +158,22 @@ export function UserForm({
 				</Button>
 				<div>
 					<h1 className="text-2xl font-bold tracking-tight">
-						{isEdit ? "Editar Usuário" : "Criar Novo Usuário"}
+						{scopeRole === "ADMIN"
+							? isEdit
+								? "Editar Administrador"
+								: "Criar Novo Administrador"
+							: isEdit
+								? "Editar Usuário"
+								: "Criar Novo Usuário"}
 					</h1>
 					<p className="text-muted-foreground">
-						{isEdit
-							? "Atualize os dados do usuário"
-							: "Preencha os dados para criar um usuário"}
+						{scopeRole === "ADMIN"
+							? isEdit
+								? "Atualize os dados do administrador"
+								: "Preencha os dados para criar um administrador"
+							: isEdit
+								? "Atualize os dados do usuário"
+								: "Preencha os dados para criar um usuário"}
 					</p>
 				</div>
 			</div>
@@ -271,7 +281,9 @@ export function UserForm({
 								? "Salvando..."
 								: isEdit
 									? "Salvar Alterações"
-									: "Criar Usuário"}
+									: scopeRole === "ADMIN"
+										? "Criar Administrador"
+										: "Criar Usuário"}
 						</Button>
 					</div>
 				</form>

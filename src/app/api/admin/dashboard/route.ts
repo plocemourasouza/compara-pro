@@ -68,6 +68,9 @@ export async function GET() {
 				companiesByType.find((c) => c.type === "SUPPLIER")?._count.type || 0,
 			clients:
 				companiesByType.find((c) => c.type === "CLIENT")?._count.type || 0,
+			representatives:
+				companiesByType.find((c) => c.type === "REPRESENTATIVE")?._count.type ||
+				0,
 		};
 
 		// Buscar métricas de uploads
@@ -133,7 +136,7 @@ export async function GET() {
 			},
 		};
 
-		// Buscar métricas de pré-pedidos
+		// Buscar métricas de pedidos
 		const [preOrderStats, preOrdersByStatus] = await Promise.all([
 			prisma.preOrder.aggregate({
 				_count: { id: true },
@@ -159,41 +162,43 @@ export async function GET() {
 			totalValue: Number(preOrderStats._sum?.totalAmount) || 0,
 		};
 
-		// Top 3 produtos em pré-pedidos por valor acumulado
-		const topProductsInPreOrders = await prisma.preOrderItem.groupBy({
-			by: ["matchId"],
-			_sum: { totalPrice: true },
-			orderBy: { _sum: { totalPrice: "desc" } },
-			take: 3,
+		// Top 3 produtos pelo valor acumulado. Agrupa pelo nome do item pedido:
+		// o mesmo produto em comparações diferentes não pode ocupar dois lugares.
+		const preOrderItems = await prisma.preOrderItem.findMany({
+			where: { deletedAt: null },
+			select: {
+				totalPrice: true,
+				product: { select: { name: true } },
+				match: { select: { productName: true } },
+				preOrder: { select: { supplierId: true } },
+			},
 		});
-
-		// Detalhes dos produtos — batch load (evita N+1)
-		const matchIds = topProductsInPreOrders
-			.map((item) => item.matchId)
-			.filter((id): id is string => id !== null);
-		const matches = matchIds.length
-			? await prisma.comparisonMatch.findMany({
-					where: { id: { in: matchIds } },
-					select: {
-						id: true,
-						clientProduct: { select: { name: true } },
-						_count: { select: { supplierMatches: true } },
-					},
-				})
-			: [];
-		const matchById = new Map(matches.map((m) => [m.id, m]));
-
-		const topProductsDetails = topProductsInPreOrders.map((item) => {
-			const match = item.matchId ? matchById.get(item.matchId) : undefined;
-			return {
-				matchId: item.matchId,
-				productName: match?.clientProduct.name || "Produto não encontrado",
-				totalValue: Number(item._sum.totalPrice) || 0,
-				supplierCount: match?._count.supplierMatches || 0,
+		const totalsByProduct = new Map<
+			string,
+			{ total: number; suppliers: Set<string> }
+		>();
+		for (const item of preOrderItems) {
+			const name = (item.match?.productName || item.product.name).trim();
+			if (!name) continue;
+			const row = totalsByProduct.get(name) ?? {
+				total: 0,
+				suppliers: new Set<string>(),
 			};
-		});
+			row.total += item.totalPrice;
+			if (item.preOrder.supplierId) row.suppliers.add(item.preOrder.supplierId);
+			totalsByProduct.set(name, row);
+		}
+		const topProductsDetails = [...totalsByProduct.entries()]
+			.sort((a, b) => b[1].total - a[1].total)
+			.slice(0, 3)
+			.map(([productName, row]) => ({
+				matchId: null,
+				productName,
+				totalValue: row.total,
+				supplierCount: row.suppliers.size,
+			}));
 
-		// Top fornecedores por valor em pré-pedidos, cada coluna empilhada pelos
+		// Top fornecedores por valor em pedidos, cada coluna empilhada pelos
 		// seus 10 produtos de maior valor (segmento = produto; ver SupplierBars).
 		const TOP_SUPPLIERS = 6;
 		const poItems = await prisma.preOrderItem.findMany({

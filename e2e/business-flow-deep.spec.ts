@@ -7,7 +7,7 @@ import { loginAs } from "./helpers/auth";
  * backlog. `business-flow.spec.ts` já cobre esse caminho superficialmente
  * (o gap antes coberto só por scripts/verify-cycle.cjs no nível de API), e
  * `compare-manual-parecer.spec.ts` já cobre o parecer aparecendo na tela e o
- * override manual de fornecedor confirmando um pré-pedido — este teste NÃO
+ * override manual de fornecedor confirmando um pedido — este teste NÃO
  * repete essas asserções.
  *
  * O que este teste soma, que nenhum dos dois cobre:
@@ -17,17 +17,17 @@ import { loginAs } from "./helpers/auth";
  *    itens, XYZ-99 sem match);
  *  - o override manual é exercitado de forma REVERSÍVEL: aplica e desfaz,
  *    provando que o agrupamento por fornecedor recalcula de verdade
- *    (1 pré-pedido → 2 → 1 de novo) sem deixar um segundo pré-pedido para
+ *    (1 pedido → 2 → 1 de novo) sem deixar um segundo pedido para
  *    trás quando a escolha volta ao fornecedor mais barato;
- *  - o pré-pedido é identificado pelo ID devolvido pela própria chamada de
+ *  - o pedido é identificado pelo ID devolvido pela própria chamada de
  *    criação (não "a primeira linha Pendente" — há outros testes nesta
- *    suíte criando pré-pedidos para o mesmo comprador);
- *  - a troca de sessão localiza esse pré-pedido específico pela busca da
+ *    suíte criando pedidos para o mesmo comprador);
+ *  - a troca de sessão localiza esse pedido específico pela busca da
  *    lista (ref = últimos 8 chars do id — o mesmo texto exibido na UI);
  *  - o status final (FINALIZED) é confirmado por uma leitura de API
  *    pós-aprovação, não assumido a partir do toast.
  *
- * Limpeza: a comparação + matches + pré-pedido criados aqui não têm
+ * Limpeza: a comparação + matches + pedido criados aqui não têm
  * varredura em scripts/cleanup-e2e.cjs (que só cobre a empresa/usuário
  * órfãos de supplier-clients.spec.ts). Como os IDs são conhecidos e
  * exclusivos desta execução, a limpeza é feita por ID exato no `finally`
@@ -38,12 +38,12 @@ const DB_CONTAINER = "price-comparison-db";
 const DB_USER = "myuser";
 const DB_NAME = "price_comparison";
 
-/** Lê "Suas escolhas geram N pré-pedido(s), agrupados por fornecedor." e devolve N. */
+/** Lê "Suas escolhas geram N pedido(s), agrupados por fornecedor." e devolve N. */
 async function readGroupCount(page: Page): Promise<number> {
 	const text = await page
-		.getByText(/suas escolhas geram \d+ pré-pedido/i)
+		.getByText(/suas escolhas geram \d+ pedido/i)
 		.innerText();
-	const raw = text.match(/(\d+)\s*pré-pedido/i)?.[1];
+	const raw = text.match(/(\d+)\s*pedido/i)?.[1];
 	if (!raw) {
 		throw new Error(
 			`não foi possível ler o contador de agrupamento em: "${text}"`,
@@ -52,7 +52,7 @@ async function readGroupCount(page: Page): Promise<number> {
 	return Number(raw);
 }
 
-/** Remove, por ID exato, a comparação e o pré-pedido criados por este teste. */
+/** Remove, por ID exato, a comparação e o pedido criados por este teste. */
 function cleanupById(comparisonId: string, preOrderId: string): void {
 	if (!comparisonId && !preOrderId) return;
 
@@ -91,7 +91,7 @@ function cleanupById(comparisonId: string, preOrderId: string): void {
 
 test.describe
 	.serial("fluxo profundo comprador→representante (UI, ponta-a-ponta)", () => {
-		test("comprador compara, parecer bate com os fatos, pré-pedido identificado por ID e status final verificado por API", async ({
+		test("comprador compara, parecer bate com os fatos, pedido identificado por ID e status final verificado por API", async ({
 			browser,
 		}) => {
 			let comparisonId = "";
@@ -103,7 +103,7 @@ test.describe
 			const repErrors: string[] = [];
 
 			try {
-				// ───────── comprador: compara, confere o parecer, cria o pré-pedido ─────────
+				// ───────── comprador: compara, confere o parecer, cria o pedido ─────────
 				const buyer = await buyerCtx.newPage();
 				buyer.on("pageerror", (e) => buyerErrors.push(e.message));
 
@@ -172,11 +172,11 @@ test.describe
 				);
 
 				// Override manual (reversível): o combobox de fornecedor do último
-				// item alterna para Alfa — o agrupamento vai a 2 pré-pedidos — e
+				// item alterna para Alfa — o agrupamento vai a 2 pedidos — e
 				// volta para Beta, provando que o override recalcula de verdade
-				// sem deixar um segundo pré-pedido órfão quando revertido.
+				// sem deixar um segundo pedido órfão quando revertido.
 				const groupsSummary = buyer.getByText(
-					/suas escolhas geram \d+ pré-pedido/i,
+					/suas escolhas geram \d+ pedido/i,
 				);
 				await expect(groupsSummary).toBeVisible({ timeout: 15_000 });
 				await expect.poll(() => readGroupCount(buyer)).toBe(1);
@@ -192,7 +192,7 @@ test.describe
 				await buyer.getByRole("option", { name: "Fornecedor Beta" }).click();
 				await expect.poll(() => readGroupCount(buyer)).toBe(1);
 
-				// Confirmar pré-pedido — captura o ID da própria resposta da API
+				// Confirmar pedido — captura o ID da própria resposta da API
 				// (o valor que controlamos), não "a primeira linha" depois.
 				const createBatchResponse = buyer.waitForResponse(
 					(r) =>
@@ -200,7 +200,7 @@ test.describe
 						r.request().method() === "POST",
 				);
 				await buyer
-					.getByRole("button", { name: /confirmar pré-pedido/i })
+					.getByRole("button", { name: /confirmar pedido/i })
 					.click();
 				const batchJson = (await (await createBatchResponse).json()) as {
 					success?: boolean;
@@ -209,12 +209,12 @@ test.describe
 				expect(batchJson.success).toBe(true);
 				expect(
 					batchJson.preOrderIds,
-					"o override revertido deve gerar um único pré-pedido (Beta)",
+					"o override revertido deve gerar um único pedido (Beta)",
 				).toHaveLength(1);
 				preOrderId = batchJson.preOrderIds?.[0] ?? "";
 				expect(preOrderId).not.toBe("");
 
-				await expect(buyer.getByText(/pré-pedido/i).first()).toBeVisible({
+				await expect(buyer.getByText(/pedido/i).first()).toBeVisible({
 					timeout: 15_000,
 				});
 
@@ -236,14 +236,14 @@ test.describe
 
 				expect(buyerErrors, buyerErrors.join("\n")).toEqual([]);
 
-				// ───────── representante: localiza ESSE pré-pedido, aprova, confirma o status final ─────────
+				// ───────── representante: localiza ESSE pedido, aprova, confirma o status final ─────────
 				const rep = await repCtx.newPage();
 				rep.on("pageerror", (e) => repErrors.push(e.message));
 
 				await loginAs(rep, "representante@demo.com");
 				await rep.goto("/supplier/pre-orders");
 				await expect(
-					rep.getByRole("heading", { level: 1, name: /pré-pedidos/i }),
+					rep.getByRole("heading", { level: 1, name: /pedidos/i }),
 				).toBeVisible({ timeout: 15_000 });
 
 				const ref = preOrderId.slice(-8);
@@ -259,7 +259,7 @@ test.describe
 					timeout: 15_000,
 				});
 				await expect(
-					rep.getByRole("heading", { level: 1, name: `Pré-pedido #${ref}` }),
+					rep.getByRole("heading", { level: 1, name: `Pedido #${ref}` }),
 				).toBeVisible();
 				await expect(rep.getByText("Parafuso M6")).toBeVisible({
 					timeout: 10_000,

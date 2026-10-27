@@ -56,13 +56,27 @@ export default function PreOrdersClient({ user }: PreOrdersClientProps) {
 	async function load() {
 		setLoading(true);
 		try {
-			const res = await fetch("/api/pre-order/list?limit=50");
-			const data = (await res.json()) as {
-				preOrders?: PreOrder[];
-				error?: string;
-			};
-			if (!res.ok) throw new Error(data.error ?? "Erro ao carregar");
-			setOrders(data.preOrders ?? []);
+			const pageSize = 50;
+			const collected: PreOrder[] = [];
+			let page = 1;
+			let total = 0;
+			do {
+				const res = await fetch(
+					`/api/pre-order/list?page=${page}&limit=${pageSize}`,
+				);
+				const data = (await res.json()) as {
+					preOrders?: PreOrder[];
+					pagination?: { total: number };
+					error?: string;
+				};
+				if (!res.ok) throw new Error(data.error ?? "Erro ao carregar");
+				const batch = data.preOrders ?? [];
+				total = data.pagination?.total ?? collected.length + batch.length;
+				collected.push(...batch);
+				if (batch.length === 0) break;
+				page += 1;
+			} while (collected.length < total && page <= 100);
+			setOrders(collected);
 		} catch (err) {
 			toast.error(err instanceof Error ? err.message : "Erro ao carregar");
 		} finally {
@@ -98,16 +112,16 @@ export default function PreOrdersClient({ user }: PreOrdersClientProps) {
 		<div className="flex min-h-0 flex-1 flex-col gap-6">
 			<div>
 				<h1 className="text-2xl font-bold tracking-tight">
-					Pré-pedidos recebidos
+					Pedidos recebidos
 				</h1>
 				<p className="text-muted-foreground">
-					Olá {user.name} — aprove ou rejeite os pré-pedidos dos compradores.
+					Olá {user.name} — aprove ou rejeite os pedidos dos compradores.
 				</p>
 			</div>
 
 			<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
 				<StatCard
-					title="Total de pré-pedidos"
+					title="Total de pedidos"
 					icon={ClipboardList}
 					value={stats ? stats.total.count.toLocaleString("pt-BR") : "—"}
 					hint={stats ? formatters.currency(stats.total.value) : undefined}
@@ -136,7 +150,7 @@ export default function PreOrdersClient({ user }: PreOrdersClientProps) {
 
 			<Card className="flex min-h-0 flex-1 flex-col">
 				<CardHeader>
-					<CardTitle>Pré-pedidos</CardTitle>
+					<CardTitle>Pedidos</CardTitle>
 				</CardHeader>
 				<CardContent className="flex min-h-0 flex-1 flex-col pt-6">
 					<DataTable
@@ -148,7 +162,7 @@ export default function PreOrdersClient({ user }: PreOrdersClientProps) {
 							router.push(`/supplier/pre-orders/${order.id}`)
 						}
 						isLoading={loading}
-						emptyState="Nenhum pré-pedido recebido ainda."
+						emptyState="Nenhum pedido recebido ainda."
 						toolbar={
 							<>
 								<Select value={statusFilter} onValueChange={setStatusFilter}>

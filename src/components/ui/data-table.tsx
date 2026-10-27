@@ -339,9 +339,11 @@ export function DataTable<TData, TValue>({
 						</SelectContent>
 					</Select>
 					<p className="text-sm text-muted-foreground">
-						{total === 0
-							? "Nenhum registro"
-							: `Exibindo ${start}-${end} de ${total} registro(s)`}
+						{isLoading
+							? "Carregando..."
+							: total === 0
+								? "Nenhum registro"
+								: `Exibindo ${start}-${end} de ${total} registro(s)`}
 					</p>
 				</div>
 				<div className="flex items-center gap-2">

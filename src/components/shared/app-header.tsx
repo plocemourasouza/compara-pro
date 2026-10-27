@@ -65,7 +65,7 @@ function titleFromPath(pathname: string | null): string | null {
 		return isInner("/supplier/products") ? "Produto" : "Produtos";
 	}
 	if (pathname.startsWith("/supplier/pre-orders")) {
-		return isInner("/supplier/pre-orders") ? "Pré-pedido" : "Pré-pedidos";
+		return isInner("/supplier/pre-orders") ? "Pedido" : "Pedidos";
 	}
 	if (pathname.startsWith("/supplier/history")) return "Listas de preço";
 	if (pathname.startsWith("/supplier/usuarios")) return "Usuários";
@@ -176,15 +176,17 @@ export default function AppHeader({
 	};
 
 	return (
-		<header className="sticky top-0 z-40 w-full bg-background border-b">
-			<div className="flex h-16 items-center justify-between px-6">
-				<div className="flex items-center space-x-4">
+		<header className="sticky top-0 z-30 w-full border-b bg-background">
+			<div className="flex h-16 items-center justify-between pr-4 pl-14 lg:px-6">
+				<div className="flex min-w-0 items-center">
 					{/* Chrome de navegação, não título do conteúdo: o <h1> da página é o
 					    da área, e dois <h1> quebram a semântica e os seletores de teste. */}
-					<div className="font-semibold text-foreground text-xl">{heading}</div>
+					<div className="truncate font-semibold text-foreground text-xl">
+						{heading}
+					</div>
 				</div>
 
-				<div className="flex items-center space-x-4">
+				<div className="flex shrink-0 items-center gap-2 sm:gap-4">
 					{/* Notifications */}
 					<Popover open={notificationsOpen} onOpenChange={setNotificationsOpen}>
 						<PopoverTrigger asChild>
@@ -288,9 +290,11 @@ export default function AppHeader({
 											.toUpperCase()}
 									</AvatarFallback>
 								</Avatar>
-								<div className="text-left">
-									<div className="text-sm font-medium">{user.name}</div>
-									<div className="text-xs text-muted-foreground">
+								<div className="hidden min-w-0 text-left sm:block">
+									<div className="max-w-40 truncate text-sm font-medium">
+										{user.name}
+									</div>
+									<div className="max-w-40 truncate text-xs text-muted-foreground">
 										{user.company?.name}
 									</div>
 								</div>
