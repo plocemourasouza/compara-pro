@@ -21,7 +21,7 @@ export interface UserData {
 	name: string;
 	email: string;
 	phone?: string | null;
-	area: "ADMIN" | "REPRESENTATIVE" | "CLIENT";
+	area: "ADMIN" | "REPRESENTATIVE" | "CLIENT" | null;
 	createdAt: string;
 	updatedAt: string;
 	deletedAt: string | null;
@@ -105,8 +105,8 @@ export function getUsersColumns({
 			header: "Papel",
 			enableSorting: false,
 			cell: ({ row }) => (
-				<Badge className={getRoleBadgeColor(row.original.area)}>
-					{getRoleLabel(row.original.area)}
+				<Badge className={getRoleBadgeColor(row.original.area ?? "")}>
+					{getRoleLabel(row.original.area ?? "")}
 				</Badge>
 			),
 		},

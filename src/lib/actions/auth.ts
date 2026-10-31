@@ -4,6 +4,10 @@ import { cookies } from "next/headers";
 import { areaOf, dashboardForArea } from "@/lib/area";
 import { generateToken, hashPassword, verifyPassword } from "@/lib/auth";
 import {
+	ACTIVATION_LOCKOUT_MS,
+	ACTIVATION_MAX_ATTEMPTS,
+	ACTIVATION_RESEND_MAX,
+	ACTIVATION_RESEND_WINDOW_MS,
 	activationExpiry,
 	buildActivationLink,
 	generateActivationCode,
@@ -68,11 +72,20 @@ export async function loginAction(_prevState: unknown, formData: FormData) {
 			};
 		}
 
+		if (user.deletedAt) {
+			return { error: "Conta desativada." };
+		}
+
+		const area = areaOf(user);
+		if (!area) {
+			return { error: "Esta conta não tem acesso à plataforma." };
+		}
+
 		await setAuthCookie(user.id);
 
 		return {
 			success: true,
-			redirectUrl: dashboardForArea(areaOf(user)),
+			redirectUrl: dashboardForArea(area),
 		};
 	} catch (error) {
 		console.error("Login error:", error);
@@ -117,20 +130,29 @@ export async function registerAction(_prevState: unknown, formData: FormData) {
 			};
 		}
 
-		// Buscar ou criar empresa
-		let company = await prisma.company.findFirst({
-			where: { name: companyName },
+		// Cadastro público nunca entra numa empresa existente. O nome enviado
+		// não prova vínculo, e um catálogo SUPPLIER com o mesmo nome viraria ADMIN.
+		const trimmedCompanyName = companyName.trim();
+		const existingCompany = await prisma.company.findFirst({
+			where: {
+				name: { equals: trimmedCompanyName, mode: "insensitive" },
+			},
+			select: { id: true },
 		});
-
-		if (!company) {
-			company = await prisma.company.create({
-				data: {
-					name: companyName,
-					// Conta = empresa do tipo da área (auto-registro público só cria CLIENT).
-					type: role === "REPRESENTATIVE" ? "REPRESENTATIVE" : "CLIENT",
-				},
-			});
+		if (existingCompany) {
+			return {
+				error:
+					"Já existe uma empresa com esse nome. Peça um convite para entrar nela.",
+			};
 		}
+
+		// O campo role do formulário é ignorado: auto-registro só cria CLIENT.
+		const company = await prisma.company.create({
+			data: {
+				name: trimmedCompanyName,
+				type: "CLIENT",
+			},
+		});
 
 		// Verificar limite de usuários por empresa
 		const userCount = await prisma.user.count({
@@ -155,21 +177,16 @@ export async function registerAction(_prevState: unknown, formData: FormData) {
 			include: { company: true },
 		});
 
-		// Gerar token e salvar em cookie
-		const token = generateToken({ userId: user.id });
-		const cookieStore = await cookies();
-		cookieStore.set("auth_token", token, {
-			httpOnly: true,
-			secure: process.env.NODE_ENV === "production",
-			sameSite: "lax",
-			maxAge: 60 * 60 * 24 * 7, // 7 dias
-		});
+		const area = areaOf(user);
+		if (!area) {
+			return { error: "Esta conta não tem acesso à plataforma." };
+		}
 
-		// Retornar sucesso e URL de redirecionamento
-		const dashboardUrl = dashboardForArea(areaOf(user));
+		await setAuthCookie(user.id);
+
 		return {
 			success: true,
-			redirectUrl: dashboardUrl,
+			redirectUrl: dashboardForArea(area),
 		};
 	} catch (error) {
 		console.error("Register error:", error);
@@ -217,8 +234,28 @@ export async function activateAccountAction(
 		if (user.activationExpiresAt.getTime() < Date.now()) {
 			return genericError;
 		}
+		if (user.deletedAt || !areaOf(user)) {
+			return genericError;
+		}
+		if (
+			user.activationLockedUntil &&
+			user.activationLockedUntil.getTime() > Date.now()
+		) {
+			return genericError;
+		}
 		const ok = await verifyActivationCode(code, user.activationCodeHash);
 		if (!ok) {
+			const attempts = user.activationFailedAttempts + 1;
+			const locked = attempts >= ACTIVATION_MAX_ATTEMPTS;
+			await prisma.user.update({
+				where: { id: user.id },
+				data: {
+					activationFailedAttempts: locked ? 0 : attempts,
+					activationLockedUntil: locked
+						? new Date(Date.now() + ACTIVATION_LOCKOUT_MS)
+						: null,
+				},
+			});
 			return genericError;
 		}
 
@@ -229,12 +266,19 @@ export async function activateAccountAction(
 				password: hashed,
 				activationCodeHash: null,
 				activationExpiresAt: null,
+				activationFailedAttempts: 0,
+				activationLockedUntil: null,
 			},
 		});
 
+		const area = areaOf(user);
+		if (!area) {
+			return genericError;
+		}
+
 		await setAuthCookie(user.id);
 
-		return { success: true, redirectUrl: dashboardForArea(areaOf(user)) };
+		return { success: true, redirectUrl: dashboardForArea(area) };
 	} catch (error) {
 		console.error("Activate account error:", error);
 		return { error: "Erro interno do servidor" };
@@ -253,23 +297,48 @@ export async function resendActivationCodeAction(
 
 		const user = await prisma.user.findUnique({
 			where: { email },
-			select: { id: true, email: true, password: true },
+			select: {
+				id: true,
+				email: true,
+				password: true,
+				activationLockedUntil: true,
+				activationResendCount: true,
+				activationResendWindowStart: true,
+			},
 		});
 
 		// Só reenvia para conta pendente; resposta genérica evita enumeração de e-mail.
-		if (user && !user.password) {
-			const code = generateActivationCode();
-			const activationCodeHash = await hashActivationCode(code);
-			await prisma.user.update({
-				where: { id: user.id },
-				data: { activationCodeHash, activationExpiresAt: activationExpiry() },
-			});
-			const link = buildActivationLink();
-			await sendNotificationEmail({
-				to: [user.email],
-				subject: "Seu código de primeiro acesso — Compara Pró",
-				message: `Seu novo código de primeiro acesso é ${code}. Acesse ${link} para confirmar o código e definir sua senha. O código expira em 7 dias.`,
-			});
+		const locked =
+			user?.activationLockedUntil &&
+			user.activationLockedUntil.getTime() > Date.now();
+		if (user && !user.password && !locked) {
+			const now = new Date();
+			const windowOpen =
+				user.activationResendWindowStart &&
+				now.getTime() - user.activationResendWindowStart.getTime() <
+					ACTIVATION_RESEND_WINDOW_MS;
+			const count = windowOpen ? user.activationResendCount : 0;
+			if (count < ACTIVATION_RESEND_MAX) {
+				const code = generateActivationCode();
+				const activationCodeHash = await hashActivationCode(code);
+				await prisma.user.update({
+					where: { id: user.id },
+					data: {
+						activationCodeHash,
+						activationExpiresAt: activationExpiry(),
+						activationResendCount: count + 1,
+						activationResendWindowStart: windowOpen
+							? user.activationResendWindowStart
+							: now,
+					},
+				});
+				const link = buildActivationLink();
+				await sendNotificationEmail({
+					to: [user.email],
+					subject: "Seu código de primeiro acesso — Compara Pró",
+					message: `Seu novo código de primeiro acesso é ${code}. Acesse ${link} para confirmar o código e definir sua senha. O código expira em 7 dias.`,
+				});
+			}
 		}
 
 		return {

@@ -10,14 +10,18 @@ export async function createManualMatchAction(
 	clientProductId: string,
 ) {
 	try {
-		const user = await requireAuth();
+		const user = await requireAuth(["CLIENT"]);
+		if (user.area !== "CLIENT" || !user.company?.id) {
+			return { error: "Acesso negado" };
+		}
+		const clientCompanyId = user.company.id;
 
-		// Verificar se a comparação pertence ao usuário/empresa
 		const comparison = await prisma.comparison.findFirst({
 			where: {
 				id: comparisonId,
-				clientId: user.company?.id,
+				clientId: clientCompanyId,
 			},
+			select: { id: true, clientUploadId: true },
 		});
 
 		if (!comparison) {
@@ -33,6 +37,28 @@ export async function createManualMatchAction(
 
 		if (supplierProduct?.company.type !== "SUPPLIER") {
 			return { error: "Produto do fornecedor não encontrado" };
+		}
+
+		const clientItem = await prisma.uploadedProduct.findFirst({
+			where: {
+				id: clientProductId,
+				uploadId: comparison.clientUploadId,
+			},
+			select: { id: true },
+		});
+		if (!clientItem) {
+			return { error: "Item da comparação não encontrado" };
+		}
+
+		const carteira = await prisma.supplierClient.findFirst({
+			where: {
+				clientCompanyId,
+				supplierCompanyId: supplierProduct.companyId,
+			},
+			select: { id: true },
+		});
+		if (!carteira) {
+			return { error: "Produto fora da sua carteira" };
 		}
 
 		// Verificar se já existe um match para este produto

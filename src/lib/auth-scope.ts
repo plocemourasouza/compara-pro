@@ -29,6 +29,18 @@ export function ownsUploadCompany(
 	return user.company?.id === uploadCompanyId;
 }
 
+/** Fornecedores com vínculo de carteira com este cliente. Sem empresa → []. */
+export async function getCarteiraSupplierIds(
+	clientCompanyId: string | null | undefined,
+): Promise<string[]> {
+	if (!clientCompanyId) return [];
+	const links = await prisma.supplierClient.findMany({
+		where: { clientCompanyId },
+		select: { supplierCompanyId: true },
+	});
+	return links.map((link) => link.supplierCompanyId);
+}
+
 export async function getRepresentedSupplierIds(
 	user: ScopeUser,
 ): Promise<string[]> {

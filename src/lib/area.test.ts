@@ -14,7 +14,7 @@ describe("areaOf", () => {
 		});
 	});
 
-	describe("fallback para ADMIN", () => {
+	describe("admin da plataforma", () => {
 		it("nenhuma chave company → ADMIN", () => {
 			const user = {};
 			expect(areaOf(user)).toBe("ADMIN");
@@ -24,27 +24,27 @@ describe("areaOf", () => {
 			const user = { company: null };
 			expect(areaOf(user)).toBe("ADMIN");
 		});
-
-		it("company.type: null → ADMIN", () => {
-			const user = { company: { type: null } };
-			expect(areaOf(user)).toBe("ADMIN");
-		});
-
-		it("company.type SUPPLIER (catálogo sem login) → ADMIN", () => {
-			const user = { company: { type: "SUPPLIER" } };
-			expect(areaOf(user)).toBe("ADMIN");
-		});
 	});
 
-	describe("sensibilidade a maiúsculas", () => {
-		it('company.type lowercase "client" → ADMIN (não reconhecido)', () => {
-			const user = { company: { type: "client" } };
-			expect(areaOf(user)).toBe("ADMIN");
+	describe("tipo sem acesso", () => {
+		it("company.type null → sem área", () => {
+			const user = { company: { type: null } };
+			expect(areaOf(user)).toBeNull();
 		});
 
-		it('company.type lowercase "representative" → ADMIN (não reconhecido)', () => {
+		it("company.type SUPPLIER → sem área", () => {
+			const user = { company: { type: "SUPPLIER" } };
+			expect(areaOf(user)).toBeNull();
+		});
+
+		it('company.type lowercase "client" → sem área', () => {
+			const user = { company: { type: "client" } };
+			expect(areaOf(user)).toBeNull();
+		});
+
+		it('company.type lowercase "representative" → sem área', () => {
 			const user = { company: { type: "representative" } };
-			expect(areaOf(user)).toBe("ADMIN");
+			expect(areaOf(user)).toBeNull();
 		});
 	});
 });
@@ -79,30 +79,25 @@ describe("dashboardForArea", () => {
 
 describe("composição: dashboardForArea(areaOf(user))", () => {
 	it("usuário REPRESENTATIVE vai para /supplier", () => {
-		const user = { company: { type: "REPRESENTATIVE" } };
-		const area = areaOf(user);
-		const dashboard = dashboardForArea(area);
-		expect(dashboard).toBe("/supplier");
+		const area = areaOf({ company: { type: "REPRESENTATIVE" } });
+		expect(area).toBe("REPRESENTATIVE");
+		expect(dashboardForArea(area ?? "CLIENT")).toBe("/supplier");
 	});
 
 	it("usuário CLIENT vai para /client", () => {
-		const user = { company: { type: "CLIENT" } };
-		const area = areaOf(user);
-		const dashboard = dashboardForArea(area);
-		expect(dashboard).toBe("/client");
+		const area = areaOf({ company: { type: "CLIENT" } });
+		expect(area).toBe("CLIENT");
+		expect(dashboardForArea(area ?? "ADMIN")).toBe("/client");
 	});
 
 	it("usuário sem empresa (ADMIN) vai para /admin", () => {
-		const user = {};
-		const area = areaOf(user);
-		const dashboard = dashboardForArea(area);
-		expect(dashboard).toBe("/admin");
+		const area = areaOf({});
+		expect(area).toBe("ADMIN");
+		expect(dashboardForArea(area ?? "CLIENT")).toBe("/admin");
 	});
 
-	it("usuário SUPPLIER (catálogo) vai para /admin", () => {
+	it("usuário SUPPLIER não recebe área de painel", () => {
 		const user = { company: { type: "SUPPLIER" } };
-		const area = areaOf(user);
-		const dashboard = dashboardForArea(area);
-		expect(dashboard).toBe("/admin");
+		expect(areaOf(user)).toBeNull();
 	});
 });

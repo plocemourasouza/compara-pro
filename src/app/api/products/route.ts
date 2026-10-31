@@ -1,6 +1,9 @@
 import { type NextRequest, NextResponse } from "next/server";
 import type { Prisma } from "@/generated/prisma";
-import { getRepresentedSupplierIds } from "@/lib/auth-scope";
+import {
+	getCarteiraSupplierIds,
+	getRepresentedSupplierIds,
+} from "@/lib/auth-scope";
 import { getCurrentUser } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";
 import { createProductSchema } from "@/lib/validations/product";
@@ -31,10 +34,17 @@ export async function GET(request: NextRequest) {
 					? companyId
 					: { in: ids };
 		} else if (user.area === "CLIENT") {
-			// Clients can only see supplier products
-			whereClause.company = {
-				type: "SUPPLIER",
-			};
+			const supplierIds = await getCarteiraSupplierIds(user.company?.id);
+			if (
+				companyId &&
+				companyId !== "all" &&
+				!supplierIds.includes(companyId)
+			) {
+				return NextResponse.json({ products: [] });
+			}
+			whereClause.companyId =
+				companyId && companyId !== "all" ? companyId : { in: supplierIds };
+			whereClause.company = { type: "SUPPLIER" };
 		}
 
 		// Apply search filter

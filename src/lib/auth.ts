@@ -18,9 +18,12 @@ export const verifyPassword = async (
 };
 
 export const generateToken = (payload: object): string => {
-	return jwt.sign(payload, JWT_SECRET, { expiresIn: "7d" });
+	return jwt.sign(payload, JWT_SECRET, {
+		expiresIn: "7d",
+		algorithm: "HS256",
+	});
 };
 
 export const verifyToken = (token: string): jwt.JwtPayload | string => {
-	return jwt.verify(token, JWT_SECRET);
+	return jwt.verify(token, JWT_SECRET, { algorithms: ["HS256"] });
 };

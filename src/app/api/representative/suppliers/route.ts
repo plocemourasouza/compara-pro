@@ -162,10 +162,29 @@ export async function POST(request: Request) {
 			);
 		}
 		if (company) {
-			company = await prisma.company.update({
-				where: { id: company.id },
-				data: companyData,
+			const owns = await prisma.representativeSupplier.findUnique({
+				where: {
+					representativeCompanyId_supplierCompanyId: {
+						representativeCompanyId: agencyId,
+						supplierCompanyId: company.id,
+					},
+				},
+				select: { id: true },
 			});
+			// Representante não reivindica fornecedor de outra agência nem
+			// reescreve o cadastro. A edição de quem já representa é o PUT.
+			if (user.area !== "ADMIN" && !owns) {
+				return NextResponse.json(
+					{ error: "Fornecedor já cadastrado." },
+					{ status: 409 },
+				);
+			}
+			if (user.area === "ADMIN") {
+				company = await prisma.company.update({
+					where: { id: company.id },
+					data: companyData,
+				});
+			}
 		} else {
 			company = await prisma.company.create({
 				data: { ...companyData, cnpj, type: "SUPPLIER" },

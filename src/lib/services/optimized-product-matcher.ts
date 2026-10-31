@@ -13,6 +13,12 @@ import {
 	normalizeString as normalizeStringUtil,
 } from "./matching-utils";
 
+function searchScopeKey(allowedSupplierIds?: string[]): string {
+	if (!allowedSupplierIds) return "unscoped";
+	if (allowedSupplierIds.length === 0) return "none";
+	return [...allowedSupplierIds].sort().join(",");
+}
+
 /** Minimal shape of a product row returned from DB select queries */
 export interface UploadedProductRow {
 	id: string;
@@ -902,10 +908,16 @@ export class OptimizedProductMatcher {
 	 */
 	@cached(
 		cache.search,
-		(query: string, supplierId?: string, limit?: number) =>
+		(
+			query: string,
+			supplierId?: string,
+			limit?: number,
+			_requestId?: string,
+			allowedSupplierIds?: string[],
+		) =>
 			PriceCompareCache.keys.search(
 				query,
-				`${supplierId || "all"}:${limit || 20}`,
+				`${supplierId || "all"}:${limit || 20}:${searchScopeKey(allowedSupplierIds)}`,
 			),
 		2 * 60 * 1000, // 2 minutes cache for searches
 	)
@@ -914,6 +926,7 @@ export class OptimizedProductMatcher {
 		supplierId?: string,
 		limit: number = 20,
 		requestId?: string,
+		allowedSupplierIds?: string[],
 	) {
 		try {
 			if (!query || query.trim().length < 2) {
@@ -925,6 +938,17 @@ export class OptimizedProductMatcher {
 				);
 			}
 
+			if (allowedSupplierIds && allowedSupplierIds.length === 0) {
+				return [];
+			}
+			if (
+				allowedSupplierIds &&
+				supplierId &&
+				!allowedSupplierIds.includes(supplierId)
+			) {
+				return [];
+			}
+
 			const _normalizedQuery = OptimizedProductMatcher.normalizeString(query);
 
 			// Fonte única: catálogo `products` (mesma do matching principal),
@@ -933,7 +957,11 @@ export class OptimizedProductMatcher {
 				isActive: true,
 				deletedAt: null,
 				company: { type: "SUPPLIER" },
-				...(supplierId ? { companyId: supplierId } : {}),
+				...(supplierId
+					? { companyId: supplierId }
+					: allowedSupplierIds
+						? { companyId: { in: allowedSupplierIds } }
+						: {}),
 				price: { gt: 0 }, // Only products with valid prices
 				OR: [
 					{ name: { contains: query, mode: "insensitive" } },

@@ -4,6 +4,18 @@ import { hashPassword, verifyPassword } from "@/lib/auth";
 /** Validade do código de primeiro acesso (7 dias). */
 export const ACTIVATION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
+/** Tentativas erradas antes de bloquear a ativação desta conta. */
+export const ACTIVATION_MAX_ATTEMPTS = 5;
+
+/** Pausa depois de esgotar as tentativas. */
+export const ACTIVATION_LOCKOUT_MS = 15 * 60 * 1000;
+
+/** Reenvios de código por conta dentro da janela. */
+export const ACTIVATION_RESEND_MAX = 3;
+
+/** Janela do limite de reenvio. */
+export const ACTIVATION_RESEND_WINDOW_MS = 60 * 60 * 1000;
+
 /** Gera um código numérico de 6 dígitos (com zeros à esquerda). */
 export function generateActivationCode(): string {
 	return randomInt(0, 1_000_000).toString().padStart(6, "0");

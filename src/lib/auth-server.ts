@@ -23,6 +23,7 @@ export async function getCurrentUser() {
 				phone: true,
 				avatarUrl: true,
 				preferences: true,
+				deletedAt: true,
 				company: {
 					select: {
 						id: true,
@@ -33,9 +34,11 @@ export async function getCurrentUser() {
 			},
 		});
 
-		if (!user) return null;
-		// Área derivada de company.type (fonte única). Anexada p/ uso direto.
-		return { ...user, area: areaOf(user) };
+		if (!user || user.deletedAt) return null;
+		const area = areaOf(user);
+		if (!area) return null;
+		const { deletedAt: _deletedAt, ...sessionUser } = user;
+		return { ...sessionUser, area };
 	} catch (error) {
 		console.error("Get current user error:", error);
 		return null;

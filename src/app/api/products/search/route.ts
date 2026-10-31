@@ -1,10 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { getCarteiraSupplierIds } from "@/lib/auth-scope";
 import { AuthError, requireAuth } from "@/lib/auth-server";
 import { OptimizedProductMatcher } from "@/lib/services/optimized-product-matcher";
 
 export async function GET(request: NextRequest) {
 	try {
-		const _user = await requireAuth(["CLIENT", "ADMIN"]);
+		const user = await requireAuth(["CLIENT", "ADMIN"]);
 
 		const { searchParams } = new URL(request.url);
 		const query = searchParams.get("q");
@@ -18,10 +19,17 @@ export async function GET(request: NextRequest) {
 			);
 		}
 
+		const allowedSupplierIds =
+			user.area === "CLIENT"
+				? await getCarteiraSupplierIds(user.company?.id)
+				: undefined;
+
 		const products = await OptimizedProductMatcher.searchProducts(
 			query.trim(),
 			supplierId || undefined,
-			Math.min(limit, 50), // Max 50 results
+			Math.min(limit, 50),
+			undefined,
+			allowedSupplierIds,
 		);
 
 		return NextResponse.json({

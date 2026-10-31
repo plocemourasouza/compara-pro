@@ -220,11 +220,49 @@ export async function POST(request: Request) {
 			);
 		}
 		if (client) {
-			// Atualiza dados/endereço da empresa existente.
-			client = await prisma.company.update({
-				where: { id: client.id },
-				data: { name: data.companyName, ...companyData },
+			const alreadyLinked = await prisma.supplierClient.findUnique({
+				where: {
+					supplierCompanyId_clientCompanyId: {
+						supplierCompanyId,
+						clientCompanyId: client.id,
+					},
+				},
+				select: { id: true },
 			});
+			if (alreadyLinked) {
+				return NextResponse.json(
+					{ error: "Cliente já está na sua carteira." },
+					{ status: 409 },
+				);
+			}
+			// Não reescreve nome, contato nem endereço de um cliente que já existe.
+			// O vínculo só segue se a agência já atende esse cliente ou se ele
+			// aprovou a solicitação para este fornecedor. Admin (suporte) vincula.
+			if (user.area !== "ADMIN") {
+				const [agencyLink, approved] = await Promise.all([
+					prisma.supplierClient.findFirst({
+						where: {
+							clientCompanyId: client.id,
+							representativeCompanyId,
+						},
+						select: { id: true },
+					}),
+					prisma.supplierLinkRequest.findFirst({
+						where: {
+							supplierCompanyId,
+							clientCompanyId: client.id,
+							status: "APPROVED",
+						},
+						select: { id: true },
+					}),
+				]);
+				if (!agencyLink && !approved) {
+					return NextResponse.json(
+						{ error: "Cliente não autorizou o vínculo." },
+						{ status: 403 },
+					);
+				}
+			}
 		} else {
 			client = await prisma.company.create({
 				data: {
@@ -236,21 +274,6 @@ export async function POST(request: Request) {
 			});
 		}
 
-		// Vínculo idempotente.
-		const existingLink = await prisma.supplierClient.findUnique({
-			where: {
-				supplierCompanyId_clientCompanyId: {
-					supplierCompanyId,
-					clientCompanyId: client.id,
-				},
-			},
-		});
-		if (existingLink) {
-			return NextResponse.json(
-				{ error: "Cliente já está na sua carteira." },
-				{ status: 409 },
-			);
-		}
 		await prisma.supplierClient.create({
 			data: {
 				supplierCompanyId,

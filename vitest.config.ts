@@ -10,5 +10,8 @@ export default defineConfig({
 	test: {
 		environment: "node",
 		include: ["src/**/*.test.{ts,tsx}"],
+		env: {
+			JWT_SECRET: "vitest-jwt-secret-not-for-production",
+		},
 	},
 });

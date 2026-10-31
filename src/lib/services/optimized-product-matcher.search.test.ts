@@ -34,6 +34,48 @@ describe("OptimizedProductMatcher.searchProducts", () => {
 		expect(prismaMock.uploadedProduct.create).not.toHaveBeenCalled();
 	});
 
+	it("limits a caller-scoped search to those supplier ids", async () => {
+		prismaMock.product.findMany.mockResolvedValue([]);
+
+		await OptimizedProductMatcher.searchProducts(
+			"parafuso",
+			undefined,
+			20,
+			undefined,
+			["s2", "s1"],
+		);
+
+		expect(prismaMock.product.findMany).toHaveBeenCalledWith(
+			expect.objectContaining({
+				where: expect.objectContaining({
+					companyId: { in: ["s2", "s1"] },
+				}),
+			}),
+		);
+	});
+
+	it("does not query when the caller has no carteira or asks for a supplier outside it", async () => {
+		await expect(
+			OptimizedProductMatcher.searchProducts(
+				"parafuso",
+				undefined,
+				20,
+				undefined,
+				[],
+			),
+		).resolves.toEqual([]);
+		await expect(
+			OptimizedProductMatcher.searchProducts(
+				"parafuso",
+				"outro",
+				20,
+				undefined,
+				["s1"],
+			),
+		).resolves.toEqual([]);
+		expect(prismaMock.product.findMany).not.toHaveBeenCalled();
+	});
+
 	it("filters by SUPPLIER company, active + priced products, and companyId when supplierId is given", async () => {
 		prismaMock.product.findMany.mockResolvedValue([]);
 

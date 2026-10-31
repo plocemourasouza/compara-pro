@@ -1,5 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { areaOf } from "@/lib/area";
 import { verifyToken } from "@/lib/auth";
+import { getCarteiraSupplierIds } from "@/lib/auth-scope";
 import { cache, PriceCompareCache } from "@/lib/cache";
 import { prisma } from "@/lib/db";
 import { ErrorFactory } from "@/lib/errors";
@@ -53,7 +55,7 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
 		cache.users.set(userCacheKey, user, 15 * 60 * 1000);
 	}
 
-	if (!user.company || user.area !== "CLIENT") {
+	if (!user.companyId || areaOf(user) !== "CLIENT") {
 		throw createAuthError(
 			"insufficient",
 			{ requiredRole: "CLIENT" },
@@ -159,7 +161,8 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
 	}
 
 	// Cache supplier products lookup
-	const supplierCacheKey = PriceCompareCache.keys.supplierProducts(true);
+	const supplierIds = await getCarteiraSupplierIds(user.companyId);
+	const supplierCacheKey = `products:carteira:${user.companyId}`;
 	interface CompareSupplierProduct {
 		id: string;
 		sku: string | null;
@@ -186,32 +189,34 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
 		cache.products.get(supplierCacheKey);
 
 	if (!supplierProducts) {
-		supplierProducts = await prisma.product.findMany({
-			where: {
-				company: {
-					type: "SUPPLIER",
-				},
-				deletedAt: null,
-				price: { gt: 0 }, // Only products with valid prices
-			},
-			select: {
-				id: true,
-				sku: true,
-				code: true,
-				name: true,
-				price: true,
-				category: true,
-				unit: true,
-				companyId: true,
-				company: {
-					select: {
-						id: true,
-						name: true,
-						type: true,
-					},
-				},
-			},
-		});
+		supplierProducts =
+			supplierIds.length === 0
+				? []
+				: await prisma.product.findMany({
+						where: {
+							companyId: { in: supplierIds },
+							company: { type: "SUPPLIER" },
+							deletedAt: null,
+							price: { gt: 0 },
+						},
+						select: {
+							id: true,
+							sku: true,
+							code: true,
+							name: true,
+							price: true,
+							category: true,
+							unit: true,
+							companyId: true,
+							company: {
+								select: {
+									id: true,
+									name: true,
+									type: true,
+								},
+							},
+						},
+					});
 
 		// Cache for 10 minutes
 		cache.products.set(supplierCacheKey, supplierProducts, 10 * 60 * 1000);

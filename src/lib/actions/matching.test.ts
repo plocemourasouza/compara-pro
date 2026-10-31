@@ -98,6 +98,7 @@ describe("createManualMatchAction", () => {
 		prismaMock.comparison.findFirst.mockResolvedValue({
 			id: "cmp-1",
 			clientId: "c1",
+			clientUploadId: "up-1",
 			// biome-ignore lint/suspicious/noExplicitAny: partial Prisma payload
 		} as any);
 		prismaMock.product.findUnique.mockResolvedValue({
@@ -107,6 +108,14 @@ describe("createManualMatchAction", () => {
 			price: 12.5,
 			quantity: 100,
 			company: { id: "supplier-co", type: "SUPPLIER" },
+			// biome-ignore lint/suspicious/noExplicitAny: partial Prisma payload
+		} as any);
+		prismaMock.uploadedProduct.findFirst.mockResolvedValue({
+			id: "cp-1",
+			// biome-ignore lint/suspicious/noExplicitAny: partial Prisma payload
+		} as any);
+		prismaMock.supplierClient.findFirst.mockResolvedValue({
+			id: "link-1",
 			// biome-ignore lint/suspicious/noExplicitAny: partial Prisma payload
 		} as any);
 		prismaMock.notification.create.mockResolvedValue(
@@ -214,5 +223,37 @@ describe("createManualMatchAction", () => {
 				}),
 			}),
 		);
+	});
+
+	it("item de outro envio não é pareado", async () => {
+		mockValidComparisonAndSupplierProduct();
+		prismaMock.uploadedProduct.findFirst.mockResolvedValue(null);
+
+		const result = await createManualMatchAction("cmp-1", "prod-1", "cp-outro");
+
+		expect(result).toEqual({ error: "Item da comparação não encontrado" });
+		assertNoWrites();
+	});
+
+	it("produto de fornecedor fora da carteira não é pareado", async () => {
+		mockValidComparisonAndSupplierProduct();
+		prismaMock.supplierClient.findFirst.mockResolvedValue(null);
+
+		const result = await createManualMatchAction("cmp-1", "prod-1", "cp-1");
+
+		expect(result).toEqual({ error: "Produto fora da sua carteira" });
+		assertNoWrites();
+	});
+
+	it("representante não cria pareamento manual", async () => {
+		const { requireAuth } = await import("@/lib/auth-server");
+		vi.mocked(requireAuth).mockResolvedValueOnce(
+			fakeUser("REPRESENTATIVE", "agency-1") as never,
+		);
+
+		const result = await createManualMatchAction("cmp-1", "prod-1", "cp-1");
+
+		expect(result).toEqual({ error: "Acesso negado" });
+		assertNoWrites();
 	});
 });

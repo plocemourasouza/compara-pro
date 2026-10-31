@@ -104,7 +104,7 @@ export function sanitizeUserCreate(
 export type MutationOp = "update" | "deactivate" | "reactivate" | "resend";
 export type MutationTarget = {
 	id: string;
-	area: string;
+	area: string | null;
 	companyId?: string | null;
 };
 
