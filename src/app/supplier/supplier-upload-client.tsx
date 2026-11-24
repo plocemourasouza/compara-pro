@@ -8,15 +8,18 @@ import {
 	Upload,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import * as XLSX from "xlsx";
+import {
+	ImportActivity,
+	useLiveUpload,
+} from "@/components/shared/import-activity";
 import { ImportPreview } from "@/components/shared/import-preview";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress";
 import {
 	Select,
 	SelectContent,
@@ -48,6 +51,8 @@ interface SupplierUploadClientProps {
 	onClose?: () => void;
 	/** Reports the current modal step so a parent (dialog) can adjust width. */
 	onStageChange?: (stage: "upload" | "mapping") => void;
+	/** True while a list is still being saved, so the dialog stays open. */
+	onBusyChange?: (busy: boolean) => void;
 }
 
 export default function SupplierUploadClient({
@@ -56,6 +61,7 @@ export default function SupplierUploadClient({
 	onSuccess,
 	onClose,
 	onStageChange,
+	onBusyChange,
 }: SupplierUploadClientProps) {
 	const router = useRouter();
 
@@ -72,13 +78,84 @@ export default function SupplierUploadClient({
 	const [parsing, setParsing] = useState(false);
 
 	// Upload state
-	const [uploading, setUploading] = useState(false);
-	const [uploadProgress, setUploadProgress] = useState(0);
+	const [watching, setWatching] = useState(false);
+	const [holding, setHolding] = useState(false);
 	const [uploadResult, setUploadResult] = useState<{
 		success: boolean;
 		message: string;
 		uploadId?: string;
 	} | null>(null);
+	const settledRef = useRef(false);
+	const stallRef = useRef<{ rows: number; at: number } | null>(null);
+
+	const { tracked, elapsedSec } = useLiveUpload(
+		watching,
+		selectedFile
+			? {
+					fileName: selectedFile.name,
+					companyId: supplierCompanyId || undefined,
+					uploadType: "SUPPLIER_PRODUCTS",
+				}
+			: null,
+	);
+
+	useEffect(() => {
+		onBusyChange?.(watching);
+	}, [watching, onBusyChange]);
+
+	useEffect(() => {
+		if (!holding || settledRef.current) return;
+		if (!tracked) {
+			if (elapsedSec < 20) return;
+			settledRef.current = true;
+			setUploadResult({
+				success: false,
+				message: "Erro ao fazer upload do arquivo",
+			});
+			setWatching(false);
+			setHolding(false);
+			return;
+		}
+		if (tracked.status === "COMPLETED") {
+			settledRef.current = true;
+			setUploadResult({
+				success: true,
+				message: `Upload realizado com sucesso! ${tracked.processedRows} produtos processados.`,
+				uploadId: tracked.id,
+			});
+			setSelectedFile(null);
+			setParsedRows([]);
+			setFileHeaders([]);
+			setMapping({});
+			onSuccess?.();
+			setWatching(false);
+			setHolding(false);
+			return;
+		}
+		if (tracked.status === "FAILED") {
+			settledRef.current = true;
+			setUploadResult({
+				success: false,
+				message: "Não foi possível processar a lista.",
+			});
+			setWatching(false);
+			setHolding(false);
+			return;
+		}
+		const now = Date.now();
+		if (!stallRef.current || stallRef.current.rows !== tracked.processedRows) {
+			stallRef.current = { rows: tracked.processedRows, at: now };
+			return;
+		}
+		if (now - stallRef.current.at < 45_000) return;
+		settledRef.current = true;
+		setUploadResult({
+			success: false,
+			message: `A gravação parou em ${tracked.processedRows} de ${tracked.totalRows} produtos. Envie a lista novamente.`,
+		});
+		setWatching(false);
+		setHolding(false);
+	}, [holding, tracked, elapsedSec, onSuccess]);
 
 	// ---------------------------------------------------------------------------
 	// Parse file in the browser
@@ -149,7 +226,7 @@ export default function SupplierUploadClient({
 			"text/csv": [".csv"],
 		},
 		multiple: false,
-		disabled: uploading || !supplierCompanyId,
+		disabled: watching || !supplierCompanyId,
 		getFilesFromEvent: (event) => Promise.resolve(filesFromDropEvent(event)),
 		maxSize: 10 * 1024 * 1024,
 		onDropRejected: (rejections) => {
@@ -225,8 +302,11 @@ export default function SupplierUploadClient({
 	const handleUpload = async () => {
 		if (!selectedFile || !supplierCompanyId || !mapping.name) return;
 
-		setUploading(true);
-		setUploadProgress(0);
+		settledRef.current = false;
+		stallRef.current = null;
+		setUploadResult(null);
+		setHolding(false);
+		setWatching(true);
 
 		try {
 			const formData = new FormData();
@@ -235,52 +315,40 @@ export default function SupplierUploadClient({
 			formData.append("supplierCompanyId", supplierCompanyId);
 			formData.append("columnMapping", JSON.stringify(mapping));
 
-			const progressInterval = setInterval(() => {
-				setUploadProgress((prev) => {
-					if (prev >= 90) {
-						clearInterval(progressInterval);
-						return prev;
-					}
-					return prev + 10;
-				});
-			}, 200);
-
 			const response = await fetch("/api/upload", {
 				method: "POST",
 				body: formData,
 			});
-
-			clearInterval(progressInterval);
-			setUploadProgress(100);
-
-			const result = await response.json();
+			const result = (await response.json().catch(() => null)) as {
+				error?: string;
+				data?: { processedRows?: number; uploadId?: string };
+			} | null;
 
 			if (response.ok) {
 				setUploadResult({
 					success: true,
-					message: `Upload realizado com sucesso! ${result.data?.processedRows ?? 0} produtos processados.`,
-					uploadId: result.data?.uploadId,
+					message: `Upload realizado com sucesso! ${result?.data?.processedRows ?? 0} produtos processados.`,
+					uploadId: result?.data?.uploadId,
 				});
 				setSelectedFile(null);
 				setParsedRows([]);
 				setFileHeaders([]);
 				setMapping({});
 				onSuccess?.();
-			} else {
-				setUploadResult({
-					success: false,
-					message: result.error || "Erro ao processar arquivo",
-				});
+				setWatching(false);
+				return;
 			}
+			if (result?.error) {
+				setUploadResult({ success: false, message: result.error });
+				setWatching(false);
+				return;
+			}
+			// Gateway timeout returns a page, not JSON. The catalog write may
+			// still be running, so keep reading its progress.
+			setHolding(true);
 		} catch (error) {
 			console.error("Upload error:", error);
-			setUploadResult({
-				success: false,
-				message: "Erro ao fazer upload do arquivo",
-			});
-		} finally {
-			setUploading(false);
-			setTimeout(() => setUploadProgress(0), 2000);
+			setHolding(true);
 		}
 	};
 
@@ -297,7 +365,7 @@ export default function SupplierUploadClient({
 		Boolean(selectedFile) &&
 		Boolean(supplierCompanyId) &&
 		nameIsMapped &&
-		!uploading &&
+		!watching &&
 		!parsing;
 
 	// Etapa 2 (mapeamento) começa quando há linhas lidas do arquivo.
@@ -346,7 +414,7 @@ export default function SupplierUploadClient({
 								<Select
 									value={supplierCompanyId}
 									onValueChange={setSupplierCompanyId}
-									disabled={uploading || done}
+									disabled={watching || done}
 								>
 									<SelectTrigger id="supplier-select" className="mt-2 w-full">
 										<SelectValue placeholder="Selecione o fornecedor desta lista" />
@@ -378,7 +446,7 @@ export default function SupplierUploadClient({
 											isDragActive
 												? "border-primary bg-primary/5 text-primary"
 												: "border-muted-foreground/30 hover:border-primary/50 hover:bg-muted/40",
-											(uploading || !supplierCompanyId) &&
+											(watching || !supplierCompanyId) &&
 												"pointer-events-none opacity-50",
 										)}
 									>
@@ -462,7 +530,7 @@ export default function SupplierUploadClient({
 										<Select
 											value={mapping[field.key] ?? "__ignore__"}
 											onValueChange={(v) => handleMappingChange(field.key, v)}
-											disabled={uploading}
+											disabled={watching}
 										>
 											<SelectTrigger
 												id={`map-${field.key}`}
@@ -507,19 +575,16 @@ export default function SupplierUploadClient({
 						</div>
 					)}
 
-					{/* Upload progress */}
-					{uploading && (
-						<div className="space-y-2">
-							<div className="flex justify-between text-sm">
-								<span>Processando arquivo...</span>
-								<span>{uploadProgress}%</span>
-							</div>
-							<Progress value={uploadProgress} />
-						</div>
+					{watching && (
+						<ImportActivity
+							tracked={tracked}
+							elapsedSec={elapsedSec}
+							holding={holding}
+						/>
 					)}
 
 					{/* Upload result */}
-					{uploadResult && (
+					{uploadResult && !watching && (
 						<div
 							className={cn(
 								"flex items-start gap-3 rounded-lg p-4",
@@ -547,7 +612,11 @@ export default function SupplierUploadClient({
 						<div className="flex gap-3 flex-wrap">
 							{hasData ? (
 								<>
-									<Button variant="outline" onClick={handleBack}>
+									<Button
+										variant="outline"
+										onClick={handleBack}
+										disabled={watching}
+									>
 										Voltar
 									</Button>
 									<Button
@@ -555,7 +624,7 @@ export default function SupplierUploadClient({
 										disabled={!canUpload}
 										className="flex-1"
 									>
-										{uploading ? "Processando..." : "Confirmar"}
+										{watching ? "Processando..." : "Confirmar"}
 									</Button>
 								</>
 							) : (

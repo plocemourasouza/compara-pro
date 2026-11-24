@@ -35,8 +35,10 @@ export function ProductImportDialog({
 }: ProductImportDialogProps) {
 	// Etapa 2 (mapeamento + tabela) alarga o modal; etapa 1 (upload) fica estreita.
 	const [wide, setWide] = useState(false);
+	const [busy, setBusy] = useState(false);
 
 	const handleOpenChange = (next: boolean) => {
+		if (!next && busy) return;
 		if (!next) setWide(false);
 		onOpenChange(next);
 	};
@@ -48,6 +50,12 @@ export function ProductImportDialog({
 					"flex max-h-[90vh] w-[calc(100vw-2rem)] flex-col overflow-y-auto",
 					wide ? "sm:max-w-360" : "sm:max-w-2xl",
 				)}
+				onEscapeKeyDown={(event) => {
+					if (busy) event.preventDefault();
+				}}
+				onPointerDownOutside={(event) => {
+					if (busy) event.preventDefault();
+				}}
 			>
 				<DialogHeader>
 					<DialogTitle>Importar lista de produtos</DialogTitle>
@@ -60,6 +68,7 @@ export function ProductImportDialog({
 					}}
 					onClose={() => onOpenChange(false)}
 					onStageChange={(stage) => setWide(stage === "mapping")}
+					onBusyChange={setBusy}
 				/>
 			</DialogContent>
 		</Dialog>

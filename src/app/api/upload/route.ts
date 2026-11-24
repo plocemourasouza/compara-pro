@@ -1,4 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server";
+
+// A 2k-row catalog is one upsert per line. The platform caps this at the plan limit.
+export const maxDuration = 300;
+
 import { getRepresentedSupplierIds } from "@/lib/auth-scope";
 import { AuthError, requireAuth } from "@/lib/auth-server";
 import { prisma } from "@/lib/db";

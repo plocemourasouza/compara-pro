@@ -10,6 +10,7 @@ function Progress({
 	value,
 	...props
 }: React.ComponentProps<typeof ProgressPrimitive.Root>) {
+	const indeterminate = value == null;
 	return (
 		<ProgressPrimitive.Root
 			data-slot="progress"
@@ -21,8 +22,15 @@ function Progress({
 		>
 			<ProgressPrimitive.Indicator
 				data-slot="progress-indicator"
-				className="bg-primary h-full w-full flex-1 transition-all"
-				style={{ transform: `translateX(-${100 - (value || 0)}%)` }}
+				className={cn(
+					"bg-primary h-full flex-1",
+					indeterminate ? "w-1/3 animate-pulse" : "w-full transition-all",
+				)}
+				style={
+					indeterminate
+						? undefined
+						: { transform: `translateX(-${100 - value}%)` }
+				}
 			/>
 		</ProgressPrimitive.Root>
 	);

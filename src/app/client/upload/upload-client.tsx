@@ -10,12 +10,15 @@ import {
 	Upload,
 	XCircle,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDropzone } from "react-dropzone";
+import {
+	ImportActivity,
+	useLiveUpload,
+} from "@/components/shared/import-activity";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { filesFromDropEvent } from "@/lib/files-from-drop";
 
 type User = {
@@ -44,15 +47,74 @@ interface UploadClientProps {
 }
 
 export default function UploadClient({ user }: UploadClientProps) {
-	const [uploading, setUploading] = useState(false);
+	const [watching, setWatching] = useState(false);
+	const [holding, setHolding] = useState(false);
+	const [fileName, setFileName] = useState<string | null>(null);
 	const [uploadResult, setUploadResult] = useState<UploadResult | null>(null);
 	const [error, setError] = useState<string | null>(null);
-	const [progress, setProgress] = useState(0);
-
+	const settledRef = useRef(false);
+	const stallRef = useRef<{ rows: number; at: number } | null>(null);
 	const uploadType =
 		user.area === "REPRESENTATIVE"
 			? "SUPPLIER_PRODUCTS"
 			: "CLIENT_REQUIREMENTS";
+	const { tracked, elapsedSec } = useLiveUpload(
+		watching,
+		fileName
+			? {
+					fileName,
+					companyId:
+						user.area === "CLIENT"
+							? (user.company?.id ?? undefined)
+							: undefined,
+					uploadType,
+				}
+			: null,
+	);
+
+	useEffect(() => {
+		if (!holding || settledRef.current) return;
+		if (!tracked) {
+			if (elapsedSec < 20) return;
+			settledRef.current = true;
+			setError("Erro ao fazer upload do arquivo");
+			setWatching(false);
+			setHolding(false);
+			return;
+		}
+		if (tracked.status === "COMPLETED") {
+			settledRef.current = true;
+			setUploadResult({
+				uploadId: tracked.id,
+				totalRows: tracked.totalRows,
+				processedRows: tracked.processedRows,
+				errorRows: tracked.errorRows,
+			});
+			setWatching(false);
+			setHolding(false);
+			return;
+		}
+		if (tracked.status === "FAILED") {
+			settledRef.current = true;
+			setError("Não foi possível processar a lista.");
+			setWatching(false);
+			setHolding(false);
+			return;
+		}
+		const now = Date.now();
+		if (!stallRef.current || stallRef.current.rows !== tracked.processedRows) {
+			stallRef.current = { rows: tracked.processedRows, at: now };
+			return;
+		}
+		if (now - stallRef.current.at < 45_000) return;
+		settledRef.current = true;
+		setError(
+			`A gravação parou em ${tracked.processedRows} de ${tracked.totalRows} produtos. Envie a lista novamente.`,
+		);
+		setWatching(false);
+		setHolding(false);
+	}, [holding, tracked, elapsedSec]);
+
 	const uploadLabel =
 		user.area === "REPRESENTATIVE"
 			? "Lista de Produtos"
@@ -62,17 +124,15 @@ export default function UploadClient({ user }: UploadClientProps) {
 		const file = acceptedFiles[0];
 		if (!file) return;
 
-		setUploading(true);
+		settledRef.current = false;
+		stallRef.current = null;
+		setFileName(file.name);
 		setError(null);
 		setUploadResult(null);
-		setProgress(0);
+		setHolding(false);
+		setWatching(true);
 
 		try {
-			// Simulate progress
-			const progressInterval = setInterval(() => {
-				setProgress((prev) => Math.min(prev + 10, 90));
-			}, 200);
-
 			const formData = new FormData();
 			formData.append("file", file);
 			formData.append("uploadType", uploadType);
@@ -81,21 +141,25 @@ export default function UploadClient({ user }: UploadClientProps) {
 				method: "POST",
 				body: formData,
 			});
+			const result = (await response.json().catch(() => null)) as {
+				error?: string;
+				data?: UploadResult;
+			} | null;
 
-			clearInterval(progressInterval);
-			setProgress(100);
-
-			if (!response.ok) {
-				const errorData = await response.json();
-				throw new Error(errorData.error || "Erro no upload");
+			if (response.ok && result?.data) {
+				setUploadResult(result.data);
+				setWatching(false);
+				return;
 			}
-
-			const result = await response.json();
-			setUploadResult(result.data);
+			if (result?.error) {
+				setError(result.error);
+				setWatching(false);
+				return;
+			}
+			setHolding(true);
 		} catch (err) {
-			setError(err instanceof Error ? err.message : "Erro desconhecido");
-		} finally {
-			setUploading(false);
+			console.error("Upload error:", err);
+			setHolding(true);
 		}
 	};
 
@@ -110,7 +174,7 @@ export default function UploadClient({ user }: UploadClientProps) {
 				"text/csv": [".csv"],
 			},
 			multiple: false,
-			disabled: uploading,
+			disabled: watching,
 			getFilesFromEvent: (event) => Promise.resolve(filesFromDropEvent(event)),
 		});
 
@@ -230,7 +294,7 @@ export default function UploadClient({ user }: UploadClientProps) {
 						className={`
               border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors
               ${isDragActive ? "border-primary bg-primary/10" : "border-border"}
-              ${uploading ? "opacity-50 cursor-not-allowed" : "hover:border-primary hover:bg-primary/10"}
+              ${watching ? "opacity-50 cursor-not-allowed" : "hover:border-primary hover:bg-primary/10"}
             `}
 					>
 						<input {...getInputProps()} />
@@ -259,20 +323,20 @@ export default function UploadClient({ user }: UploadClientProps) {
 						)}
 					</div>
 
-					{uploading && (
-						<div className="mt-4 space-y-2">
-							<div className="flex justify-between text-sm">
-								<span>Processando arquivo...</span>
-								<span>{progress}%</span>
-							</div>
-							<Progress value={progress} />
+					{watching && (
+						<div className="mt-4">
+							<ImportActivity
+								tracked={tracked}
+								elapsedSec={elapsedSec}
+								holding={holding}
+							/>
 						</div>
 					)}
 				</CardContent>
 			</Card>
 
 			{/* Error Display */}
-			{error && (
+			{error && !watching && (
 				<Alert variant="destructive">
 					<XCircle className="h-4 w-4" />
 					<AlertDescription>{error}</AlertDescription>

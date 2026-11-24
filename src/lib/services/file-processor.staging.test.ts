@@ -132,4 +132,30 @@ describe("FileProcessor.processData — staging vs catalog routing", () => {
 			},
 		]);
 	});
+
+	it("publishes saved-row counts every 40 rows so the screen can follow a long list", async () => {
+		prismaMock.product.upsert.mockResolvedValue(
+			// biome-ignore lint/suspicious/noExplicitAny: not asserted on
+			{} as any,
+		);
+		const rows = Array.from({ length: 40 }, (_, index) => ({
+			Sku: `SKU-${index}`,
+			Name: `Produto ${index}`,
+			Price: "10",
+		}));
+
+		// biome-ignore lint/complexity/useLiteralKeys: acesso por colchete alcança o método privado sem recorrer a `any` (ver docblock do arquivo)
+		await FileProcessor["processData"](
+			rows,
+			"upload-long",
+			"SUPPLIER_PRODUCTS",
+			"company-1",
+		);
+
+		expect(prismaMock.uploadHistory.update).toHaveBeenCalledTimes(1);
+		expect(prismaMock.uploadHistory.update).toHaveBeenCalledWith({
+			where: { id: "upload-long" },
+			data: { processedRows: 40, errorRows: 0 },
+		});
+	});
 });

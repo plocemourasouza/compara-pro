@@ -231,6 +231,7 @@ export class FileProcessor {
 		const processedProducts: (SupplierProduct | ClientRequirement)[] = [];
 		let processedRows = 0;
 		let errorRows = 0;
+		let rowsSincePublish = 0;
 
 		for (let i = 0; i < data.length; i++) {
 			const row = data[i];
@@ -335,6 +336,19 @@ export class FileProcessor {
 					message: described.message,
 					value: described.value ?? "",
 				});
+			}
+
+			rowsSincePublish++;
+			if (rowsSincePublish >= 40) {
+				rowsSincePublish = 0;
+				try {
+					await prisma.uploadHistory.update({
+						where: { id: uploadId },
+						data: { processedRows, errorRows },
+					});
+				} catch (publishError) {
+					console.error("Upload progress update failed:", publishError);
+				}
 			}
 		}
 
