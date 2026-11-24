@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/table";
 import type { HeaderMapping } from "@/lib/file-mapping";
 import { applyMapping, SUPPLIER_FIELDS } from "@/lib/file-mapping";
+import { formatImportedPrice } from "@/lib/format";
 
 interface ImportPreviewProps {
 	rows: Record<string, unknown>[];
@@ -52,7 +53,12 @@ export function ImportPreview({ rows, mapping }: ImportPreviewProps) {
 					<TableHeader>
 						<TableRow>
 							{SUPPLIER_FIELDS.map((field) => (
-								<TableHead key={field.key} className="text-xs">
+								<TableHead
+									key={field.key}
+									className={
+										field.key === "price" ? "text-right text-xs" : "text-xs"
+									}
+								>
 									{field.label}
 									{field.required && (
 										<span className="text-destructive ml-0.5">*</span>
@@ -74,10 +80,22 @@ export function ImportPreview({ rows, mapping }: ImportPreviewProps) {
 								>
 									{SUPPLIER_FIELDS.map((field) => {
 										const val = mapped[field.key];
-										const cellStr = val !== undefined ? String(val) : "";
+										const isPrice = field.key === "price";
+										const cellStr = isPrice
+											? formatImportedPrice(val)
+											: val !== undefined
+												? String(val)
+												: "";
 										const isNameEmpty = field.key === "name" && nameEmpty;
 										return (
-											<TableCell key={field.key} className="text-xs">
+											<TableCell
+												key={field.key}
+												className={
+													isPrice
+														? "text-xs text-right tabular-nums"
+														: "text-xs"
+												}
+											>
 												{isNameEmpty ? (
 													<span className="text-destructive italic">
 														— sem nome —

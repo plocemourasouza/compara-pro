@@ -30,6 +30,7 @@ import {
 import type { HeaderMapping } from "@/lib/file-mapping";
 import { autoMapHeaders, buildRows, SUPPLIER_FIELDS } from "@/lib/file-mapping";
 import { filesFromDropEvent } from "@/lib/files-from-drop";
+import { formatImportedPrice } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 type User = {
@@ -547,7 +548,7 @@ export default function SupplierUploadClient({
 												</SelectItem>
 												{fileHeaders.map((h) => (
 													<SelectItem key={h} value={h} className="text-xs">
-														{h}
+														{field.key === "price" ? formatImportedPrice(h) : h}
 													</SelectItem>
 												))}
 											</SelectContent>
